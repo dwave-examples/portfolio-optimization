@@ -53,7 +53,7 @@ class SinglePeriod:
         self.model = {'CQM': None, 'DQM': None}
         self.sample_set = {}
 
-        self.precision =  2
+        self.precision = 2
 
         # This is a dictionary that saves solutions in desired format 
         # e.g., solution = {'CQM':{'stocks': {'IBM': 3, 'WMT': 12}, 

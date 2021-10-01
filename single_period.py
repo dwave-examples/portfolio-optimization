@@ -30,9 +30,9 @@ class SinglePeriod:
     sampler = {'CQM': LeapHybridCQMSampler(profile='cqm_alpha'),
                'DQM': LeapHybridDQMSampler()}
 
-    def __init__(self, stocks=['IBM', 'SEHI', 'WMT'] , budget=1000, 
-                 bin_size=10, gamma=[10], file_path='data/basic_data.csv', 
-                 dates=[], model_type='CQM', alpha=[0.0005], baseline='^GSPC', 
+    def __init__(self, stocks=('IBM', 'SEHI', 'WMT') , budget=1000, 
+                 bin_size=10, gamma=(10), file_path='data/basic_data.csv', 
+                 dates=(), model_type='CQM', alpha=(0.0005), baseline='^GSPC', 
                  verbose=True):
         self.stocks = stocks 
         self.budget = budget 
@@ -62,7 +62,7 @@ class SinglePeriod:
         #                   }
         self.solution = {}
         
-    def load_data(self, file_path='', dates=[], df=pd.DataFrame()):
+    def load_data(self, file_path='', dates=(), df=pd.DataFrame()):
         """Load the relevant stock data from file, dataframe, or Yahoo!. 
 
         Args:

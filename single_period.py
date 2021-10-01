@@ -338,7 +338,8 @@ class SinglePeriod:
 
         solution = {}
 
-        solution['stocks'] = {s:self.shares_intervals[s][self.sample_set['DQM'].first.sample[s]] for s in self.stocks}
+        sample = self.sample_set['DQM'].first.sample 
+        solution['stocks'] = {s:self.shares_intervals[s][sample[s]] for s in self.stocks}
         
         solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 

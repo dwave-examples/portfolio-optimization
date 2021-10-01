@@ -15,7 +15,7 @@
 import itertools
 import numpy as np
 import pandas as pd
-from pandas_datareader import data
+from pandas_datareader.data import DataReader
 
 from dimod import Integer
 from dimod import quicksum 
@@ -85,7 +85,7 @@ class SinglePeriod:
             else:
                 dates = self.dates
             # Read in daily data; resample to monthly
-            panel_data = data.DataReader(self.stocks, 'yahoo', dates[0], dates[1])
+            panel_data = DataReader(self.stocks, 'yahoo', dates[0], dates[1])
             panel_data = panel_data.resample('BM').last()
             self.df_all = pd.DataFrame(index=panel_data.index, columns=self.stocks)
 
@@ -93,7 +93,7 @@ class SinglePeriod:
                 self.df_all[i] = panel_data[[('Adj Close',  i)]]
 
             # Read in baseline data; resample to monthly
-            index_df = data.DataReader(self.baseline, 'yahoo', dates[0], dates[1])
+            index_df = DataReader(self.baseline, 'yahoo', dates[0], dates[1])
             index_df = index_df.resample('BM').last()
             self.df_baseline = pd.DataFrame(index=index_df.index, columns=self.baseline)
 

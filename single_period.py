@@ -230,15 +230,24 @@ class SinglePeriod:
 
         solution = {}
 
-        solution['stocks'] = {k:best_feasible.sample[k] for k in self.stocks}
+        solution['stocks'] = {k:int(best_feasible.sample[k]) for k in self.stocks}
 
         solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
         if self.verbose:
-            print(f'CQM -- Number of feasible solutions: {len(feasible_records)} out of {n_samples} sampled.')
-            print(f'CQM -- Best energy: {self.sample_set["CQM"].first.energy}')
-            print(f'CQM -- Best energy (feasible): {min([rec.energy for rec in feasible_records])}')  
-            print(f'CQM -- Best feasible solution: {solution}\n')
+            print(f'Number of feasible solutions: {len(feasible_records)} out of {n_samples} sampled.')
+            print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
+            print(f'Best energy (feasible): {min([rec.energy for rec in feasible_records]): .2f}')  
+
+            print(f'\nBest feasible solution:')
+            print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
+
+            print(f"\nEstimated returns: {solution['return']}")
+
+            spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+            print(f"Purchase Cost: {spending:.2f}")
+
+            print(f"Variance: {solution['risk']}\n")
 
         return solution 
 
@@ -343,7 +352,18 @@ class SinglePeriod:
         
         solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
-        print(f'DQM -- solution for alpha == {self.alpha} and gamma == {self.gamma}: {solution}\n')
+        print(f'\nDQM -- solution for alpha == {self.alpha} and gamma == {self.gamma}:')
+        print(f"\nShares to buy:")
+
+        print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
+
+        print(f"\nEstimated returns: {solution['return']}")
+
+        spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+        print(f"Purchase Cost: {spending:.2f}")
+
+        print(f"Variance: {solution['risk']}\n")
+
 
         return solution 
 

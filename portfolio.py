@@ -18,24 +18,33 @@ from multi_period import MultiPeriod
 from single_period import SinglePeriod
 
 @click.command()
-@click.option('-s', '--stocks', default=['IBM', 'SEHI', 'WMT'], 
-              multiple=True, show_default=True)
-@click.option('-b', '--budget', default=1000, show_default=True)
-@click.option('-n', '--bin-size', default=10, show_default=True)
-@click.option('-g', '--gamma', default=[10], multiple=True, show_default=True)
-@click.option('-a', '--alpha', default=[0.0005], multiple=True, show_default=True)
-@click.option('-f', '--file-path', default='data/basic_data.csv', show_default=True)
-@click.option('-z', '--baseline', default='^GSPC', show_default=True)
-@click.option('-u', '--max-risk', default=0)
-@click.option('-l', '--min-return', default=0)
+@click.option('-s', '--stocks', default=['IBM', 'SEHI', 'WMT'], multiple=True,
+              show_default=True, help='Stock name to be included')
+@click.option('-b', '--budget', default=1000, show_default=True,
+              help='portfolio budget')
+@click.option('-n', '--bin-size', default=10, show_default=True,
+              help='Maximum number of intervals for each stock')
+@click.option('-g', '--gamma', default=[10], multiple=True, show_default=True,
+               help='Penalty coefficient for budget constraint')
+@click.option('-a', '--alpha', default=[0.0005], multiple=True, show_default=True,
+              help='Risk aversion coefficient')
+@click.option('-f', '--file-path', default='data/basic_data.csv', show_default=True,
+              help='Full path of csv file containing input stock data')
+@click.option('-z', '--baseline', default='^GSPC', show_default=True,
+              help='Basiline stock for comparison in multi-period run')
+@click.option('-u', '--max-risk', default=0, help='Upper bound on risk/variance')
+@click.option('-l', '--min-return', default=0, help='Lower bound on the returns')
 @click.option('-d', '--dates', default=(['2010-01-01', '2012-12-31']), 
-              nargs=2, type=click.Tuple([str, str]), show_default=True)
-@click.option('-m', '--model-type', default='CQM', multiple=False,
-              type=click.Choice(['CQM', 'DQM'], case_sensitive=False))
+              nargs=2, type=click.Tuple([str, str]), show_default=True,
+              help='Start and end date to query stock data from Yahoo! Finance')
+@click.option('-m', '--model-type', default='CQM', multiple=False, 
+              type=click.Choice(['CQM', 'DQM'], case_sensitive=False),
+              show_default=True, help='Model type, cqm or dqm')
 @click.option('-r', '--rebalance', is_flag=True, default=False,
-              help='makes a multi-period rebalancing portfolio optimization run; \
-                   otherwise, makes a single-period portfolio optimization run')
-@click.option('-v', '--verbose', is_flag=True, default=True)
+              help='Make a multi-period rebalancing portfolio optimization run; '
+                   'otherwise, make a single-period portfolio optimization run')
+@click.option('-v', '--verbose', is_flag=True, default=True, 
+              help='Enable additional program console output')
 def main(stocks, budget, bin_size, gamma, 
          file_path, max_risk, min_return,baseline,
          dates, model_type, rebalance, alpha, verbose):

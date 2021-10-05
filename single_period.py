@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import itertools
+import json
 import numpy as np
 import pandas as pd
 from pandas_datareader.data import DataReader
@@ -27,13 +28,10 @@ from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 class SinglePeriod: 
     """Define and solve a  single-period portfolio optimization problem.
     """
-    sampler = {'CQM': LeapHybridCQMSampler(profile='cqm_alpha'),
-               'DQM': LeapHybridDQMSampler()}
-
     def __init__(self, stocks=('IBM', 'SEHI', 'WMT') , budget=1000, 
-                 bin_size=10, gamma=(10), file_path='data/basic_data.csv', 
-                 dates=(), model_type='CQM', alpha=(0.0005), baseline='^GSPC', 
-                 verbose=True):
+                 bin_size=10, gamma=(10,), file_path='data/basic_data.csv', 
+                 dates=(), model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
+                 sampler_args={}, verbose=True):
         self.stocks = stocks 
         self.budget = budget 
         self.bin_size = bin_size
@@ -51,17 +49,20 @@ class SinglePeriod:
         self.gamma = gamma[-1]
         
         self.model = {'CQM': None, 'DQM': None}
+
         self.sample_set = {}
+        if sampler_args:
+            self.sampler_args = json.loads(sampler_args) 
+        else:
+            self.sampler_args = {}
+
+        self.sampler = {'CQM': LeapHybridCQMSampler(**self.sampler_args),
+                        'DQM': LeapHybridDQMSampler(**self.sampler_args)}
+
+        self.solution = {}
 
         self.precision = 2
-
-        # This is a dictionary that saves solutions in desired format 
-        # e.g., solution = {'CQM':{'stocks': {'IBM': 3, 'WMT': 12}, 
-        #                          'risk': 10, 
-        #                          'return': 20}
-        #                   }
-        self.solution = {}
-        
+       
     def load_data(self, file_path='', dates=(), df=pd.DataFrame()):
         """Load the relevant stock data from file, dataframe, or Yahoo!. 
 
@@ -124,7 +125,7 @@ class SinglePeriod:
                                         for i in range(self.bin_size)]
 
         self.price = self.df.iloc[-1]
-        self.monthly_returns = self.df[self.stocks].pct_change().iloc[1:]
+        self.monthly_returns = self.df[list(self.stocks)].pct_change().iloc[1:]
         self.ave_monthly_returns = self.monthly_returns.mean(axis=0)
         self.covariance_matrix = self.monthly_returns.cov()
 

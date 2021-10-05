@@ -43,9 +43,12 @@ from single_period import SinglePeriod
 @click.option('-r', '--rebalance', is_flag=True, default=False,
               help='Make a multi-period rebalancing portfolio optimization run; '
                    'otherwise, make a single-period portfolio optimization run')
+@click.option('-p', '--params', default="{}", 
+              help='Pass sampler arguments such as profile and solver; '
+                    'usage: -p \'{"profile": "test"}\'')
 @click.option('-v', '--verbose', is_flag=True, default=True, 
               help='Enable additional program console output')
-def main(stocks, budget, bin_size, gamma, 
+def main(stocks, budget, bin_size, gamma, params,  
          file_path, max_risk, min_return,baseline,
          dates, model_type, rebalance, alpha, verbose):
     if max_risk or min_return:
@@ -56,17 +59,18 @@ def main(stocks, budget, bin_size, gamma,
         if 'SEHI' in stocks:
             stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
         my_portfolio = MultiPeriod(stocks=stocks, budget=budget, 
-                                    bin_size=bin_size, gamma=gamma, 
-                                    file_path=file_path, dates=dates, 
+                                    sampler_args=params, 
+                                    bin_size=bin_size, dates=dates,
+                                    file_path=file_path, gamma=gamma,
                                     model_type=model_type, alpha=alpha, 
                                     verbose=verbose, baseline=baseline)
     else:
         print(f"\nSingle period portfolio optimization run...")
-        my_portfolio = SinglePeriod(stocks=list(stocks), budget=budget, 
+        my_portfolio = SinglePeriod(stocks=list(stocks), budget=budget,
                                     bin_size=bin_size, gamma=gamma, 
                                     file_path=file_path, dates=[], 
                                     model_type=model_type, alpha=alpha, 
-                                    verbose=verbose)
+                                    verbose=verbose, sampler_args=params)
     
     my_portfolio.run(min_return=min_return, max_risk=max_risk)
 

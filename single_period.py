@@ -67,16 +67,10 @@ class SinglePeriod:
         """Load the relevant stock data from file, dataframe, or Yahoo!. 
 
         Args:
-            file_path (string): 
-                Full path of csv file containing stock price data for single
-                period problem.
-            dates (list): 
-                [Start_Date, End_Date] to query data from Yahoo!.
-            df (dataframe): 
-                Table of stock prices.   
-
-        Returns:
-            None.
+            file_path (string): Full path of csv file containing stock price data
+                for the single period problem.
+            dates (list): [Start_Date, End_Date] to query data from Yahoo!.
+            df (dataframe): Table of stock prices.   
         """
         if not df.empty:
             self.df = df 
@@ -137,13 +131,8 @@ class SinglePeriod:
             3) min risk s.t. return >= min_return  
 
         Args:
-            max_risk (int): 
-                Maximum risk for the risk bounding problem formulation.
-            min_return (int): 
-                Minimum return for the return bounding problem formulation.
-
-        Returns:
-            None.
+            max_risk (int): Maximum risk for the risk bounding formulation.
+            min_return (int): Minimum return for the return bounding formulation.
         """
         # Instantiating the CQM object 
         cqm = ConstrainedQuadraticModel()
@@ -202,22 +191,18 @@ class SinglePeriod:
 
     def solve_cqm(self, max_risk=None, min_return=None):
         """Solve CQM.  
-        This method allows the user a choice of 3 problem formulations: 
+        This method allows the user to solve one of 3 cqm problem formulations: 
             1) max return - alpha*risk (default formulation)
             2) max return s.t. risk <= max_risk 
             3) min risk s.t. return >= min_return  
 
         Args:
-            max_risk (int): 
-                Maximum risk for the risk bounding problem formulation.
-            min_return (int): 
-                Minimum return for the return bounding problem formulation.
+            max_risk (int): Maximum risk for the risk bounding formulation.
+            min_return (int): Minimum return for the return bounding formulation.
 
         Returns:
-            solution (dict):
-                This is a dictionary that saves solutions in desired format 
-                e.g., solution = {'CQM':{'stocks': {'IBM': 3, 'WMT': 12}, 'risk': 10, 'return': 20}, 
-                                  'DQM':{'stocks': {'APL': 5, 'IBM': 24}, 'risk': 15, 'return': 43}}                   
+            solution (dict): This is a dictionary that saves solutions in desired format 
+                e.g., solution = {'stocks': {'IBM': 3, 'WMT': 12}, 'risk': 10, 'return': 20}
         """
         self.build_cqm(max_risk, min_return)
 
@@ -256,13 +241,8 @@ class SinglePeriod:
         """Build DQM.  
 
         Args:
-            alpha (float): 
-                Risk aversion coefficient.
-            gamma (int): 
-                Penalty coefficient for budgeting constraint.
-
-        Returns:
-            None.     
+            alpha (float): Risk aversion coefficient.
+            gamma (int): Penalty coefficient for budgeting constraint.
         """
         if not gamma:
             gamma = self.gamma
@@ -336,10 +316,8 @@ class SinglePeriod:
         """Solve DQM.
 
         Returns:
-            solution (dict):
-                This is a dictionary that saves solutions in desired format 
-                e.g., solution = {'CQM':{'stocks': {'IBM': 3, 'WMT': 12}, 'risk': 10, 'return': 20}, 
-                                  'DQM':{'stocks': {'APL': 5, 'IBM': 24}, 'risk': 15, 'return': 43}}                    
+            solution (dict): This is a dictionary that saves solutions in desired format 
+                e.g., solution = {'stocks': {'IBM': 3, 'WMT': 12}, 'risk': 10, 'return': 20}
         """
         if not self.model['DQM']:
             self.build_dqm()

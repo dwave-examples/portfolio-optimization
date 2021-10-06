@@ -133,3 +133,4 @@ class MultiPeriod(SinglePeriod):
 
         plt.savefig("portfolio.png")
         plt.show()
+        

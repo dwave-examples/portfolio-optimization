@@ -18,8 +18,7 @@ from multi_period import MultiPeriod
 from single_period import SinglePeriod
 
 @click.command()
-@click.option('-s', '--stocks', default=['IBM', 'SEHI', 'WMT'], multiple=True,
-              show_default=True, help='Stock name to be included')
+@click.option('-s', '--stocks', multiple=True, help='Stock name to be included')
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='portfolio budget')
 @click.option('-n', '--bin-size', default=10, show_default=True,
@@ -56,7 +55,7 @@ def main(stocks, budget, bin_size, gamma, params,
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")
-        if 'SEHI' in stocks:
+        if not stocks:
             stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
         my_portfolio = MultiPeriod(stocks=stocks, budget=budget, 
                                     sampler_args=params, 
@@ -66,6 +65,8 @@ def main(stocks, budget, bin_size, gamma, params,
                                     verbose=verbose, baseline=baseline)
     else:
         print(f"\nSingle period portfolio optimization run...")
+        if not stocks:
+            stocks = ['IBM', 'SEHI', 'WMT']
         my_portfolio = SinglePeriod(stocks=list(stocks), budget=budget,
                                     bin_size=bin_size, gamma=gamma, 
                                     file_path=file_path, dates=[], 

@@ -157,8 +157,7 @@ class SinglePeriod:
             for s in self.stocks:
                 cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.ave_monthly_returns[s])
 
-            if self.verbose:
-                print(f"\nCQM Formulation: maximize return s.t. risk <= max_risk\n")
+            print(f"\nCQM Formulation: maximize return s.t. risk <= max_risk\n")
         elif min_return: 
             # Adding minimum return constraint 
             cqm.add_constraint(quicksum([x[s]*self.price[s]*self.ave_monthly_returns[s] for s in self.stocks]) >= min_return)
@@ -169,8 +168,7 @@ class SinglePeriod:
                     coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
                     cqm.objective.add_quadratic(x[s1].variables[0], x[s2].variables[0], coeff)
 
-            if self.verbose:
-                print(f"\nCQM Formulation: mininimize risk s.t. return >= min_return\n")
+            print(f"\nCQM Formulation: mininimize risk s.t. return >= min_return\n")
         else:
             # Objective 1: minimize variance
             for s1 in self.stocks:
@@ -182,8 +180,7 @@ class SinglePeriod:
             for s in self.stocks:
                 cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.ave_monthly_returns[s])
 
-            if self.verbose:
-                print(f"\nCQM Formulation: maximize return - alpha*risk\n")
+            print(f"\nCQM Formulation: maximize return - alpha*risk\n")
 
         cqm.substitute_self_loops()
 
@@ -220,20 +217,21 @@ class SinglePeriod:
 
         solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
+        spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+
         if self.verbose:
             print(f'Number of feasible solutions: {len(feasible_records)} out of {n_samples} sampled.')
             print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
             print(f'Best energy (feasible): {min([rec.energy for rec in feasible_records]): .2f}')  
 
-            print(f'\nBest feasible solution:')
-            print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
+        print(f'\nBest feasible solution:')
+        print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
 
-            print(f"\nEstimated returns: {solution['return']}")
+        print(f"\nEstimated returns: {solution['return']}")
 
-            spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
-            print(f"Purchase Cost: {spending:.2f}")
+        print(f"Purchase Cost: {spending:.2f}")
 
-            print(f"Variance: {solution['risk']}\n")
+        print(f"Variance: {solution['risk']}\n")
 
         return solution 
 
@@ -331,6 +329,8 @@ class SinglePeriod:
         
         solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
+        spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+
         print(f'\nDQM -- solution for alpha == {self.alpha} and gamma == {self.gamma}:')
         print(f"\nShares to buy:")
 
@@ -338,7 +338,6 @@ class SinglePeriod:
 
         print(f"\nEstimated returns: {solution['return']}")
 
-        spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
         print(f"Purchase Cost: {spending:.2f}")
 
         print(f"Variance: {solution['risk']}\n")

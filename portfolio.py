@@ -46,7 +46,7 @@ from single_period import SinglePeriod
 @click.option('-p', '--params', default="{}", 
               help='Pass sampler arguments such as profile and solver; '
                     'usage: -p \'{"profile": "test"}\'')
-@click.option('-v', '--verbose', is_flag=True, default=True, 
+@click.option('-v', '--verbose', is_flag=True, 
               help='Enable additional program console output')
 def main(stocks, budget, bin_size, gamma, params,  
          file_path, max_risk, min_return,baseline,

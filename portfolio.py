@@ -18,7 +18,8 @@ from multi_period import MultiPeriod
 from single_period import SinglePeriod
 
 @click.command()
-@click.option('-s', '--stocks', multiple=True, help='Stock name to be included')
+@click.option('-s', '--stocks', multiple=True, help='Stock name to be included. '
+              'When a file is provided, stock name must be included in the file ')
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='Portfolio budget')
 @click.option('-n', '--bin-size', default=10, show_default=True,

@@ -39,7 +39,7 @@ from single_period import SinglePeriod
               help='Start and end date to query stock data from Yahoo! Finance')
 @click.option('-m', '--model-type', default='CQM', multiple=False, 
               type=click.Choice(['CQM', 'DQM'], case_sensitive=False),
-              show_default=True, help='Model type, cqm or dqm')
+              show_default=True, help='Model type, CQM or DQM')
 @click.option('-r', '--rebalance', is_flag=True, default=False,
               help='Make a multi-period rebalancing portfolio optimization run; '
                    'otherwise, make a single-period portfolio optimization run')

@@ -20,7 +20,7 @@ from single_period import SinglePeriod
 @click.command()
 @click.option('-s', '--stocks', multiple=True, help='Stock name to be included')
 @click.option('-b', '--budget', default=1000, show_default=True,
-              help='portfolio budget')
+              help='Portfolio budget')
 @click.option('-n', '--bin-size', default=10, show_default=True,
               help='Maximum number of intervals for each stock')
 @click.option('-g', '--gamma', default=[10], multiple=True, show_default=True,
@@ -30,7 +30,7 @@ from single_period import SinglePeriod
 @click.option('-f', '--file-path', default='data/basic_data.csv', show_default=True,
               help='Full path of csv file containing input stock data')
 @click.option('-z', '--baseline', default='^GSPC', show_default=True,
-              help='Basiline stock for comparison in multi-period run')
+              help='Baseline stock for comparison in multi-period run')
 @click.option('-u', '--max-risk', default=0, help='Upper bound on risk/variance')
 @click.option('-l', '--min-return', default=0, help='Lower bound on the returns')
 @click.option('-d', '--dates', default=(['2010-01-01', '2012-12-31']), 
@@ -55,8 +55,7 @@ def main(stocks, budget, bin_size, gamma, params,
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")
-        if not stocks:
-            stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
+
         my_portfolio = MultiPeriod(stocks=stocks, budget=budget, 
                                     sampler_args=params, 
                                     bin_size=bin_size, dates=dates,
@@ -65,9 +64,8 @@ def main(stocks, budget, bin_size, gamma, params,
                                     verbose=verbose, baseline=baseline)
     else:
         print(f"\nSingle period portfolio optimization run...")
-        if not stocks:
-            stocks = ['IBM', 'SEHI', 'WMT']
-        my_portfolio = SinglePeriod(stocks=list(stocks), budget=budget,
+        
+        my_portfolio = SinglePeriod(stocks=stocks, budget=budget,
                                     bin_size=bin_size, gamma=gamma, 
                                     file_path=file_path, dates=[], 
                                     model_type=model_type, alpha=alpha, 

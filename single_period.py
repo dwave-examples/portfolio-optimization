@@ -219,12 +219,10 @@ class SinglePeriod:
         self.build_cqm(max_risk, min_return)
 
         self.sample_set['CQM'] = self.sampler['CQM'].sample_cqm(self.model['CQM'])
-
-        best_feasible = next(itertools.filterfalse(lambda d: not getattr(d,'is_feasible'), 
-                                                   list(self.sample_set['CQM'].data())))
-
-        feasible_records = [rec for rec in self.sample_set['CQM'].record if rec.is_feasible]
         n_samples = len(self.sample_set['CQM'].record)
+
+        feasible_samples = self.sample_set['CQM'].filter(lambda d: d.is_feasible) 
+        best_feasible = feasible_samples.first
 
         solution = {}
 
@@ -235,9 +233,9 @@ class SinglePeriod:
         spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
 
         if self.verbose:
-            print(f'Number of feasible solutions: {len(feasible_records)} out of {n_samples} sampled.')
+            print(f'Number of feasible solutions: {len(feasible_samples)} out of {n_samples} sampled.')
             print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
-            print(f'Best energy (feasible): {min([rec.energy for rec in feasible_records]): .2f}')  
+            print(f'Best energy (feasible): {best_feasible.energy: .2f}')  
 
         print(f'\nBest feasible solution:')
         print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 

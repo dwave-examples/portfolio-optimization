@@ -128,8 +128,8 @@ The user can select to build a disctrete quadratic model (DQM) using the followi
 
 ```python portfolio.py -m 'DQM'```
 
-This builds a DQM for the single-period portfolio optimization problem and solves it on the 
-D-Wave's hybrid solver. The DQM uses a binning approach where the range of the shares of each 
+This builds a DQM for the single-period portfolio optimization problem and solves it on 
+Leap's hybrid solver. The DQM uses a binning approach where the range of the shares of each 
 stock is divided into equally-spaced intervals. 
 
 The output of the default DQM run is printed on the console as follows. 
@@ -242,9 +242,9 @@ Purchase Cost: 990.39
 Variance: 27437.82
 ```
 
-### Multiple-Period Demo
+### Multi-Period Demo
 
-The multiple-period demo provides an analysis of portfolio value over time: rebalancing the 
+The multi-period demo provides an analysis of portfolio value over time: rebalancing the 
 portfolio at each time period until the target time. To run the demo with default data and 
 settings, type:
 
@@ -296,7 +296,7 @@ higher the bound, the fewer slack variables needed for the DQM formulation.
 
 The `portfolio.py` program can be called with these additional options:
 - -b, --budget: problem budget 
-- -d, --dates: list of [start_date, end_date] for multi period portfolio optimization problem 
+- -d, --dates: list of [start_date, end_date] for multi-period portfolio optimization problem 
 - -f, --file-path: full path of file with csv stock data 
 - -n, --bin-size: bin size for dqm binning 
 - -s, --stocks: list of stocks for the problem 
@@ -332,10 +332,11 @@ All CQM formulations include the budget constraint described earlier.
 ##### Risk-Bounding Formulation 
 
 This includes an upper bound on the risk as a quadratic constraint.  
-Such constraint is supported natively by CQM. 
+Such a constraint is supported natively by CQM. 
 
 ##### Return-Bounding Formulation
 This includes a lower bound on the returns as a linear inequality constraint.  
+
 
 ## References
 

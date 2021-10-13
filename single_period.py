@@ -78,7 +78,7 @@ class SinglePeriod:
 
         self.precision = 2
        
-    def load_data(self, file_path='', dates=(), df=pd.DataFrame()):
+    def load_data(self, file_path='', dates=None, df=None):
         """Load the relevant stock data from file, dataframe, or Yahoo!. 
 
         Args:
@@ -87,7 +87,7 @@ class SinglePeriod:
             dates (list): [Start_Date, End_Date] to query data from Yahoo!.
             df (dataframe): Table of stock prices.   
         """
-        if not df.empty:
+        if df:
             self.df = df 
         elif dates or self.dates: 
             if dates:

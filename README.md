@@ -337,6 +337,12 @@ Such a constraint is supported natively by CQM.
 ##### Return-Bounding Formulation
 This includes a lower bound on the returns as a linear inequality constraint.  
 
+### Objective 
+There are 3 CQM formulations, each with a different objective: 
+- The bi-objective formulation corresponds to the original problem formulation where 
+a combination of variance and mean is minimized. 
+- The risk-bounding formulation where only the returns are maximized.
+- The return-bounding formulation where only the risk is minimized. 
 
 ## References
 

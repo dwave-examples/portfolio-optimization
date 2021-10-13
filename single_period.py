@@ -29,8 +29,8 @@ class SinglePeriod:
     """Define and solve a  single-period portfolio optimization problem.
     """
     def __init__(self, stocks=None, budget=1000, 
-                 bin_size=10, gamma=(10,), file_path='data/basic_data.csv', 
-                 dates=(), model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
+                 bin_size=None, gamma=None, file_path='data/basic_data.csv', 
+                 dates=(), model_type='CQM', alpha=None, baseline='^GSPC', 
                  sampler_args={}, verbose=True):
         if stocks:
             self.stocks = list(stocks) 
@@ -38,7 +38,6 @@ class SinglePeriod:
             self.stocks = ['IBM', 'SEHI', 'WMT']
 
         self.budget = budget 
-        self.bin_size = bin_size
         self.gamma_list = gamma
         self.file_path = file_path
         self.dates = dates 
@@ -48,10 +47,22 @@ class SinglePeriod:
         self.baseline = [baseline] 
 
         self.verbose = verbose 
-
-        self.alpha = alpha[-1]
-        self.gamma = gamma[-1]
         
+        if alpha:
+            self.alpha = alpha[-1]
+        else:
+            self.alpha = 0.0005 
+        
+        if gamma:
+            self.gamma = gamma[-1]
+        else: 
+            self.gamma = 100
+
+        if bin_size:
+            self.bin_size = bin_size
+        else:
+            self.bin_size = 10
+
         self.model = {'CQM': None, 'DQM': None}
 
         self.sample_set = {}

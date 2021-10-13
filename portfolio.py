@@ -22,11 +22,11 @@ from single_period import SinglePeriod
               'When a file is provided, stock name must be included in the file ')
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='Portfolio budget')
-@click.option('-n', '--bin-size', default=10, show_default=True,
+@click.option('-n', '--bin-size',
               help='Maximum number of intervals for each stock')
-@click.option('-g', '--gamma', default=[10], multiple=True, show_default=True,
+@click.option('-g', '--gamma', multiple=True, 
                help='Penalty coefficient for budget constraint')
-@click.option('-a', '--alpha', default=[0.0005], multiple=True, show_default=True,
+@click.option('-a', '--alpha', multiple=True,
               help='Risk aversion coefficient')
 @click.option('-f', '--file-path', default='data/basic_data.csv', show_default=True,
               help='Full path of csv file containing input stock data')
@@ -51,8 +51,11 @@ from single_period import SinglePeriod
 def main(stocks, budget, bin_size, gamma, params,  
          file_path, max_risk, min_return,baseline,
          dates, model_type, rebalance, alpha, verbose):
-    if max_risk or min_return:
-        model_type = 'CQM'
+    if ((max_risk or min_return) and model_type != 'CQM'):
+        raise Exception("The bound options require a CQM.")
+        
+    if ((gamma or bin_size) and model_type != 'DQM'):
+        raise Exception("The option gamma or bin-size requires a DQM.")
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")

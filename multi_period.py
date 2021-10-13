@@ -59,10 +59,10 @@ class MultiPeriod(SinglePeriod):
 
         # Define dataframe to save output data 
         headers = ['Date', 'Budget', 'Spending'] + self.stocks + ['Variance', 'Returns']
-        self.opt_results_df = pd.DataFrame(columns = headers)
+        self.opt_results_df = pd.DataFrame(columns=headers)
         row = []
 
-        self.price_df = pd.DataFrame(columns = self.stocks)
+        self.price_df = pd.DataFrame(columns=self.stocks)
 
         # Initialize the plot
         plt.ylim(ymax = 1.0*self.budget, ymin = -1.0*self.budget)

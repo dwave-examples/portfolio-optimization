@@ -29,8 +29,8 @@ class SinglePeriod:
     """Define and solve a  single-period portfolio optimization problem.
     """
     def __init__(self, stocks=None, budget=1000, 
-                 bin_size=None, gamma=None, file_path='data/basic_data.csv', 
-                 dates=None, model_type='CQM', alpha=None, baseline='^GSPC', 
+                 bin_size=0, gamma=(), file_path='data/basic_data.csv', 
+                 dates=None, model_type='CQM', alpha=(), baseline='^GSPC', 
                  sampler_args={}, verbose=True):
         """Class constructor. 
 
@@ -63,7 +63,7 @@ class SinglePeriod:
         
         if alpha:
             if isinstance(alpha, (list, tuple)):
-                self.alpha = alpha[-1]
+                self.alpha = alpha[0]
                 self.alpha_list = list(alpha)
             elif isinstance (alpha, (int, float)):
                 self.alpha = alpha
@@ -112,7 +112,7 @@ class SinglePeriod:
             dates (list): [Start_Date, End_Date] to query data from Yahoo!.
             df (dataframe): Table of stock prices.   
         """
-        if df:
+        if df is not None:
             self.df = df 
         elif dates or self.dates: 
             if dates:

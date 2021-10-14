@@ -18,22 +18,24 @@ from multi_period import MultiPeriod
 from single_period import SinglePeriod
 
 @click.command()
-@click.option('-s', '--stocks', multiple=True, help='Stock name to be included. '
+@click.option('-s', '--stocks', multiple=True, type=str, 
+              help='Stock name to be included. '
               'When a file is provided, stock name must be included in the file ')
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='Portfolio budget')
-@click.option('-n', '--bin-size',
+@click.option('-n', '--bin-size', type=int,
               help='Maximum number of intervals for each stock')
-@click.option('-g', '--gamma', multiple=True, 
+@click.option('-g', '--gamma', multiple=True, type=float,
                help='Penalty coefficient for budget constraint')
-@click.option('-a', '--alpha', multiple=True,
+@click.option('-a', '--alpha', multiple=True, type=float,  
               help='Risk aversion coefficient')
-@click.option('-f', '--file-path', default='data/basic_data.csv', show_default=True,
+@click.option('-f', '--file-path', default='data/basic_data.csv', 
+              show_default=True, type=str,
               help='Full path of csv file containing input stock data')
 @click.option('-z', '--baseline', default='^GSPC', show_default=True,
               help='Baseline stock for comparison in multi-period run')
-@click.option('-u', '--max-risk', default=0, help='Upper bound on risk/variance')
-@click.option('-l', '--min-return', default=0, help='Lower bound on the returns')
+@click.option('-u', '--max-risk', default=0.0, help='Upper bound on risk/variance')
+@click.option('-l', '--min-return', default=0.0, help='Lower bound on the returns')
 @click.option('-d', '--dates', default=(['2010-01-01', '2012-12-31']), 
               nargs=2, type=click.Tuple([str, str]), show_default=True,
               help='Start and end date to query stock data from Yahoo! Finance')

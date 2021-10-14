@@ -28,8 +28,21 @@ class MultiPeriod(SinglePeriod):
     """
     def __init__(self, stocks=None, budget=1000, 
                  bin_size=10, gamma=(10,), file_path='data/basic_data.csv', 
-                 dates=(), model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
+                 dates=None, model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
                  sampler_args={}, verbose=True):
+        """Class constructor. 
+
+        Args:
+            stocks (list of str): List of stocks.
+            gamma (float): Budget constraint penalty coefficient(s).
+            file_path (string): Full path of CSV file containing stock data. 
+            dates (list of str): pair of strings for start date and end date. 
+            model_type (string): CQM or DQM.
+            alpha (float): risk aversion coefficient 
+            baseline (str): Stock baseline for rebalancing model. 
+            sampler_args (dict): Sampler arguments. 
+            verbose (bool): Flag to enable additional output. 
+        """
         if stocks:
             self.stocks = list(stocks)
         else:

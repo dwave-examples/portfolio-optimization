@@ -51,23 +51,35 @@ class SinglePeriod:
             self.stocks = ['IBM', 'SEHI', 'WMT']
 
         self.budget = budget 
-        self.gamma_list = gamma
+        self.gamma_list = []
         self.file_path = file_path
         self.dates = dates 
         self.model_type = model_type
-        self.alpha_list = alpha
+        self.alpha_list = []
 
         self.baseline = [baseline] 
 
         self.verbose = verbose 
         
         if alpha:
-            self.alpha = alpha[-1]
+            if isinstance(alpha, (list, tuple)):
+                self.alpha = alpha[-1]
+                self.alpha_list = list(alpha)
+            elif isinstance (alpha, (int, float)):
+                self.alpha = alpha
+            else:
+                raise TypeError("The value of alpha must be integer or float.")
         else:
             self.alpha = 0.0005 
         
         if gamma:
-            self.gamma = gamma[-1]
+            if isinstance(gamma, (list, tuple)):
+                self.gamma = gamma[-1]
+                self.gamma_list = list(gamma)
+            elif isinstance(gamma, (int, float)):
+                self.gamma = gamma 
+            else:
+                raise TypeError("Use integer or float for gamma.")
         else: 
             self.gamma = 100
 

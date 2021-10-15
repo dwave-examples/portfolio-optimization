@@ -161,7 +161,7 @@ class SinglePeriod:
 
         self.price = self.df.iloc[-1]
         self.monthly_returns = self.df[list(self.stocks)].pct_change().iloc[1:]
-        self.ave_monthly_returns = self.monthly_returns.mean(axis=0)
+        self.avg_monthly_returns = self.monthly_returns.mean(axis=0)
         self.covariance_matrix = self.monthly_returns.cov()
 
     def build_cqm(self, max_risk=None, min_return=None):
@@ -196,12 +196,12 @@ class SinglePeriod:
 
             # Objective: maximize return 
             for s in self.stocks:
-                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.ave_monthly_returns[s])
+                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.avg_monthly_returns[s])
 
             print(f"\nCQM Formulation: maximize return s.t. risk <= max_risk\n")
         elif min_return: 
             # Adding minimum return constraint 
-            cqm.add_constraint(quicksum([x[s]*self.price[s]*self.ave_monthly_returns[s] for s in self.stocks]) >= min_return)
+            cqm.add_constraint(quicksum([x[s]*self.price[s]*self.avg_monthly_returns[s] for s in self.stocks]) >= min_return)
 
             # Objective: minimize risk 
             for s1 in self.stocks:
@@ -219,7 +219,7 @@ class SinglePeriod:
                             
             # Objective 2: maximize return
             for s in self.stocks:
-                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.ave_monthly_returns[s])
+                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.avg_monthly_returns[s])
 
             print(f"\nCQM Formulation: maximize return - alpha*risk\n")
 
@@ -326,7 +326,7 @@ class SinglePeriod:
                 dqm.set_linear_case(
                                 s, j, dqm.get_linear_case(s,j)
                                 - self.shares_intervals[s][j]*self.price[s]
-                                * self.ave_monthly_returns[s])
+                                * self.avg_monthly_returns[s])
 
         # Scaling factor to guarantee that all coefficients are integral
         # needed in order to use add_linear_inequality_constraint method 
@@ -427,7 +427,7 @@ class SinglePeriod:
 
         est_return = 0
         for stock in solution:
-            est_return += solution[stock]*self.price[stock]*self.ave_monthly_returns[stock]
+            est_return += solution[stock]*self.price[stock]*self.avg_monthly_returns[stock]
 
         return round(est_return, 2), round(variance, 2)
 

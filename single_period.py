@@ -114,6 +114,7 @@ class SinglePeriod:
         """
         if df is not None:
             self.df = df 
+            self.stocks = df.columns.tolist()
         elif dates or self.dates: 
             if dates:
                 self.dates = dates 

@@ -91,36 +91,9 @@ Purchase Cost: 676.17
 Variance: 9993.17
 ```
 
-We can do similarly for the return-bounding formulation: 
+We can do similarly for the return-bounding formulation, with this command: 
 
 `python portfolio.py -m 'CQM' --min-return 50`
-
-```bash
-Single period portfolio optimization run...
-
-Max shares we can afford with a budget of 1000
-IBM       8
-WMT      18
-SEHI    555
-
-CQM run...
-
-CQM Formulation: mininimize risk s.t. returns >= min_return
-
-Number of feasible solutions: 26 out of 43 sampled.
-
-Best energy: -0.00
-Best energy (feasible):  22940.46
-
-Best feasible solution:
-IBM	  4
-SEHI	287
-WMT	  0
-
-Estimated returns: 50.1
-Purchase Cost: 978.96
-Variance: 22940.46
-```
 
 #### DQM Runs 
 
@@ -166,81 +139,6 @@ for &alpha; (here `[0.5, 0.0005`),and &gamma; (here `[10, 100]`) as follows:
 
 ``python portfolio.py  -m 'DQM' -a 0.5 -a 0.0005 -g 10 -g 100``
 
-The output is printed to the console at each stage in the grid search, as shown below.
-```bash
-Single period portfolio optimization run...
-
-Max shares we can afford with a budget of 1000
-IBM       8
-WMT      18
-SEHI    555
-
-DQM run...
-
-Starting DQM Grid Search...
-
-Grid search results:
-
-DQM -- solution for alpha == 0.5 and gamma == 10:
-
-Shares to buy:
-IBM	  1
-SEHI	333
-WMT	  5
-
-Estimated returns: 49.42
-Purchase Cost: 990.39
-Variance: 27437.82
-
-
-DQM -- solution for alpha == 0.5 and gamma == 100:
-
-Shares to buy:
-IBM	  6
-SEHI	166
-WMT	  0
-
-Estimated returns: 40.06
-Purchase Cost: 992.34
-Variance: 15641.24
-
-
-DQM -- solution for alpha == 0.0005 and gamma == 10:
-
-Shares to buy:
-IBM	  1
-SEHI	333
-WMT	  5
-
-Estimated returns: 49.42
-Purchase Cost: 990.39
-Variance: 27437.82
-
-
-DQM -- solution for alpha == 0.0005 and gamma == 100:
-
-Shares to buy:
-IBM	  6
-SEHI	166
-WMT	  0
-
-Estimated returns: 40.06
-Purchase Cost: 992.34
-Variance: 15641.24
-
-DQM Grid Search Completed: alpha=0.0005, gamma=10.-
-
-DQM -- solution for alpha == 0.0005 and gamma == 10:
-
-Shares to buy:
-IBM	  1
-SEHI	333
-WMT	  5
-
-Estimated returns: 49.42
-Purchase Cost: 990.39
-Variance: 27437.82
-```
 
 ### Multi-Period Demo
 

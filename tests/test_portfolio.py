@@ -32,6 +32,7 @@ class TestSmoke(unittest.TestCase):
         subprocess.check_output([sys.executable, demo_file])
 
 class TestDemo(unittest.TestCase):
+    """Verify models are build correctly."""
     def test_build_dqm(self):
         test_portfolio = SinglePeriod(bin_size=5, model_type='DQM')
 

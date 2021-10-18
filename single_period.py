@@ -36,6 +36,8 @@ class SinglePeriod:
 
         Args:
             stocks (list of str): List of stocks.
+            budget (int): portfolio budget.
+            bin_size (int): bin size for DQM. 
             gamma (float): Budget constraint penalty coefficient(s).
             file_path (str): Full path of CSV file containing stock data. 
             dates (list of str): pair of strings for start date and end date. 

@@ -287,14 +287,11 @@ class SinglePeriod:
             alpha (float): Risk aversion coefficient.
             gamma (int): Penalty coefficient for budgeting constraint.
         """
-        if not gamma:
-            gamma = self.gamma
+        if gamma:
+            self.gamma = gamma
 
-        if not alpha:
-            alpha = self.alpha
-
-        self.alpha = alpha 
-        self.gamma = gamma
+        if alpha:
+            self.alpha = alpha
 
          # Defining DQM 
         dqm = DiscreteQuadraticModel() 
@@ -314,7 +311,7 @@ class SinglePeriod:
                         dqm.set_linear_case(
                                     s1, k, 
                                     dqm.get_linear_case(s1,k) 
-                                    + alpha*coeff*num_s1*num_s1)
+                                    + self.alpha*coeff*num_s1*num_s1)
                 else:
                     for k in range(dqm.num_cases(s1)):
                         for m in range(dqm.num_cases(s2)):
@@ -324,7 +321,7 @@ class SinglePeriod:
                             dqm.set_quadratic_case(
                                 s1, k, s2, m, 
                                 dqm.get_quadratic_case(s1,k,s2,m)
-                                + coeff*alpha*num_s1*num_s2) 
+                                + coeff*self.alpha*num_s1*num_s2) 
                         
         # Objective 2: maximize return
         for s in self.stocks:
@@ -350,7 +347,7 @@ class SinglePeriod:
                                             constant=0, 
                                             lb=min_budget, 
                                             ub=factor*budget, 
-                                            lagrange_multiplier=gamma, 
+                                            lagrange_multiplier=self.gamma, 
                                             label="budget")
 
         self.model['DQM'] = dqm 

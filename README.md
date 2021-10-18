@@ -2,7 +2,7 @@
 
 Optimizing a portfolio of stocks is a challenging problem that looks to identify the optimal number of shares of each stock to purchase in order to minimize risk (variance) and maximize returns, while staying under some specified spending budget.
 
-## Problem Definition and Mathematical Formulation
+## Problem Definition
 Consider a set of n types of stocks to choose from, with an average monthly return per dollar spent of r<sub>i</sub> for each stock i. Furthermore, let &sigma;<sub>i,j</sub> be the covariance of the returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub> denote the number of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization problem can be represented as 
 
 ![Model Formulation](readme_imgs/equation.png)
@@ -131,7 +131,7 @@ Variance: 15641.24
 
 For the DQM single-period problem formulation, this demo gives the user the option to run a 
 grid search on the objective parameters, &alpha; and &gamma;. Note that &alpha; is the 
-risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforced 
+risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforce 
 the budget inequality. 
 
 The user can opt to run a grid search with DQM by providing a list of candidate values 

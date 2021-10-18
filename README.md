@@ -131,7 +131,7 @@ Variance: 15641.24
 
 For the DQM single-period problem formulation, this demo gives the user the option to run a 
 grid search on the objective parameters, &alpha; and &gamma;. Note that &alpha; is the 
-risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforced 
+risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforce
 the budget inequality. 
 
 The user can opt to run a grid search with DQM by providing a list of candidate values 

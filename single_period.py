@@ -31,18 +31,20 @@ class SinglePeriod:
     def __init__(self, stocks=None, budget=1000, 
                  bin_size=0, gamma=(), file_path='data/basic_data.csv', 
                  dates=None, model_type='CQM', alpha=(), baseline='^GSPC', 
-                 sampler_args={}, verbose=True):
+                 sampler_args=None, verbose=True):
         """Class constructor. 
 
         Args:
             stocks (list of str): List of stocks.
             budget (int): portfolio budget.
-            bin_size (int): bin size for DQM. 
-            gamma (float): Budget constraint penalty coefficient(s).
+            bin_size (int): bin size for DQM.
+            gamma (float or tuple): Budget constraint penalty coefficient(s).
+                If tuple and DQM, grid search will be done; otherwise, no grid search.   
             file_path (str): Full path of CSV file containing stock data. 
             dates (list of str): pair of strings for start date and end date. 
             model_type (str): CQM or DQM.
-            alpha (float): risk aversion coefficient 
+            alpha (float or tuple): risk aversion coefficient. 
+                If tuple and DQM, grid search will be done; otherwise, no grid search.   
             baseline (str): Stock baseline for rebalancing model. 
             sampler_arg (dict): Sampler arguments. 
             verbose (bool): Flag to enable additional output. 

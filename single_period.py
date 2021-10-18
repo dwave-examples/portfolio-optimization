@@ -122,20 +122,23 @@ class SinglePeriod:
         elif dates or self.dates: 
             if dates:
                 self.dates = dates 
-            else:
-                dates = self.dates
+    
             # Read in daily data; resample to monthly
-            panel_data = DataReader(self.stocks, 'yahoo', dates[0], dates[1])
+            panel_data = DataReader(self.stocks, 'yahoo', 
+                                    self.dates[0], self.dates[1])
             panel_data = panel_data.resample('BM').last()
-            self.df_all = pd.DataFrame(index=panel_data.index, columns=self.stocks)
+            self.df_all = pd.DataFrame(index=panel_data.index, 
+                                       columns=self.stocks)
 
             for i in self.stocks:
                 self.df_all[i] = panel_data[[('Adj Close',  i)]]
 
             # Read in baseline data; resample to monthly
-            index_df = DataReader(self.baseline, 'yahoo', dates[0], dates[1])
+            index_df = DataReader(self.baseline, 'yahoo', 
+                                  self.dates[0], self.dates[1])
             index_df = index_df.resample('BM').last()
-            self.df_baseline = pd.DataFrame(index=index_df.index, columns=self.baseline)
+            self.df_baseline = pd.DataFrame(index=index_df.index, 
+                                            columns=self.baseline)
 
             for i in self.baseline:
                 self.df_baseline[i] = index_df[[('Adj Close',  i)]]
@@ -144,10 +147,8 @@ class SinglePeriod:
         else:
             if file_path:
                 self.file_path = file_path
-            else:
-                file_path = self.file_path
 
-            self.df = pd.read_csv(file_path, index_col=0)
+            self.df = pd.read_csv(self.file_path, index_col=0)
 
         self.max_num_shares = (self.budget/self.df.iloc[-1]).astype(int)
         if self.verbose:

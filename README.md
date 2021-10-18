@@ -131,11 +131,11 @@ Variance: 15641.24
 
 For the DQM single-period problem formulation, this demo gives the user the option to run a 
 grid search on the objective parameters, &alpha; and &gamma;. Note that &alpha; is the 
-risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforce 
+risk-aversion coefficient whereas &gamma; is a penalty coefficient used in DQM to enforce
 the budget inequality. 
 
 The user can opt to run a grid search with DQM by providing a list of candidate values 
-for &alpha; (here `[0.5, 0.0005`),and &gamma; (here `[10, 100]`) as follows: 
+for &alpha; (ie. `[0.5, 0.0005]`) and &gamma; (ie.`[10, 100]`) as follows: 
 
 ``python portfolio.py  -m 'DQM' -a 0.5 -a 0.0005 -g 10 -g 100``
 

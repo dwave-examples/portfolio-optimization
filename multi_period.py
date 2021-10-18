@@ -29,19 +29,23 @@ class MultiPeriod(SinglePeriod):
     def __init__(self, stocks=None, budget=1000, 
                  bin_size=10, gamma=(10,), file_path='data/basic_data.csv', 
                  dates=None, model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
-                 sampler_args={}, verbose=True):
+                 sampler_args=None, verbose=True):
         """Class constructor. 
 
         Args:
             stocks (list of str): List of stocks.
-            gamma (float): Budget constraint penalty coefficient(s).
-            file_path (string): Full path of CSV file containing stock data. 
+            budget (int): portfolio budget.
+            bin_size (int): bin size for DQM.
+            gamma (float or tuple): Budget constraint penalty coefficient(s).
+                If tuple and DQM, grid search will be done; otherwise, no grid search.   
+            file_path (str): Full path of CSV file containing stock data. 
             dates (list of str): pair of strings for start date and end date. 
-            model_type (string): CQM or DQM.
-            alpha (float): risk aversion coefficient 
+            model_type (str): CQM or DQM.
+            alpha (float or tuple): risk aversion coefficient. 
+                If tuple and DQM, grid search will be done; otherwise, no grid search.   
             baseline (str): Stock baseline for rebalancing model. 
-            sampler_args (dict): Sampler arguments. 
-            verbose (bool): Flag to enable additional output. 
+            sampler_arg (dict): Sampler arguments. 
+            verbose (bool): Flag to enable additional output.  
         """
         if stocks:
             self.stocks = list(stocks)
@@ -56,6 +60,10 @@ class MultiPeriod(SinglePeriod):
 
     def run(self, max_risk=0, min_return=0): 
         """Solve the rebalancing portfolio optimization problem.
+
+        Args:
+            max_risk (int): Maximum risk for the CQM risk bounding formulation.
+            min_return (int): Minimum return for the CQM return bounding formulation.
         """
         if not self.dates:
             self.dates = ['2010-01-01', '2012-12-31']

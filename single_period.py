@@ -249,7 +249,8 @@ class SinglePeriod:
         """
         self.build_cqm(max_risk, min_return)
 
-        self.sample_set['CQM'] = self.sampler['CQM'].sample_cqm(self.model['CQM'])
+        self.sample_set['CQM'] = self.sampler['CQM'].sample_cqm(self.model['CQM'], 
+                                                                label="Example - Portfolio Optimization")
         n_samples = len(self.sample_set['CQM'].record)
 
         feasible_samples = self.sample_set['CQM'].filter(lambda d: d.is_feasible) 
@@ -364,7 +365,8 @@ class SinglePeriod:
         if not self.model['DQM']:
             self.build_dqm()
 
-        self.sample_set['DQM'] = self.sampler['DQM'].sample_dqm(self.model['DQM'])
+        self.sample_set['DQM'] = self.sampler['DQM'].sample_dqm(self.model['DQM'], 
+                                                                label="Example - Portfolio Optimization")
 
         solution = {}
 

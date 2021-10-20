@@ -1,5 +1,5 @@
-pandas>=1.3.0
+pandas>=1.2.1
 dimod>=0.10.7
 dwave-system>=1.10.0
 pandas-datareader>=0.10.0
-matplotlib>=3.4.2
+matplotlib>=3.3.4

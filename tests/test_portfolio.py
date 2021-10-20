@@ -85,6 +85,7 @@ class TestIntegration(unittest.TestCase):
         self.assertIn('variance', output)
         self.assertNotIn('traceback', output)
 
+    @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")
     def test_dqm_integration(self):
         """Test integration of portfolio script default run."""
 

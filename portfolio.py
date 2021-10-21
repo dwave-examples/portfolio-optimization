@@ -25,9 +25,9 @@ from single_period import SinglePeriod
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='Portfolio budget')
 @click.option('-n', '--bin-size', type=int,
-              help='Maximum number of intervals for each stock')
+              help='Maximum number of intervals for each stock. This a DQM-only option.')
 @click.option('-g', '--gamma', multiple=True, type=float,
-              help='Penalty coefficient for budget constraint')
+              help='Penalty coefficient for budget constraint. This is a DQM-only option.')
 @click.option('-a', '--alpha', multiple=True, type=float,  
               default=[0.005], show_default=True,
               help='Risk aversion coefficient')
@@ -36,8 +36,10 @@ from single_period import SinglePeriod
               help='Full path of csv file containing input stock data')
 @click.option('-z', '--baseline', default='^GSPC', show_default=True,
               help='Baseline stock for comparison in multi-period run')
-@click.option('-u', '--max-risk', default=0.0, help='Upper bound on risk/variance')
-@click.option('-l', '--min-return', default=0.0, help='Lower bound on the returns')
+@click.option('-u', '--max-risk', default=0.0, 
+              help='Upper bound on risk/variance. This only works for CQM.')
+@click.option('-l', '--min-return', default=0.0, 
+              help='Lower bound on the returns. This only works for CQM.')
 @click.option('-d', '--dates',nargs=2, type=click.Tuple([str, str]),
               help='Start and end date to query stock data from Yahoo! Finance')
 @click.option('-m', '--model-type', default='CQM', multiple=False, 
@@ -82,3 +84,4 @@ def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk,
 
 if __name__ == '__main__':
     main()
+    

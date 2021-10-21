@@ -234,31 +234,35 @@ class SinglePeriod:
         n_samples = len(self.sample_set['CQM'].record)
 
         feasible_samples = self.sample_set['CQM'].filter(lambda d: d.is_feasible) 
-        best_feasible = feasible_samples.first
 
-        solution = {}
+        if not feasible_samples: 
+            raise Exception("No feasible solution could be found for this problem instance.")
+        else:
+            best_feasible = feasible_samples.first
 
-        solution['stocks'] = {k:int(best_feasible.sample[k]) for k in self.stocks}
+            solution = {}
 
-        solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
+            solution['stocks'] = {k:int(best_feasible.sample[k]) for k in self.stocks}
 
-        spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+            solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
-        if self.verbose:
-            print(f'Number of feasible solutions: {len(feasible_samples)} out of {n_samples} sampled.')
-            print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
-            print(f'Best energy (feasible): {best_feasible.energy: .2f}')  
+            spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
 
-        print(f'\nBest feasible solution:')
-        print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
+            if self.verbose:
+                print(f'Number of feasible solutions: {len(feasible_samples)} out of {n_samples} sampled.')
+                print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
+                print(f'Best energy (feasible): {best_feasible.energy: .2f}')  
 
-        print(f"\nEstimated returns: {solution['return']}")
+            print(f'\nBest feasible solution:')
+            print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
 
-        print(f"Purchase Cost: {spending:.2f}")
+            print(f"\nEstimated returns: {solution['return']}")
 
-        print(f"Variance: {solution['risk']}\n")
+            print(f"Purchase Cost: {spending:.2f}")
 
-        return solution 
+            print(f"Variance: {solution['risk']}\n")
+
+            return solution 
 
     def build_dqm(self, alpha=None, gamma=None):
         """Build DQM.  

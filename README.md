@@ -1,18 +1,27 @@
 # Portfolio Optimization
 
-Optimizing a portfolio of stocks is a challenging problem that looks to identify the optimal number of shares of each stock to purchase in order to minimize risk (variance) and maximize returns, while staying under some specified spending budget.
+Optimizing a portfolio of stocks is a challenging problem that looks to identify the optimal number 
+of shares of each stock to purchase in order to minimize risk (variance) and maximize returns, 
+while staying under some specified spending budget.
 
 ## Problem Definition
-Consider a set of n types of stocks to choose from, with an average monthly return per dollar spent of r<sub>i</sub> for each stock i. Furthermore, let &sigma;<sub>i,j</sub> be the covariance of the returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub> denote the number of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization problem can be represented as 
+Consider a set of n types of stocks to choose from, with an average monthly return per dollar spent 
+of r<sub>i</sub> for each stock i. Furthermore, let &sigma;<sub>i,j</sub> be the covariance of the
+returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub> denote the number
+of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization
+problem can be represented as 
 
 ![Model Formulation](readme_imgs/equation.png)
 
-Here, &alpha; &gt; 0 is the trade-off coefficient between the risk (variance) and the returns, also known as the risk aversion coefficient. Notice that while we are minimizing the variance, we are also minimizing the negative of the return (which is equivalent to maximizing the return). 
+Here, &alpha; &gt; 0 is the trade-off coefficient between the risk (variance) and the returns, also 
+known as the risk aversion coefficient. Notice that while we are minimizing the variance, we are 
+also minimizing the negative of the return (which is equivalent to maximizing the return). 
 
 
 ## Running the Demos
 
-There are two main demos included in this repository. For each demo, two models are showcased for the formulation of the portfolio problem:
+There are two main demos included in this repository. For each demo, two models are showcased for 
+the formulation of the portfolio problem:
 - Discrete Quadratic Modeling (DQM)
 - Constrained Quadratic Modeling (CQM)
 
@@ -21,11 +30,14 @@ There are two main demos included in this repository. For each demo, two models 
 
 #### CQM Runs 
 
-The single-period demo determines the optimal number of shares to purchase from 3 stocks based on the historical price data provided. To run the demo, type:
+The single-period demo determines the optimal number of shares to purchase from 3 stocks based on 
+the historical price data provided. To run the demo, type:
 
 ```python portfolio.py```
 
-This runs the single-period portfolio optimization problem, as formulated above, using default data stored in `basic_data.csv`, builds the constrained quadratic model (CQM), and runs the CQM on D-Wave's hybrid solver. The output of the run is printed to the console as follows.
+This runs the single-period portfolio optimization problem, as formulated above, using default data 
+stored in `basic_data.csv`, builds the constrained quadratic model (CQM), and runs the CQM on 
+D-Wave's hybrid solver. The output of the run is printed to the console as follows.
 
 ```bash
 Single period portfolio optimization run...
@@ -45,11 +57,13 @@ Variance: 1378.78
 
 ##### CQM Bounding Formulations 
 
-The demo allows the user to choose among two additional CQM formulations for the portfolio optimization problem: 
+The demo allows the user to choose among two additional CQM formulations for the portfolio 
+optimization problem: 
 - The risk-bounding formulation solves the problem `maximize returns s.t. risk <= max_risk`
 - The return-bounding formulation solves the problem `minimize risk s.t. returns >= min_return`
 
-Note that both of these formulations also include the budget constraint. To run the single-period demo with the CQM risk bounding formulation, type:
+Note that both of these formulations also include the budget constraint. To run the single-period 
+demo with the CQM risk bounding formulation, type:
 
 `python portfolio.py -m 'CQM' --max-risk 2500`
 
@@ -221,4 +235,5 @@ a combination of variance and mean is minimized.
 Ahmed, Shabbir. "The Optimization Process: An example of portfolio optimization." 
 Georgia Tech University (2002). https://www2.isye.gatech.edu/~sahmed/isye6669/notes/portfolio.pdf
 
-Mansini, R., Ogryczak, W., &amp; Speranza, M. G. (2015). Linear and mixed integer programming for portfolio optimization. Springer International Publishing.
+Mansini, R., Ogryczak, W., &amp; Speranza, M. G. (2015). Linear and mixed integer programming for 
+portfolio optimization. Springer International Publishing.

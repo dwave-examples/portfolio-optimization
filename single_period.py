@@ -14,14 +14,13 @@
 
 from itertools import product
 import json
+
 import numpy as np
 import pandas as pd
 from pandas_datareader.data import DataReader
-
 from dimod import Integer
 from dimod import quicksum 
 from dimod import ConstrainedQuadraticModel, DiscreteQuadraticModel
-
 from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler 
 
 

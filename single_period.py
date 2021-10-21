@@ -49,7 +49,7 @@ class SinglePeriod:
             sampler_arg (dict): Sampler arguments. 
             verbose (bool): Flag to enable additional output. 
         """
-        self.stocks = stocks 
+        self.stocks = list(stocks) 
         self.budget = budget 
         self.gamma_list = []
         self.file_path = file_path

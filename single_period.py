@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import itertools
+from itertools import product
 import json
 import numpy as np
 import pandas as pd
@@ -189,10 +189,9 @@ class SinglePeriod:
 
         # Defining risk expression 
         risk = 0
-        for s1 in self.stocks:
-            for s2 in self.stocks:
-                coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
-                risk = risk + coeff*x[s1]*x[s2]
+        for s1, s2 in product(self.stocks, self.stocks):
+            coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
+            risk = risk + coeff*x[s1]*x[s2]
 
         # Defining the returns expression 
         returns = 0
@@ -291,24 +290,23 @@ class SinglePeriod:
             dqm.add_variable(len(self.shares_intervals[s]), label=s)
 
         # Objective 1: minimize variance
-        for s1 in self.stocks:
-            for s2 in self.stocks:
-                coeff = (self.covariance_matrix[s1][s2]
+        for s1, s2 in product(self.stocks, self.stocks):
+            coeff = (self.covariance_matrix[s1][s2]
                         * self.price[s1] * self.price[s2])
-                if s1 == s2:
-                    for k in range(dqm.num_cases(s1)):
-                        num_s1 = self.shares_intervals[s1][k]
-                        dqm.set_linear_case(
+            if s1 == s2:
+                for k in range(dqm.num_cases(s1)):
+                    num_s1 = self.shares_intervals[s1][k]
+                    dqm.set_linear_case(
                                     s1, k, 
                                     dqm.get_linear_case(s1,k) 
                                     + self.alpha*coeff*num_s1*num_s1)
-                else:
-                    for k in range(dqm.num_cases(s1)):
-                        for m in range(dqm.num_cases(s2)):
-                            num_s1 = self.shares_intervals[s1][k]
-                            num_s2 = self.shares_intervals[s2][m]
+            else:
+                for k in range(dqm.num_cases(s1)):
+                    for m in range(dqm.num_cases(s2)):
+                        num_s1 = self.shares_intervals[s1][k]
+                        num_s2 = self.shares_intervals[s2][m]
 
-                            dqm.set_quadratic_case(
+                        dqm.set_quadratic_case(
                                 s1, k, s2, m, 
                                 dqm.get_quadratic_case(s1,k,s2,m)
                                 + coeff*self.alpha*num_s1*num_s2) 
@@ -413,11 +411,10 @@ class SinglePeriod:
         """Compute the risk and return values of solution.
         """
         variance = 0.0
-        for s1 in solution:
-            for s2 in solution:
-                variance += (solution[s1] * self.price[s1] 
-                            * solution[s2] * self.price[s2]  
-                            * self.covariance_matrix[s1][s2])
+        for s1, s2 in product(solution, solution):
+            variance += (solution[s1] * self.price[s1] 
+                        * solution[s2] * self.price[s2]  
+                        * self.covariance_matrix[s1][s2])
 
         est_return = 0
         for stock in solution:

@@ -187,46 +187,36 @@ class SinglePeriod:
         x = {s: Integer("%s" %s, lower_bound=0, 
                         upper_bound=self.max_num_shares[s]) for s in self.stocks}
 
+        # Defining risk expression 
+        risk = 0
+        for s1 in self.stocks:
+            for s2 in self.stocks:
+                coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
+                risk = risk + coeff*x[s1]*x[s2]
+
+        # Defining the returns expression 
+        returns = 0
+        for s in self.stocks: 
+            returns = returns + self.price[s] * self.avg_monthly_returns[s] * x[s]
+
         # Adding budget constraint 
         cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks]) <= self.budget)
 
         if max_risk: 
             # Adding maximum risk constraint 
-            expression = 0
-            for s1 in self.stocks:
-                for s2 in self.stocks:
-                    coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
-                    expression = expression + coeff*x[s1]*x[s2]
-            cqm.add_constraint(expression <= max_risk)
+            cqm.add_constraint(risk <= max_risk)
 
             # Objective: maximize return 
-            for s in self.stocks:
-                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.avg_monthly_returns[s])
-
-            print(f"\nCQM Formulation: maximize return s.t. risk <= max_risk\n")
-        elif min_return: 
-            # Adding minimum return constraint 
-            cqm.add_constraint(quicksum([x[s]*self.price[s]*self.avg_monthly_returns[s] for s in self.stocks]) >= min_return)
+            cqm.set_objective(-1*returns)
+        elif min_return:
+            # Adding minimum returns constraint
+            cqm.add_constraint(returns >= min_return) 
 
             # Objective: minimize risk 
-            for s1 in self.stocks:
-                for s2 in self.stocks:
-                    coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
-                    cqm.objective.add_quadratic(x[s1].variables[0], x[s2].variables[0], coeff)
-
-            print(f"\nCQM Formulation: mininimize risk s.t. return >= min_return\n")
-        else:
-            # Objective 1: minimize variance
-            for s1 in self.stocks:
-                for s2 in self.stocks:
-                    coeff = (self.covariance_matrix[s1][s2] * self.price[s1] * self.price[s2])
-                    cqm.objective.add_quadratic(x[s1].variables[0], x[s2].variables[0], self.alpha*coeff)
-                            
-            # Objective 2: maximize return
-            for s in self.stocks:
-                cqm.objective.add_linear(x[s].variables[0], - self.price[s] * self.avg_monthly_returns[s])
-
-            print(f"\nCQM Formulation: maximize return - alpha*risk\n")
+            cqm.set_objective(risk)
+        else: 
+            # Objective: minimize mean-variance expression 
+            cqm.set_objective(self.alpha*risk - returns)
 
         cqm.substitute_self_loops()
 

@@ -34,17 +34,19 @@ class MultiPeriod(SinglePeriod):
 
         Args:
             stocks (list of str): List of stocks.
-            budget (int): portfolio budget.
-            bin_size (int): bin size for DQM.
-            gamma (float or tuple): Budget constraint penalty coefficient(s).
-                If tuple and DQM, grid search will be done; otherwise, no grid search.   
+            budget (int): Portfolio budget.
+            bin_size (int): Maximum number of intervals for each stock. 
+            gamma (float or int or list or tuple): Budget constraint penalty coefficient(s).
+                If gamma is a tuple/list and model is DQM, grid search will be done; 
+                otherwise, no grid search.   
             file_path (str): Full path of CSV file containing stock data. 
-            dates (list of str): pair of strings for start date and end date. 
+            dates (list of str): Pair of strings for start date and end date. 
             model_type (str): CQM or DQM.
-            alpha (float or tuple): risk aversion coefficient. 
-                If tuple and DQM, grid search will be done; otherwise, no grid search.   
+            alpha (float or int or list or tuple): Risk aversion coefficient. 
+                If alpha is a tuple/list and model is DQM, grid search will be done; 
+                otherwise, no grid search.   
             baseline (str): Stock baseline for rebalancing model. 
-            sampler_arg (dict): Sampler arguments. 
+            sampler_args (dict): Sampler arguments. 
             verbose (bool): Flag to enable additional output.  
         """
         super().__init__(stocks=stocks, budget=budget, 

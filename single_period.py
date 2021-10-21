@@ -195,17 +195,18 @@ class SinglePeriod:
             returns = returns + self.price[s] * self.avg_monthly_returns[s] * x[s]
 
         # Adding budget constraint 
-        cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks]) <= self.budget)
+        cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
+                           <= self.budget, label='budget')
 
         if max_risk: 
             # Adding maximum risk constraint 
-            cqm.add_constraint(risk <= max_risk)
+            cqm.add_constraint(risk <= max_risk, label='max_risk')
 
             # Objective: maximize return 
             cqm.set_objective(-1*returns)
         elif min_return:
             # Adding minimum returns constraint
-            cqm.add_constraint(returns >= min_return) 
+            cqm.add_constraint(returns >= min_return, label='min_return') 
 
             # Objective: minimize risk 
             cqm.set_objective(risk)

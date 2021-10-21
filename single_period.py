@@ -28,9 +28,9 @@ from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 class SinglePeriod: 
     """Define and solve a  single-period portfolio optimization problem.
     """
-    def __init__(self, stocks=None, budget=1000, 
-                 bin_size=0, gamma=(), file_path='data/basic_data.csv', 
-                 dates=None, model_type='CQM', alpha=(), baseline='^GSPC', 
+    def __init__(self, stocks=('AAPL', 'MSFT', 'AAL', 'WMT'), budget=1000, 
+                 bin_size=None, gamma=None, file_path='data/basic_data.csv', 
+                 dates=None, model_type='CQM', alpha=0.005, baseline='^GSPC', 
                  sampler_args=None, verbose=True):
         """Class constructor. 
 
@@ -49,32 +49,23 @@ class SinglePeriod:
             sampler_arg (dict): Sampler arguments. 
             verbose (bool): Flag to enable additional output. 
         """
-        if stocks:
-            self.stocks = list(stocks) 
-        else:
-            self.stocks = ['IBM', 'SEHI', 'WMT']
-
+        self.stocks = stocks 
         self.budget = budget 
         self.gamma_list = []
         self.file_path = file_path
         self.dates = dates 
         self.model_type = model_type
         self.alpha_list = []
-
         self.baseline = [baseline] 
-
         self.verbose = verbose 
         
-        if alpha:
-            if isinstance(alpha, (list, tuple)):
-                self.alpha = alpha[0]
-                self.alpha_list = list(alpha)
-            elif isinstance (alpha, (int, float)):
-                self.alpha = alpha
-            else:
-                raise TypeError("The value of alpha must be integer or float.")
+        if isinstance(alpha, (list, tuple)):
+            self.alpha = alpha[0]
+            self.alpha_list = list(alpha)
+        elif isinstance (alpha, (int, float)):
+            self.alpha = alpha
         else:
-            self.alpha = 0.0005 
+            raise TypeError("The value of alpha must be integer or float.")
         
         if gamma:
             if isinstance(gamma, (list, tuple)):
@@ -91,7 +82,7 @@ class SinglePeriod:
             self.bin_size = bin_size
         else:
             self.bin_size = 10
-
+       
         self.model = {'CQM': None, 'DQM': None}
 
         self.sample_set = {}

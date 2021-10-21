@@ -26,9 +26,9 @@ from single_period import SinglePeriod
 class MultiPeriod(SinglePeriod):
     """Solve the multi-period (dynamic) portfolio optimization problem.
     """
-    def __init__(self, stocks=None, budget=1000, 
-                 bin_size=10, gamma=(10,), file_path='data/basic_data.csv', 
-                 dates=None, model_type='CQM', alpha=(0.0005,), baseline='^GSPC', 
+    def __init__(self, stocks=('AAPL', 'MSFT', 'AAL', 'WMT'), budget=1000, 
+                 bin_size=None, gamma=None, file_path='data/basic_data.csv', 
+                 dates=None, model_type='CQM', alpha=0.005, baseline='^GSPC', 
                  sampler_args=None, verbose=True):
         """Class constructor. 
 
@@ -47,12 +47,6 @@ class MultiPeriod(SinglePeriod):
             sampler_arg (dict): Sampler arguments. 
             verbose (bool): Flag to enable additional output.  
         """
-        if stocks:
-            self.stocks = list(stocks)
-        else:
-            self.stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
-            stocks = self.stocks
-        
         super().__init__(stocks=stocks, budget=budget, 
                  bin_size=bin_size, gamma=gamma, file_path=file_path, 
                  dates=dates, model_type=model_type, alpha=alpha, 
@@ -76,7 +70,6 @@ class MultiPeriod(SinglePeriod):
         self.baseline_values = [0]
         self.update_values = [0]
         months = []
-        precision = 2 
 
         # Define dataframe to save output data 
         headers = ['Date', 'Budget', 'Spending'] + self.stocks + ['Variance', 'Returns']

@@ -19,15 +19,17 @@ from single_period import SinglePeriod
 
 @click.command()
 @click.option('-s', '--stocks', multiple=True, type=str, 
-              help='Stock name to be included. '
+              default=['AAPL', 'MSFT', 'AAL', 'WMT'], show_default=True,
+              help='Stock name to be included.'
               'When a file is provided, stock name must be included in the file ')
 @click.option('-b', '--budget', default=1000, show_default=True,
               help='Portfolio budget')
 @click.option('-n', '--bin-size', type=int,
               help='Maximum number of intervals for each stock')
 @click.option('-g', '--gamma', multiple=True, type=float,
-               help='Penalty coefficient for budget constraint')
+              help='Penalty coefficient for budget constraint')
 @click.option('-a', '--alpha', multiple=True, type=float,  
+              default=[0.005], show_default=True,
               help='Risk aversion coefficient')
 @click.option('-f', '--file-path', default='data/basic_data.csv', 
               show_default=True, type=str,
@@ -50,9 +52,9 @@ from single_period import SinglePeriod
                     'usage: -p \'{"profile": "test"}\'')
 @click.option('-v', '--verbose', is_flag=True, 
               help='Enable additional program console output')
-def main(stocks, budget, bin_size, gamma, params,  
-         file_path, max_risk, min_return,baseline,
-         dates, model_type, rebalance, alpha, verbose):
+def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk, 
+         min_return,baseline, dates, model_type, rebalance, alpha, verbose):
+
     if ((max_risk or min_return) and model_type != 'CQM'):
         raise Exception("The bound options require a CQM.")
         

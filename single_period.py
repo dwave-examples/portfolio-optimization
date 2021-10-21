@@ -108,12 +108,16 @@ class SinglePeriod:
             df (dataframe): Table of stock prices.   
         """
         if df is not None:
+            print("\nLoading data from DataFrame...")
             self.df = df 
             self.stocks = df.columns.tolist()
         elif dates or self.dates: 
             if dates:
                 self.dates = dates 
-    
+
+            print(f"\nLoading live data from the web from Yahoo! finance",
+                  f"from {self.dates[0]} to {self.dates[1]}...")
+
             # Read in daily data; resample to monthly
             panel_data = DataReader(self.stocks, 'yahoo', 
                                     self.dates[0], self.dates[1])
@@ -136,6 +140,7 @@ class SinglePeriod:
 
             self.df = self.df_all 
         else:
+            print("\nLoading data from provided CSV file...")
             if file_path:
                 self.file_path = file_path
 

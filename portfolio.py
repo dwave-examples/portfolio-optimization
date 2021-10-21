@@ -38,8 +38,7 @@ from single_period import SinglePeriod
               help='Baseline stock for comparison in multi-period run')
 @click.option('-u', '--max-risk', default=0.0, help='Upper bound on risk/variance')
 @click.option('-l', '--min-return', default=0.0, help='Lower bound on the returns')
-@click.option('-d', '--dates', default=(['2010-01-01', '2012-12-31']), 
-              nargs=2, type=click.Tuple([str, str]), show_default=True,
+@click.option('-d', '--dates',nargs=2, type=click.Tuple([str, str]),
               help='Start and end date to query stock data from Yahoo! Finance')
 @click.option('-m', '--model-type', default='CQM', multiple=False, 
               type=click.Choice(['CQM', 'DQM'], case_sensitive=False),
@@ -75,7 +74,7 @@ def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk,
         
         my_portfolio = SinglePeriod(stocks=stocks, budget=budget,
                                     bin_size=bin_size, gamma=gamma, 
-                                    file_path=file_path, dates=[], 
+                                    file_path=file_path, dates=dates, 
                                     model_type=model_type, alpha=alpha, 
                                     verbose=verbose, sampler_args=params)
     

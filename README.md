@@ -30,28 +30,17 @@ This runs the single-period portfolio optimization problem, as formulated above,
 ```bash
 Single period portfolio optimization run...
 
-Max shares we can afford with a budget of 1000
-IBM       8
-WMT      18
-SEHI    555
-
 CQM run...
 
-CQM Formulation: maximize returns - alpha*risk
-
-Number of feasible solutions: 22 out of 46 sampled.
-
-Best energy: -90.05
-Best energy (feasible): -41.65
-
 Best feasible solution:
-IBM	  2
-SEHI	427
-WMT	  0
+AAPL	 45
+MSFT	  0
+AAL	  0
+WMT	 10
 
-Estimated returns: 62.67
-Purchase Cost: 999.78
-Variance: 42035.77
+Estimated returns: 14.65
+Purchase Cost: 993.98
+Variance: 1378.78
 ```
 
 ##### CQM Bounding Formulations 
@@ -62,38 +51,27 @@ The demo allows the user to choose among two additional CQM formulations for the
 
 Note that both of these formulations also include the budget constraint. To run the single-period demo with the CQM risk bounding formulation, type:
 
-`python portfolio.py -m 'CQM' --max-risk 10000`
+`python portfolio.py -m 'CQM' --max-risk 2500`
 
 ```bash
 Single period portfolio optimization run...
 
-Max shares we can afford with a budget of 1000
-IBM       8
-WMT      18
-SEHI    555
-
 CQM run...
 
-CQM Formulation: maximize returns s.t. risk <= max_risk
-
-Number of feasible solutions: 26 out of 44 sampled.
-
-Best energy: -98.13
-Best energy (feasible): -33.30
-
 Best feasible solution:
-IBM	  3
-SEHI	183
-WMT	  0
+AAPL	 72
+MSFT	  0
+AAL	  0
+WMT	  3
 
-Estimated returns: 33.3
-Purchase Cost: 676.17
-Variance: 9993.17
+Estimated returns: 17.24
+Purchase Cost: 983.81
+Variance: 2434.26
 ```
 
 We can do similarly for the return-bounding formulation, with this command: 
 
-`python portfolio.py -m 'CQM' --min-return 50`
+`python portfolio.py -m 'CQM' --min-return 17.5`
 
 #### DQM Runs 
 
@@ -110,23 +88,19 @@ The output of the default DQM run is printed on the console as follows.
 ```bash 
 Single period portfolio optimization run...
 
-Max shares we can afford with a budget of 1000
-IBM       8
-WMT      18
-SEHI    555
-
 DQM run...
 
-DQM -- solution for alpha == 0.0005 and gamma == 10:
+DQM -- solution for alpha == 0.005 and gamma == 100:
 
 Shares to buy:
-IBM	  6
-SEHI	166
-WMT	  0
+AAPL	 43
+MSFT	 19
+AAL	  0
+WMT	  2
 
-Estimated returns: 40.06
-Purchase Cost: 992.34
-Variance: 15641.24
+Estimated returns: 12.16
+Purchase Cost: 991.39
+Variance: 1939.62
 ```
 
 For the DQM single-period problem formulation, this demo gives the user the option to run a 
@@ -246,3 +220,5 @@ a combination of variance and mean is minimized.
 
 Ahmed, Shabbir. "The Optimization Process: An example of portfolio optimization." 
 Georgia Tech University (2002). https://www2.isye.gatech.edu/~sahmed/isye6669/notes/portfolio.pdf
+
+Mansini, R., Ogryczak, W., &amp; Speranza, M. G. (2015). Linear and mixed integer programming for portfolio optimization. Springer International Publishing.

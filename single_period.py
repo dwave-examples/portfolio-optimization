@@ -67,7 +67,7 @@ class SinglePeriod:
         elif isinstance (alpha, (int, float)):
             self.alpha = alpha
         else:
-            raise TypeError("The value of alpha must be integer or float.")
+            raise TypeError("Use integer or float for alpha, or a list or tuple of either type.")
         
         if gamma:
             if isinstance(gamma, (list, tuple)):
@@ -76,7 +76,7 @@ class SinglePeriod:
             elif isinstance(gamma, (int, float)):
                 self.gamma = gamma 
             else:
-                raise TypeError("Use integer or float for gamma.")
+                raise TypeError("Use integer or float for gamma, or a list or tuple of either type.")
         else: 
             self.gamma = 100
 

@@ -197,7 +197,9 @@ class SinglePeriod:
 
         # Adding budget constraint 
         cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
-                           <= self.budget, label='budget')
+                           <= self.budget, label='upper_budget')
+        cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
+                           >= 0.997*self.budget, label='lower_budget')
 
         if max_risk: 
             # Adding maximum risk constraint 
@@ -325,7 +327,7 @@ class SinglePeriod:
         # needed in order to use add_linear_inequality_constraint method 
         factor = 10**self.precision
 
-        min_budget = round(factor*0.99*self.budget)
+        min_budget = round(factor*0.997*self.budget)
         budget = int(self.budget)
 
         terms = [(s, j, int(self.shares_intervals[s][j]

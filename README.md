@@ -1,3 +1,7 @@
+[![Linux/Mac/Windows build status](
+  https://circleci.com/gh/dwave-examples/portfolio-optimization.svg?style=svg)](
+  https://circleci.com/gh/dwave-examples/portfolio-optimization)
+
 # Portfolio Optimization
 
 Optimizing a portfolio of stocks is a challenging problem that looks to identify the optimal number 

@@ -46,8 +46,8 @@ class TestDemo(unittest.TestCase):
         test_portfolio.load_data(df=df)
         test_portfolio.build_dqm()
 
-        self.assertEqual(test_portfolio.model['DQM'].num_variables(), 12)
-        self.assertEqual(test_portfolio.model['DQM'].num_cases(), 30)
+        self.assertEqual(test_portfolio.model['DQM'].num_variables(), 11)
+        self.assertEqual(test_portfolio.model['DQM'].num_cases(), 28)
 
     def test_build_cqm(self):
         test_portfolio = SinglePeriod(bin_size=5, model_type='DQM')
@@ -63,7 +63,7 @@ class TestDemo(unittest.TestCase):
         test_portfolio.build_cqm()
 
         self.assertEqual(len(test_portfolio.model['CQM'].variables), 4)
-        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 3)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 4)
 
 class TestIntegration(unittest.TestCase):
     @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")
@@ -78,7 +78,6 @@ class TestIntegration(unittest.TestCase):
         output = output.lower()
 
         self.assertIn('cqm run', output)
-        self.assertIn('cqm formulation', output)
         self.assertIn('best feasible solution', output)
         self.assertIn('estimated returns', output)
         self.assertIn('purchase cost', output)

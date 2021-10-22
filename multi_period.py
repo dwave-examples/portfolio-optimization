@@ -81,12 +81,12 @@ class MultiPeriod(SinglePeriod):
         self.price_df = pd.DataFrame(columns=self.stocks)
 
         # Initialize the plot
-        plt.ylim(ymax = 1.0*self.budget, ymin = -1.0*self.budget)
+        plt.ylim(ymax = 1.5*self.budget, ymin = -1.5*self.budget)
         plt.xticks(list(range(0, num_months, 2)), 
                 self.df_baseline.index.strftime('%b')[::2], rotation='vertical')
         plt.locator_params(axis='x', nbins=num_months/2)
         plt.plot(list(range(0, num_months)), [0]*(num_months), 
-                color='red', label="Break even", linewidth=0.5)
+                color='red', label="Break-even", linewidth=0.5)
 
         for i in range(3, num_months):
 
@@ -98,17 +98,18 @@ class MultiPeriod(SinglePeriod):
 
             if first_purchase:
                 budget = self.budget
+                initial_budget = self.budget
                 baseline_shares = (budget / baseline_df_current.iloc[-1])
                 baseline_result = {self.baseline[0]: baseline_shares} 
             else:
                 # Compute profit of current portfolio
                 budget = sum([df.iloc[-1][s]*result['stocks'][s] for s in self.stocks]) 
-                self.update_values.append(budget - spending)
+                self.update_values.append(budget - initial_budget)
 
                 # Compute profit of fund portfolio
                 fund_value = sum([baseline_df_current.iloc[-1][s]*baseline_result[s] 
                                  for s in self.baseline]) 
-                self.baseline_values.append(fund_value - self.budget)
+                self.baseline_values.append(fund_value - initial_budget)
 
             self.budget = budget 
             self.load_data(df=df)
@@ -119,7 +120,7 @@ class MultiPeriod(SinglePeriod):
             update_values = np.array(self.update_values, dtype=object)
             baseline_values = np.array(self.baseline_values, dtype=object)
             plt.plot(range(3, i+1), update_values, 
-                    color='blue', label="Updated portfolio")
+                    color='blue', label="Optimized portfolio")
             plt.plot(range(3, i+1), baseline_values, 
                     color='gray', label="Fund portfolio", linewidth=0.5)
             

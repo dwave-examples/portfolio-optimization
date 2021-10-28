@@ -406,8 +406,8 @@ class SinglePeriod:
 
         n_opt = np.argmax(data_matrix)
 
-        self.alpha = alpha[n_opt%len(alpha)]
-        self.gamma = gamma[n_opt//len(gamma)]
+        self.alpha = alpha[n_opt//len(gamma)]
+        self.gamma = gamma[n_opt - (n_opt//len(gamma)) * len(gamma)]
 
         print(f"DQM Grid Search Completed: alpha={self.alpha}, gamma={self.gamma}.-")
 

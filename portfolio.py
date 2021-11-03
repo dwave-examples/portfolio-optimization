@@ -40,7 +40,7 @@ from single_period import SinglePeriod
               help='Upper bound on risk/variance. This only works for CQM.')
 @click.option('-l', '--min-return', default=0.0, 
               help='Lower bound on the returns. This only works for CQM.')
-@click.option('-d', '--dates',nargs=2, type=click.Tuple([str, str]),
+@click.option('-d', '--dates', nargs=2, type=str,
               help='Start and end date to query stock data from Yahoo! Finance')
 @click.option('-m', '--model-type', default='CQM', multiple=False, 
               type=click.Choice(['CQM', 'DQM'], case_sensitive=False),

@@ -14,6 +14,7 @@
 
 from itertools import product
 import json
+import random 
 
 import numpy as np
 import pandas as pd
@@ -99,7 +100,7 @@ class SinglePeriod:
 
         self.precision = 2
        
-    def load_data(self, file_path='', dates=None, df=None):
+    def load_data(self, file_path='', dates=None, df=None, num=0):
         """Load the relevant stock data from file, dataframe, or Yahoo!. 
 
         Args:
@@ -107,6 +108,7 @@ class SinglePeriod:
                 for the single period problem.
             dates (list): [Start_Date, End_Date] to query data from Yahoo!.
             df (dataframe): Table of stock prices.   
+            num (int): Number of stocks to be randomnly generated. 
         """
         if df is not None:
             print("\nLoading data from DataFrame...")
@@ -118,6 +120,14 @@ class SinglePeriod:
 
             print(f"\nLoading live data from the web from Yahoo! finance",
                   f"from {self.dates[0]} to {self.dates[1]}...")
+
+            # Generating randomn list of stocks 
+            if num > 0: 
+                if (self.dates[0] < '2010-01-01'):
+                    raise Exception(f"Start date must be >= '2010-01-01' " 
+                                    f"when using option 'num'.") 
+                symbols_df = pd.read_csv('data/stocks_symbols.csv')
+                self.stocks = random.sample(list(symbols_df.loc[:,'Symbol']), num)
 
             # Read in daily data; resample to monthly
             panel_data = DataReader(self.stocks, 'yahoo', 
@@ -426,10 +436,15 @@ class SinglePeriod:
 
         return round(est_return, 2), round(variance, 2)
 
-    def run(self, min_return=0, max_risk=0): 
+    def run(self, min_return=0, max_risk=0, num=0): 
         """Execute sequence of load_data --> build_model --> solve.
+
+        Args:
+            max_risk (int): Maximum risk for the risk bounding formulation.
+            min_return (int): Minimum return for the return bounding formulation.
+            num (int): Number of stocks to be randomnly generated. 
         """
-        self.load_data()
+        self.load_data(num=num)
         if self.model_type=='CQM': 
             print(f"\nCQM run...")
             self.solution['CQM'] = self.solve_cqm(min_return=min_return, max_risk=max_risk)

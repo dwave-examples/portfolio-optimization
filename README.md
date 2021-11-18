@@ -189,6 +189,7 @@ The `portfolio.py` program can be called with these additional options:
 - -d, --dates: list of [start_date, end_date] for multi-period portfolio optimization problem 
 - -f, --file-path: full path of file with csv stock data 
 - -n, --bin-size: bin size for dqm binning 
+- -k, --num: number of stocks to be randomnly picked to generate a random problem instance
 - -s, --stocks: list of stocks for the problem 
 - -v, --verbose: to turn on or off additional code output 
 - -z, --baseline: baseline stock for multi-period portfolio optimization run 

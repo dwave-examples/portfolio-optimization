@@ -50,7 +50,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(test_portfolio.model['DQM'].num_cases(), 28)
 
     def test_build_cqm(self):
-        test_portfolio = SinglePeriod(bin_size=5, model_type='DQM')
+        test_portfolio = SinglePeriod(model_type='CQM')
 
         data = {'IBM': [93.043, 84.585, 111.453, 99.525, 95.819],
                 'WMT': [51.826, 52.823, 56.477, 49.805, 50.287]}
@@ -64,6 +64,15 @@ class TestDemo(unittest.TestCase):
 
         self.assertEqual(len(test_portfolio.model['CQM'].variables), 4)
         self.assertEqual(len(test_portfolio.model['CQM'].constraints), 4)
+
+    def test_build_random_cqm_instance(self):
+        test_portfolio = SinglePeriod(model_type='CQM')
+
+        test_portfolio.load_data(dates=['2010-01-01', '2010-12-31'], num=10)
+        test_portfolio.build_cqm()
+
+        self.assertEqual(len(test_portfolio.model['CQM'].variables), 20)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 12)
 
 class TestIntegration(unittest.TestCase):
     @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")

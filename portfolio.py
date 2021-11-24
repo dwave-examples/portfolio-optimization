@@ -53,7 +53,10 @@ from single_period import SinglePeriod
                     'usage: -p \'{"profile": "test"}\'')
 @click.option('-v', '--verbose', is_flag=True, 
               help='Enable additional program console output')
-def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk, 
+@click.option('-k', '--num', default=0, type=click.IntRange(0, ),
+              help='Number of stocks to be randomnly generated.'
+                   'When this option is selected, dates need to be provided.')
+def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num, 
          min_return,baseline, dates, model_type, rebalance, alpha, verbose):
 
     if ((max_risk or min_return) and model_type != 'CQM'):
@@ -61,6 +64,9 @@ def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk,
         
     if ((gamma or bin_size) and model_type != 'DQM'):
         raise Exception("The option gamma or bin-size requires a DQM.")
+
+    if (num and not dates):
+        raise Exception("User must provide dates with option 'num'.") 
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")
@@ -80,7 +86,7 @@ def main(stocks, budget, bin_size, gamma, params,  file_path, max_risk,
                                     model_type=model_type, alpha=alpha, 
                                     verbose=verbose, sampler_args=params)
     
-    my_portfolio.run(min_return=min_return, max_risk=max_risk)
+    my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
 
 if __name__ == '__main__':
     main()

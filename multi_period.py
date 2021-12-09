@@ -54,7 +54,7 @@ class MultiPeriod(SinglePeriod):
                  dates=dates, model_type=model_type, alpha=alpha, 
                  baseline=baseline, sampler_args=sampler_args, verbose=verbose)
 
-    def run(self, max_risk=0, min_return=0): 
+    def run(self, max_risk=0, min_return=0, num=0): 
         """Solve the rebalancing portfolio optimization problem.
 
         Args:

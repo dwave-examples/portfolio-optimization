@@ -25,11 +25,18 @@ project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class TestSmoke(unittest.TestCase):
     @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")
-    def test_smoke(self):
-        """Run portfolio.py and check that nothing crashes"""
+    def test_smoke_single_period(self):
+        """Run single-period portfolio.py and check that nothing crashes"""
 
         demo_file = os.path.join(project_dir, 'portfolio.py')
         subprocess.check_output([sys.executable, demo_file])
+
+    def test_smoke_multi_period(self):
+        """Run multi-period portfolio.py and check that nothing crashes"""
+
+        demo_file = os.path.join(project_dir, 'portfolio.py')
+        subprocess.check_output([sys.executable, demo_file, 
+                                 "-d", "2012-06-01", "2012-12-31", "-r"])
 
 class TestDemo(unittest.TestCase):
     """Verify models are build correctly."""

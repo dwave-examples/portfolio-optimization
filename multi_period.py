@@ -27,7 +27,7 @@ class MultiPeriod(SinglePeriod):
     """Solve the multi-period (dynamic) portfolio optimization problem.
     """
     def __init__(self, stocks=('AAPL', 'MSFT', 'AAL', 'WMT'), budget=1000, 
-                 bin_size=None, gamma=None, file_path='data/basic_data.csv', 
+                 bin_size=None, gamma=None, file_path=None, 
                  dates=None, model_type='CQM', alpha=0.005, baseline='^GSPC', 
                  sampler_args=None, verbose=True):
         """Class constructor. 
@@ -160,8 +160,7 @@ class MultiPeriod(SinglePeriod):
 
         print(self.opt_results_df)
         print(f'\nRun completed.\n')
-        print(f'\nPlease close the plot dialog to return to the terminal.\n')
 
         plt.savefig("portfolio.png")
-        plt.show()
+        plt.show(block=False)
         

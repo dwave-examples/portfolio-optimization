@@ -36,7 +36,7 @@ class TestSmoke(unittest.TestCase):
 
         demo_file = os.path.join(project_dir, 'portfolio.py')
         subprocess.check_output([sys.executable, demo_file, 
-                                 "-d", "2012-06-01", "2012-12-31", "-r"])
+                                 "-d", "2012-01-01", "2012-12-31", "-r"])
 
 class TestDemo(unittest.TestCase):
     """Verify models are build correctly."""

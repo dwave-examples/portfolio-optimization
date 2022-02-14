@@ -19,7 +19,7 @@ import random
 import numpy as np
 import pandas as pd
 from pandas_datareader.data import DataReader
-from dimod import Integer
+from dimod import Integer, Binary
 from dimod import quicksum 
 from dimod import ConstrainedQuadraticModel, DiscreteQuadraticModel
 from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler 
@@ -31,7 +31,7 @@ class SinglePeriod:
     def __init__(self, stocks=('AAPL', 'MSFT', 'AAL', 'WMT'), budget=1000, 
                  bin_size=None, gamma=None, file_path='data/basic_data.csv', 
                  dates=None, model_type='CQM', alpha=0.005, baseline='^GSPC', 
-                 sampler_args=None, verbose=True):
+                 sampler_args=None, t_cost=0.01, verbose=True):
         """Class constructor. 
 
         Args:
@@ -49,10 +49,12 @@ class SinglePeriod:
                 otherwise, no grid search.   
             baseline (str): Stock baseline for rebalancing model. 
             sampler_args (dict): Sampler arguments. 
+            t_cost (float): transaction cost; percentage of transaction dollar value. 
             verbose (bool): Flag to enable additional output. 
         """
         self.stocks = list(stocks) 
         self.budget = budget 
+        self.init_budget = budget 
         self.gamma_list = []
         self.file_path = file_path
         self.dates = dates 
@@ -60,6 +62,8 @@ class SinglePeriod:
         self.alpha_list = []
         self.baseline = [baseline] 
         self.verbose = verbose 
+        self.t_cost = t_cost
+        self.init_holdings = {s:0 for s in self.stocks}
         
         if isinstance(alpha, (list, tuple)):
             self.alpha = alpha[0]
@@ -176,7 +180,7 @@ class SinglePeriod:
         self.avg_monthly_returns = self.monthly_returns.mean(axis=0)
         self.covariance_matrix = self.monthly_returns.cov()
 
-    def build_cqm(self, max_risk=None, min_return=None):
+    def build_cqm(self, max_risk=None, min_return=None, init_holdings=None):
         """Build and store a CQM. 
         This method allows the user a choice of 3 problem formulations: 
             1) max return - alpha*risk (default formulation)
@@ -186,6 +190,7 @@ class SinglePeriod:
         Args:
             max_risk (int): Maximum risk for the risk bounding formulation.
             min_return (int): Minimum return for the return bounding formulation.
+            init_holdings (float): Initial holdings, or initial portfolio state. 
         """
         # Instantiating the CQM object 
         cqm = ConstrainedQuadraticModel()
@@ -205,11 +210,40 @@ class SinglePeriod:
         for s in self.stocks: 
             returns = returns + self.price[s] * self.avg_monthly_returns[s] * x[s]
 
-        # Adding budget constraint 
-        cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
-                           <= self.budget, label='upper_budget')
-        cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
-                           >= 0.997*self.budget, label='lower_budget')
+        # Adding budget and related constraints
+        if not init_holdings:
+            init_holdings = self.init_holdings
+        else:
+            self.init_holdings = init_holdings
+
+        if not self.t_cost:  
+            cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
+                            <= self.budget, label='upper_budget')
+            cqm.add_constraint(quicksum([x[s]*self.price[s] for s in self.stocks])
+                            >= 0.997*self.budget, label='lower_budget')
+        else:
+            # Modeling transaction cost 
+            x0 = init_holdings
+
+            y = {s: Binary("Y[%s]" %s) for s in self.stocks}
+
+            lhs = 0 
+            for s in self.stocks:
+                lhs = lhs + 2*self.t_cost*self.price[s]*x[s]*y[s] \
+                          + self.price[s]*(1 - self.t_cost)*x[s] \
+                          - 2*self.t_cost*self.price[s]*x0[s]*y[s] \
+                          - self.price[s]*(1 - self.t_cost)*x0[s]
+                          
+            cqm.add_constraint( lhs <= self.budget, label='upper_budget')
+            cqm.add_constraint( lhs >= self.budget - 0.003*self.init_budget, 
+                                label='lower_budget')
+
+            # indicator constraints 
+            for s in self.stocks:
+                cqm.add_constraint(x[s] - x0[s]*y[s] >= 0, 
+                                   label=f'indicator_constraint_gte_{s}')
+                cqm.add_constraint(x[s] - x[s]*y[s] <= x0[s], 
+                                   label=f'indicator_constraint_lte_{s}')
 
         if max_risk: 
             # Adding maximum risk constraint 
@@ -231,7 +265,7 @@ class SinglePeriod:
 
         self.model['CQM'] = cqm 
 
-    def solve_cqm(self, max_risk=None, min_return=None):
+    def solve_cqm(self, max_risk=None, min_return=None, init_holdings=None):
         """Solve CQM.  
         This method allows the user to solve one of 3 cqm problem formulations: 
             1) max return - alpha*risk (default formulation)
@@ -241,12 +275,13 @@ class SinglePeriod:
         Args:
             max_risk (int): Maximum risk for the risk bounding formulation.
             min_return (int): Minimum return for the return bounding formulation.
+            init_holdings (float): Initial holdings, or initial portfolio state. 
 
         Returns:
             solution (dict): This is a dictionary that saves solutions in desired format 
                 e.g., solution = {'stocks': {'IBM': 3, 'WMT': 12}, 'risk': 10, 'return': 20}
         """
-        self.build_cqm(max_risk, min_return)
+        self.build_cqm(max_risk, min_return, init_holdings)
 
         self.sample_set['CQM'] = self.sampler['CQM'].sample_cqm(self.model['CQM'], 
                                                                 label="Example - Portfolio Optimization")
@@ -265,7 +300,10 @@ class SinglePeriod:
 
             solution['return'], solution['risk'] = self.compute_risk_and_returns(solution['stocks'])
 
-            spending = sum([self.price[s]*solution['stocks'][s] for s in self.stocks])
+            spending = sum([self.price[s]*max(0, solution['stocks'][s] - self.init_holdings[s]) for s in self.stocks])
+            sales = sum([self.price[s]*max(0, self.init_holdings[s] - solution['stocks'][s]) for s in self.stocks])
+
+            transaction = self.t_cost*(spending + sales)
 
             if self.verbose:
                 print(f'Number of feasible solutions: {len(feasible_samples)} out of {n_samples} sampled.')
@@ -275,9 +313,13 @@ class SinglePeriod:
             print(f'\nBest feasible solution:')
             print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution['stocks'].items())) 
 
-            print(f"\nEstimated returns: {solution['return']}")
+            print(f"\nEstimated Returns: {solution['return']}")
+
+            print(f"Sales Revenue: {sales:.2f}")
 
             print(f"Purchase Cost: {spending:.2f}")
+
+            print(f"Transaction Cost: {transaction:.2f}")
 
             print(f"Variance: {solution['risk']}\n")
 
@@ -436,18 +478,21 @@ class SinglePeriod:
 
         return round(est_return, 2), round(variance, 2)
 
-    def run(self, min_return=0, max_risk=0, num=0): 
+    def run(self, min_return=0, max_risk=0, num=0, init_holdings=None): 
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:
             max_risk (int): Maximum risk for the risk bounding formulation.
             min_return (int): Minimum return for the return bounding formulation.
             num (int): Number of stocks to be randomnly generated. 
+            init_holdings (float): Initial holdings, or initial portfolio state. 
         """
         self.load_data(num=num)
         if self.model_type=='CQM': 
             print(f"\nCQM run...")
-            self.solution['CQM'] = self.solve_cqm(min_return=min_return, max_risk=max_risk)
+            self.solution['CQM'] = self.solve_cqm(min_return=min_return, 
+                                                  max_risk=max_risk, 
+                                                  init_holdings=init_holdings)
         else:
             print(f"\nDQM run...")
             if len(self.alpha_list) > 1 or len(self.gamma_list) > 1:

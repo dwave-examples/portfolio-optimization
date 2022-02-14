@@ -56,8 +56,11 @@ from single_period import SinglePeriod
 @click.option('-k', '--num', default=0, type=click.IntRange(0, ),
               help='Number of stocks to be randomnly generated.'
                    'When this option is selected, dates need to be provided.')
+@click.option('-t', '--t-cost', default=0.01, type=click.FloatRange(0, 1),
+              help='Transaction cost: percentage of transaction dollar value.')
 def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num, 
-         min_return,baseline, dates, model_type, rebalance, alpha, verbose):
+         min_return,baseline, dates, model_type, rebalance, alpha, verbose, 
+         t_cost):
 
     if ((max_risk or min_return) and model_type != 'CQM'):
         raise Exception("The bound options require a CQM.")
@@ -68,6 +71,10 @@ def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num,
     if (num and not dates):
         raise Exception("User must provide dates with option 'num'.") 
 
+    if (t_cost and model_type != 'CQM'):
+        raise Exception("The transaction cost option requires a CQM. "\
+                        "Set t_cost=0 for DQM.")
+
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")
 
@@ -76,7 +83,8 @@ def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num,
                                     bin_size=bin_size, dates=dates,
                                     file_path=file_path, gamma=gamma,
                                     model_type=model_type, alpha=alpha, 
-                                    verbose=verbose, baseline=baseline)
+                                    verbose=verbose, baseline=baseline,
+                                    t_cost=t_cost)
     else:
         print(f"\nSingle period portfolio optimization run...")
         
@@ -84,7 +92,8 @@ def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num,
                                     bin_size=bin_size, gamma=gamma, 
                                     file_path=file_path, dates=dates, 
                                     model_type=model_type, alpha=alpha, 
-                                    verbose=verbose, sampler_args=params)
+                                    verbose=verbose, sampler_args=params,
+                                    t_cost=t_cost)
     
     my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
 

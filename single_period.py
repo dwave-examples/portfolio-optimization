@@ -161,6 +161,8 @@ class SinglePeriod:
 
             self.df = pd.read_csv(self.file_path, index_col=0)
 
+        self.init_holdings = {s:0 for s in self.stocks}
+
         self.max_num_shares = (self.budget/self.df.iloc[-1]).astype(int)
         if self.verbose:
             print("\nMax shares we can afford with a budget of", self.budget)

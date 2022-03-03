@@ -41,7 +41,7 @@ class TestSmoke(unittest.TestCase):
 class TestDemo(unittest.TestCase):
     """Verify models are build correctly."""
     def test_build_dqm(self):
-        test_portfolio = SinglePeriod(bin_size=5, model_type='DQM')
+        test_portfolio = SinglePeriod(bin_size=5, model_type='DQM', t_cost=0)
 
         data = {'IBM': [93.043, 84.585, 111.453, 99.525, 95.819],
                 'WMT': [51.826, 52.823, 56.477, 49.805, 50.287]}
@@ -69,8 +69,8 @@ class TestDemo(unittest.TestCase):
         test_portfolio.load_data(df=df)
         test_portfolio.build_cqm()
 
-        self.assertEqual(len(test_portfolio.model['CQM'].variables), 4)
-        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 4)
+        self.assertEqual(len(test_portfolio.model['CQM'].variables), 6)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 8)
 
     def test_build_random_cqm_instance(self):
         test_portfolio = SinglePeriod(model_type='CQM')
@@ -78,8 +78,24 @@ class TestDemo(unittest.TestCase):
         test_portfolio.load_data(dates=['2010-01-01', '2010-12-31'], num=10)
         test_portfolio.build_cqm()
 
-        self.assertEqual(len(test_portfolio.model['CQM'].variables), 20)
-        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 12)
+        self.assertEqual(len(test_portfolio.model['CQM'].variables), 30)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 32)
+
+    def test_build_cqm_no_transaction(self):
+        test_portfolio = SinglePeriod(model_type='CQM', t_cost=0)
+
+        data = {'IBM': [93.043, 84.585, 111.453, 99.525, 95.819],
+                'WMT': [51.826, 52.823, 56.477, 49.805, 50.287]}
+
+        idx = ['Nov-00', 'Dec-00', 'Jan-01', 'Feb-01', 'Mar-01']
+
+        df = pd.DataFrame(data, index=idx)
+
+        test_portfolio.load_data(df=df)
+        test_portfolio.build_cqm()
+
+        self.assertEqual(len(test_portfolio.model['CQM'].variables), 4)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 4)
 
 class TestIntegration(unittest.TestCase):
     @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")
@@ -102,12 +118,12 @@ class TestIntegration(unittest.TestCase):
 
     @unittest.skipIf(os.getenv('SKIP_INT_TESTS'), "Skipping integration test.")
     def test_dqm_integration(self):
-        """Test integration of portfolio script default run."""
+        """Test integration of portfolio script dqm run."""
 
         project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, 'portfolio.py')
 
-        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM"])
+        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM", "-t", "0"])
         output = output.decode('utf-8') # Bytes to str
         output = output.lower()
 

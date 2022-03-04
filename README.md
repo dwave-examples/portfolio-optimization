@@ -46,17 +46,21 @@ D-Wave's hybrid solver. The output of the run is printed to the console as follo
 ```bash
 Single period portfolio optimization run...
 
+Loading data from provided CSV file...
+
 CQM run...
 
 Best feasible solution:
 AAPL	 45
 MSFT	  0
-AAL	  0
+AAL	  1
 WMT	 10
 
-Estimated returns: 14.65
-Purchase Cost: 993.98
-Variance: 1378.78
+Estimated Returns: 14.37
+Sales Revenue: 0.00
+Purchase Cost: 998.43
+Transaction Cost: 0.00
+Variance: 1373.85
 ```
 
 ##### CQM Bounding Formulations 
@@ -69,27 +73,37 @@ optimization problem:
 Note that both of these formulations also include the budget constraint. To run the single-period 
 demo with the CQM risk bounding formulation, type:
 
-`python portfolio.py -m 'CQM' --max-risk 2500`
+`python portfolio.py -m 'CQM' --max-risk 1200`
 
 ```bash
 Single period portfolio optimization run...
 
+Loading data from provided CSV file...
+
 CQM run...
 
 Best feasible solution:
-AAPL	 72
-MSFT	  0
-AAL	  0
-WMT	  3
+AAPL	 31
+MSFT	  3
+AAL	  3
+WMT	 12
 
-Estimated returns: 17.24
-Purchase Cost: 983.81
-Variance: 2434.26
+Estimated Returns: 11.96
+Sales Revenue: 0.00
+Purchase Cost: 998.79
+Transaction Cost: 0.00
+Variance: 1196.06
 ```
 
 We can do similarly for the return-bounding formulation, with this command: 
 
 `python portfolio.py -m 'CQM' --min-return 17.5`
+
+##### CQM Transaction Cost Model 
+
+The demo allows the user to model transaction costs as a percentage of the total transactions value (sales and purchases). A default CQM run with a transaction cost factor of 10% can be done with the following command:
+
+`python portfolio.py -m 'CQM' -t 0.01` 
 
 #### DQM Runs 
 
@@ -188,9 +202,10 @@ The `portfolio.py` program can be called with these additional options:
 - -b, --budget: problem budget 
 - -d, --dates: list of [start_date, end_date] for multi-period portfolio optimization problem 
 - -f, --file-path: full path of file with csv stock data 
-- -n, --bin-size: bin size for dqm binning 
 - -k, --num: number of stocks to be randomly picked to generate a random problem instance
+- -n, --bin-size: bin size for dqm binning 
 - -s, --stocks: list of stocks for the problem 
+- -t, --t-cost: percentage transaction cost
 - -v, --verbose: to turn on or off additional code output 
 - -z, --baseline: baseline stock for multi-period portfolio optimization run 
 

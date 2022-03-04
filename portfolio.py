@@ -56,7 +56,7 @@ from single_period import SinglePeriod
 @click.option('-k', '--num', default=0, type=click.IntRange(0, ),
               help='Number of stocks to be randomnly generated.'
                    'When this option is selected, dates need to be provided.')
-@click.option('-t', '--t-cost', default=0.01, type=click.FloatRange(0, 1),
+@click.option('-t', '--t-cost', default=0.00, type=click.FloatRange(0, 1),
               help='Transaction cost: percentage of transaction dollar value.')
 def main(stocks, budget, bin_size, gamma, params, file_path, max_risk, num, 
          min_return,baseline, dates, model_type, rebalance, alpha, verbose, 

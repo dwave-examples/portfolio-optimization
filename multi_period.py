@@ -29,7 +29,7 @@ class MultiPeriod(SinglePeriod):
     def __init__(self, stocks=('AAPL', 'MSFT', 'AAL', 'WMT'), budget=1000, 
                  bin_size=None, gamma=None, file_path=None, 
                  dates=None, model_type='CQM', alpha=0.005, baseline='^GSPC', 
-                 sampler_args=None, verbose=True):
+                 sampler_args=None, t_cost=0.01, verbose=True):
         """Class constructor. 
 
         Args:
@@ -47,14 +47,15 @@ class MultiPeriod(SinglePeriod):
                 otherwise, no grid search.   
             baseline (str): Stock baseline for rebalancing model. 
             sampler_args (dict): Sampler arguments. 
+            t_cost (float): transaction cost; percentage of transaction dollar value. 
             verbose (bool): Flag to enable additional output.  
         """
-        super().__init__(stocks=stocks, budget=budget, 
+        super().__init__(stocks=stocks, budget=budget, t_cost=t_cost,
                  bin_size=bin_size, gamma=gamma, file_path=file_path, 
                  dates=dates, model_type=model_type, alpha=alpha, 
                  baseline=baseline, sampler_args=sampler_args, verbose=verbose)
 
-    def run(self, max_risk=0, min_return=0, num=0): 
+    def run(self, max_risk=0, min_return=0, num=0, init_holdings=None): 
         """Solve the rebalancing portfolio optimization problem.
 
         Args:
@@ -74,7 +75,7 @@ class MultiPeriod(SinglePeriod):
         months = []
 
         # Define dataframe to save output data 
-        headers = ['Date', 'Budget', 'Spending'] + self.stocks + ['Variance', 'Returns']
+        headers = ['Date', 'Value'] + self.stocks + ['Variance', 'Returns']
         self.opt_results_df = pd.DataFrame(columns=headers)
         row = []
 
@@ -111,7 +112,8 @@ class MultiPeriod(SinglePeriod):
                                  for s in self.baseline]) 
                 self.baseline_values.append(fund_value - initial_budget)
 
-            self.budget = budget 
+                self.budget = budget 
+
             self.load_data(df=df)
 
             self.price_df.loc[i-2] = list(self.price.values)
@@ -136,22 +138,29 @@ class MultiPeriod(SinglePeriod):
             # Making solve run
             if self.model_type == 'DQM':
                 print(f"\nMulti-Period DQM Run...")
-
+                
                 self.build_dqm()
                 self.solution['DQM'] = self.solve_dqm()
                 result = self.solution['DQM']
             else:
                 print(f"\nMulti-Period CQM Run...")
 
-                self.solution['CQM'] = self.solve_cqm(max_risk=max_risk, min_return=min_return)
+                # Set budget to 0 to enforce that portfolio is self-financing 
+                if self.t_cost and not first_purchase:
+                    self.budget = 0 
+
+                self.solution['CQM'] = self.solve_cqm(max_risk=max_risk, 
+                                                      min_return=min_return,
+                                                      init_holdings=init_holdings)
                 result = self.solution['CQM']
+                init_holdings = result['stocks']
 
             # Print results to command-line
-            spending = sum([self.price[s]*result['stocks'][s] for s in self.stocks])
+            value = sum([self.price[s]*result['stocks'][s] for s in self.stocks])
             returns = result['return']
             variance = result['risk']     
 
-            row = [months[-1].strftime('%Y-%m-%d'), budget, spending] + \
+            row = [months[-1].strftime('%Y-%m-%d'), value] + \
                 [result['stocks'][s] for s in self.stocks] + \
                 [variance, returns] 
             self.opt_results_df.loc[i-2] = row 

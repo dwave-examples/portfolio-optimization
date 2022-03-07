@@ -101,7 +101,15 @@ We can do similarly for the return-bounding formulation, with this command:
 
 ##### CQM Transaction Cost Model 
 
-The demo allows the user to model transaction costs as a percentage of the total transactions value (sales and purchases). A default CQM run with a transaction cost factor of 10% can be done with the following command:
+The demo allows the user to model transaction costs as a percentage of the total transactions value. 
+For a transaction cost factor c and initial holdings x<sup>0</sup>, a new 0-1 variable y<sub>i</sub> is defined to indicate 
+the transaction direction (1 for a sale and 0 for purchase) along with the following new constraints: 
+x<sub>i</sub> &geq; y<sub>i</sub> x<sub>i</sub><sup>0</sup>
+x<sub>i</sub><sup>0</sup> &geq; x<sub>i</sub>(1 - y<sub>i</sub>) 
+The balance constraint then becomes:
+&Sigma;<sub>i</sub> (p<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>) + cp<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>)(2y<sub>i</sub> - 1)) &leq; B
+
+A default CQM run with a transaction cost factor of 1% can be done with the following command:
 
 `python portfolio.py -m 'CQM' -t 0.01` 
 

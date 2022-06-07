@@ -14,8 +14,8 @@ AAP,Advance Auto Parts,Consumer Discretionary,Automotive Retail,7/9/15
 AAL,American Airlines Group,Industrials,Airlines,3/23/15
 RCL,Royal Caribbean Group,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",12/5/14
 AVGO,Broadcom,Information Technology,Semiconductors,5/8/14
-UAA,Under Armour (Class A),Consumer Discretionary,"Apparel, Accessories & Luxury Goods",5/1/14
-GOOGL,Alphabet (Class A),Communication Services,Interactive Media & Services,4/3/14
+UAA,Under Armour (Class A),Consumer Discretionary,"Apparel, Accessories & Luxury Goods",5/1/14
+GOOGL,Alphabet (Class A),Communication Services,Interactive Media & Services,4/3/14
 DAL,Delta Air Lines,Industrials,Airlines,9/11/13
 GM,General Motors,Consumer Discretionary,Automobile Manufacturers,6/6/13
 GRMN,Garmin,Consumer Discretionary,Consumer Electronics,12/12/12
@@ -28,7 +28,7 @@ NFLX,Netflix,Communication Services,Movies & Entertainment,12/20/10
 JCI,Johnson Controls,Industrials,Building Products,8/27/10
 CB,Chubb,Financials,Property & Casualty Insurance,7/15/10
 KMX,CarMax,Consumer Discretionary,Specialty Stores,6/28/10
-DISCA,Discovery (Series A),Communication Services,Broadcasting,3/1/10
+SHEL,Royal Dutch Shell PLC,Energy,,
 NRG,NRG Energy,Utilities,Independent Power Producers & Energy Traders,1/29/10
 ROST,Ross Stores,Consumer Discretionary,Apparel Retail,12/21/09
 V,Visa,Information Technology,Data Processing & Outsourced Services,12/21/09
@@ -41,7 +41,7 @@ WELL,Welltower,Real Estate,Health Care REITs,1/30/09
 IRM,Iron Mountain,Real Estate,Specialized REITs,1/6/09
 WYNN,Wynn Resorts,Consumer Discretionary,Casinos & Gaming,11/14/08
 XRAY,Dentsply Sirona,Health Care,Health Care Supplies,11/14/08
-PBCT,People's United Financial,Financials,Thrifts & Mortgage Finance,11/13/08
+PBT,Permian Basin Royalty Trust,Energy,,
 WEC,WEC Energy Group,Utilities,Electric Utilities,10/31/08
 APH,Amphenol,Information Technology,Electronic Components,9/30/08
 PXD,Pioneer Natural Resources,Energy,Oil & Gas Exploration & Production,9/24/08
@@ -72,7 +72,7 @@ FIS,Fidelity National Information Services,Information Technology,Data Processin
 WU,Western Union,Information Technology,Data Processing & Outsourced Services,9/29/06
 JNPR,Juniper Networks,Information Technology,Communications Equipment,6/2/06
 BXP,Boston Properties,Real Estate,Office REITs,4/3/06
-GOOG,Alphabet (Class C),Communication Services,Interactive Media & Services,4/3/06
+GOOG,Alphabet (Class C),Communication Services,Interactive Media & Services,4/3/06
 VRSN,Verisign,Information Technology,Internet Services & Infrastructure,2/1/06
 EL,Estée Lauder Companies,Consumer Staples,Personal Products,1/5/06
 AMZN,Amazon,Consumer Discretionary,Internet & Direct Marketing Retail,11/18/05
@@ -168,7 +168,7 @@ CNP,CenterPoint Energy,Utilities,Multi-Utilities,7/31/85
 NOC,Northrop Grumman,Industrials,Aerospace & Defense,6/30/85
 APD,Air Products & Chemicals,Materials,Industrial Gases,4/30/85
 NUE,Nucor,Materials,Steel,4/30/85
-BLL,Ball Corp,Materials,Metal & Glass Containers,10/31/84
+ABB,ABB Ltd,Industrials,,
 HAS,Hasbro,Consumer Discretionary,Leisure Products,9/30/84
 LMT,Lockheed Martin,Industrials,Aerospace & Defense,7/31/84
 HES,Hess Corporation,Energy,Integrated Oil & Gas,5/31/84
@@ -292,7 +292,7 @@ TPR,Tapestry,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",
 TROW,T. Rowe Price,Financials,Asset Management & Custody Banks,
 TXN,Texas Instruments,Information Technology,Semiconductors,
 USB,U.S. Bancorp,Financials,Diversified Banks,
-VIAC,ViacomCBS,Communication Services,Movies & Entertainment,
+GME,GameStop Corporation,Consumer Cyclical,,
 VLO,Valero Energy,Energy,Oil & Gas Refining & Marketing,
 VNO,Vornado Realty Trust,Real Estate,Office REITs,
 WAT,Waters Corporation,Health Care,Health Care Distributors,

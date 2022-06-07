@@ -143,6 +143,14 @@ class SinglePeriod:
             for i in self.stocks:
                 self.df_all[i] = panel_data[[('Adj Close',  i)]]
 
+            nan_columns = self.df_all.columns[self.df_all.isna().any()].tolist()
+            if nan_columns:
+                print("The following tickers are dropped due to invalid data: ", nan_columns)
+                self.df_all = self.df_all.dropna(axis=1)
+                if len(self.df_all.columns) < 2:
+                    raise Exception(f"There must be at least 2 valid stock tickers.") 
+                self.stocks = list(self.df_all.columns)
+
             # Read in baseline data; resample to monthly
             index_df = DataReader(self.baseline, 'yahoo', 
                                   self.dates[0], self.dates[1])

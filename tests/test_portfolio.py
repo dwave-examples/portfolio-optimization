@@ -74,12 +74,14 @@ class TestDemo(unittest.TestCase):
 
     def test_build_random_cqm_instance(self):
         test_portfolio = SinglePeriod(model_type='CQM')
-
+        
         test_portfolio.load_data(dates=['2010-01-01', '2010-12-31'], num=10)
         test_portfolio.build_cqm()
+        
+        k = len(test_portfolio.stocks)
 
-        self.assertEqual(len(test_portfolio.model['CQM'].variables), 30)
-        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 32)
+        self.assertEqual(len(test_portfolio.model['CQM'].variables), 3*k)
+        self.assertEqual(len(test_portfolio.model['CQM'].constraints), 3*k + 2)
 
     def test_build_cqm_no_transaction(self):
         test_portfolio = SinglePeriod(model_type='CQM', t_cost=0)

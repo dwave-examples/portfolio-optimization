@@ -298,7 +298,7 @@ class SinglePeriod:
                                                                 label="Example - Portfolio Optimization")
         n_samples = len(self.sample_set['CQM'].record)
 
-        feasible_samples = (self.sample_set['CQM']).filter(lambda d: d.is_feasible) 
+        feasible_samples = self.sample_set['CQM'].filter(lambda d: d.is_feasible) 
 
         if not feasible_samples: 
             raise Exception("No feasible solution could be found for this problem instance.")

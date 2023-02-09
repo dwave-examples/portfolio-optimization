@@ -24,6 +24,8 @@ from dimod import quicksum
 from dimod import ConstrainedQuadraticModel, DiscreteQuadraticModel
 from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler 
 
+import yfinance as yf
+
 
 class SinglePeriod: 
     """Define and solve a  single-period portfolio optimization problem.
@@ -134,8 +136,8 @@ class SinglePeriod:
                 self.stocks = random.sample(list(symbols_df.loc[:,'Symbol']), num)
 
             # Read in daily data; resample to monthly
-            panel_data = DataReader(self.stocks, 'yahoo', 
-                                    self.dates[0], self.dates[1])
+            panel_data = yf.download(self.stocks, 
+                                     start=self.dates[0], end=self.dates[1])
             panel_data = panel_data.resample('BM').last()
             self.df_all = pd.DataFrame(index=panel_data.index, 
                                        columns=self.stocks)
@@ -152,14 +154,13 @@ class SinglePeriod:
                 self.stocks = list(self.df_all.columns)
 
             # Read in baseline data; resample to monthly
-            index_df = DataReader(self.baseline, 'yahoo', 
-                                  self.dates[0], self.dates[1])
+            index_df = yf.download(self.baseline, 
+                                   start=self.dates[0], end=self.dates[1])
             index_df = index_df.resample('BM').last()
-            self.df_baseline = pd.DataFrame(index=index_df.index, 
-                                            columns=self.baseline)
-
+            self.df_baseline = pd.DataFrame(index=index_df.index)
+            
             for i in self.baseline:
-                self.df_baseline[i] = index_df[[('Adj Close',  i)]]
+                self.df_baseline[i] = index_df[[('Adj Close')]]
 
             self.df = self.df_all 
         else:
@@ -297,7 +298,7 @@ class SinglePeriod:
                                                                 label="Example - Portfolio Optimization")
         n_samples = len(self.sample_set['CQM'].record)
 
-        feasible_samples = self.sample_set['CQM'].filter(lambda d: d.is_feasible) 
+        feasible_samples = (self.sample_set['CQM']).filter(lambda d: d.is_feasible) 
 
         if not feasible_samples: 
             raise Exception("No feasible solution could be found for this problem instance.")

@@ -189,7 +189,10 @@ class SinglePeriod:
         self.price = self.df.iloc[-1]
         self.monthly_returns = self.df[list(self.stocks)].pct_change().iloc[1:]
         self.avg_monthly_returns = self.monthly_returns.mean(axis=0)
-        self.covariance_matrix = self.monthly_returns.cov()
+        self.covariance_matrix = covariance_matrix = self.monthly_returns.cov()
+
+        # convert any NaNs in the covariance matrix to 0s
+        covariance_matrix.replace(np.nan, 0)
 
     def build_cqm(self, max_risk=None, min_return=None, init_holdings=None):
         """Build and store a CQM. 

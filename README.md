@@ -1,6 +1,6 @@
-[![Open in Leap IDE](
-  https://cdn-assets.cloud.dwavesys.com/shared/latest/badges/leapide.svg)](
-  https://ide.dwavesys.io/#https://github.com/dwave-examples/portfolio-optimization)
+[![Open in GitHub Codespaces](
+  https://img.shields.io/badge/Open%20in%20GitHub%20Codespaces-333?logo=github)](
+  https://codespaces.new/dwave-examples/portfolio-optimization?quickstart=1)
 [![Linux/Mac/Windows build status](
   https://circleci.com/gh/dwave-examples/portfolio-optimization.svg?style=shield)](
   https://circleci.com/gh/dwave-examples/portfolio-optimization)

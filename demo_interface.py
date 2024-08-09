@@ -19,7 +19,7 @@ from dash import dcc, html
 import plotly.graph_objs as go
 
 
-from app_configs import (
+from demo_configs import (
     BUDGET,
     CHECKLIST,
     DESCRIPTION,
@@ -32,7 +32,7 @@ from app_configs import (
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.enums import SamplerType
+from src.demo_enums import SamplerType
 
 SAMPLER_TYPES = {SamplerType.CQM: "Quantum Hybrid (CQM)", SamplerType.DQM: "Quantum Hybrid (DQM)"}
 
@@ -293,9 +293,9 @@ def problem_details(index: int) -> html.Div:
     )
 
 
-def set_html(app):
+def create_interface() -> html.Div:
     """Set the application HTML."""
-    app.layout = html.Div(
+    return html.Div(
         id="app-container",
         children=[
             # Below are any temporary storage items, e.g., for sharing data between callbacks.

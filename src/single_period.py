@@ -16,7 +16,7 @@ from itertools import product
 import json
 import random
 
-from src.enums import SamplerType
+from src.demo_enums import SamplerType
 import numpy as np
 import pandas as pd
 from dimod import Integer, Binary

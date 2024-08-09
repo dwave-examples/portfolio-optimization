@@ -14,9 +14,9 @@
 
 import click
 
-from src.enums import SamplerType
-from multi_period import MultiPeriod
-from single_period import SinglePeriod
+from src.demo_enums import SamplerType
+from src.multi_period import MultiPeriod
+from src.single_period import SinglePeriod
 
 
 @click.command()

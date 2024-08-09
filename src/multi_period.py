@@ -13,13 +13,13 @@
 # limitations under the License.
 
 import pandas as pd
-from src.enums import SamplerType
+from src.demo_enums import SamplerType
 import numpy as np
 import matplotlib
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 
-from single_period import SinglePeriod
+from src.single_period import SinglePeriod
 
 
 class MultiPeriod(SinglePeriod):

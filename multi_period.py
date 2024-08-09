@@ -13,14 +13,11 @@
 # limitations under the License.
 
 import pandas as pd
+from src.enums import SamplerType
 import numpy as np
 import matplotlib
-
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    matplotlib.use("agg")
-    import matplotlib.pyplot as plt
+matplotlib.use("agg")
+import matplotlib.pyplot as plt
 
 from single_period import SinglePeriod
 
@@ -36,7 +33,7 @@ class MultiPeriod(SinglePeriod):
         gamma=None,
         file_path=None,
         dates=None,
-        model_type="CQM",
+        model_type=SamplerType.CQM,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -91,7 +88,7 @@ class MultiPeriod(SinglePeriod):
 
         num_months = len(self.df_all)
         first_purchase = True
-        result = {}
+        solution = {}
         baseline_result = {}
         self.baseline_values = [0]
         self.update_values = [0]
@@ -135,7 +132,7 @@ class MultiPeriod(SinglePeriod):
                 baseline_result = {self.baseline[0]: baseline_shares}
             else:
                 # Compute profit of current portfolio
-                budget = sum([df.iloc[-1][s] * result["stocks"][s] for s in self.stocks])
+                budget = sum([df.iloc[-1][s] * solution["stocks"][s] for s in self.stocks])
                 self.update_values.append(budget - initial_budget)
 
                 # Compute profit of fund portfolio
@@ -175,12 +172,11 @@ class MultiPeriod(SinglePeriod):
             plt.pause(0.05)
 
             # Making solve run
-            if self.model_type == "DQM":
+            if self.model_type is SamplerType.DQM:
                 print(f"\nMulti-Period DQM Run...")
 
                 self.build_dqm()
-                self.solution["DQM"] = self.solve_dqm()
-                result = self.solution["DQM"]
+                solution = self.solve_dqm()
             else:
                 print(f"\nMulti-Period CQM Run...")
 
@@ -188,20 +184,22 @@ class MultiPeriod(SinglePeriod):
                 if self.t_cost and not first_purchase:
                     self.budget = 0
 
-                self.solution["CQM"] = self.solve_cqm(
+                solution = self.solve_cqm(
                     max_risk=max_risk, min_return=min_return, init_holdings=init_holdings
                 )
-                result = self.solution["CQM"]
-                init_holdings = result["stocks"]
+
+                init_holdings = solution["stocks"]
+
+            self.print_results(solution=solution)
 
             # Print results to command-line
-            value = sum([self.price[s] * result["stocks"][s] for s in self.stocks])
-            returns = result["return"]
-            variance = result["risk"]
+            value = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
+            returns = solution["return"]
+            variance = solution["risk"]
 
             row = (
                 [months[-1].strftime("%Y-%m-%d"), value]
-                + [result["stocks"][s] for s in self.stocks]
+                + [solution["stocks"][s] for s in self.stocks]
                 + [variance, returns]
             )
             self.opt_results_df.loc[i - 2] = row
@@ -209,7 +207,8 @@ class MultiPeriod(SinglePeriod):
             first_purchase = False
 
         print(self.opt_results_df)
-        print(f"\nRun completed.\n")
 
         plt.savefig("portfolio.png")
         plt.show(block=False)
+
+        return self.opt_results_df

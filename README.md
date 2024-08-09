@@ -41,7 +41,7 @@ the formulation of the portfolio problem:
 
 #### CQM Runs 
 
-The single-period demo determines the optimal number of shares to purchase from 3 stocks based on
+The single-period demo determines the optimal number of shares to purchase from 4 stocks based on
 the historical price data provided. To run the demo, type:
 
 ```python portfolio.py```
@@ -169,7 +169,7 @@ settings, type:
 
 `python portfolio.py -r`
 
-The program will pull historical data on four stocks from Yahoo! finance over a period of 3
+The program will pull historical data on four stocks from Yahoo Finance over a period of 3
 years. For each month in the year, the optimal portfolio is computed and the funds are
 reinvested. A plot shows the trend of the portfolio value over time, as compared to a fund
 portfolio (investing all of the budget into a given fund, such as S&P500).

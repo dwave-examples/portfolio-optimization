@@ -16,14 +16,16 @@
 from __future__ import annotations
 
 from dash import dcc, html
+import plotly.graph_objs as go
+
 
 from app_configs import (
     BUDGET,
     CHECKLIST,
     DESCRIPTION,
-    DROPDOWN,
     MAIN_HEADER,
     NUM_STOCKS,
+    PERIOD_OPTIONS,
     RADIO,
     TRANSACTION_COST,
     SOLVER_TIME,
@@ -150,6 +152,7 @@ def generate_settings_form() -> html.Div:
     """
     checklist_options = generate_options(CHECKLIST)
     radio_options = generate_options(RADIO)
+    period_options = generate_options(PERIOD_OPTIONS)
 
     sampler_options = [
         {"label": label, "value": sampler_type.value}
@@ -159,38 +162,31 @@ def generate_settings_form() -> html.Div:
     return html.Div(
         className="settings",
         children=[
+            dropdown(
+                "Single/Multi-Period",
+                "period-options",
+                sorted(period_options, key=lambda op: op["value"]),
+            ),
             html.Label("Budget"),
             dcc.Input(
                 id="budget",
                 type="number",
                 **BUDGET,
             ),
+            # slider(
+            #     "Number of Stocks",
+            #     "num-stocks",
+            #     NUM_STOCKS,
+            # ),
             slider(
                 "Percentage Transaction Cost",
                 "transaction-cost",
                 TRANSACTION_COST,
             ),
-            slider(
-                "Number of Stocks",
-                "num-stocks",
-                NUM_STOCKS,
-            ),
-            html.Label("Date Range"),
-            dcc.DatePickerRange(
-                id="date-range",
-            ),
-            checklist(
-                "Example Checklist",
-                "checklist",
-                sorted(checklist_options, key=lambda op: op["value"]),
-                [0],
-            ),
-            radio(
-                "Example Radio",
-                "radio",
-                sorted(radio_options, key=lambda op: op["value"]),
-                0,
-            ),
+            # html.Label("Date Range"),
+            # dcc.DatePickerRange(
+            #     id="date-range",
+            # ),
             dropdown(
                 "Solver",
                 "sampler-type-select",
@@ -356,10 +352,30 @@ def set_html(app):
                                         children=[
                                             dcc.Loading(
                                                 parent_className="input",
+                                                className="input-loading",
                                                 type="circle",
                                                 color=THEME_COLOR_SECONDARY,
                                                 # A Dash callback (in app.py) will generate content in the Div below
-                                                children=html.Div(id="input"),
+                                                children=html.Div(
+                                                    # html.Img(src="static/portfolio.png"),
+                                                    [
+                                                        dcc.Graph(
+                                                            # id={"type": f"graph", "index": 0},
+                                                            id="input-graph",
+                                                            responsive=True,
+                                                            config={"displayModeBar": False},
+                                                            # figure=go.Figure(
+                                                            #     data=[
+                                                            #         go.Scatter(
+                                                            #             x=["Jan", "Mar", "May", "Jul", "Sep", "Nov"],
+                                                            #             y=[0, 0, 0, 0, 0, 0], mode="lines", line=go.scatter.Line(color="red"),
+                                                            #         )
+                                                            #     ]
+                                                            # )
+                                                        )
+                                                    ],
+                                                    # id="input",
+                                                ),
                                             ),
                                         ],
                                     ),
@@ -377,7 +393,10 @@ def set_html(app):
                                                         type="circle",
                                                         color=THEME_COLOR_SECONDARY,
                                                         # A Dash callback (in app.py) will generate content in the Div below
-                                                        children=html.Div(id="results"),
+                                                        children=html.Div(
+                                                            # id="results"
+                                                            [html.Img(src="static/portfolio.png")]
+                                                        ),
                                                     ),
                                                     # Problem details dropdown
                                                     html.Div([html.Hr(), problem_details(1)]),

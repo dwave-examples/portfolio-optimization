@@ -24,6 +24,10 @@ limitations under the License.
     height: 100%;
 }
 
+.tab-content {
+    padding: 0 3rem 3rem;
+}
+
 .solution-stats-table td:nth-child(2n) {
     text-align: right;
 }
@@ -32,13 +36,6 @@ limitations under the License.
     border-right: none;
 }
 
-.input, .results {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.input, .results, .input > div:first-child, #input-graph {
     height: 100%;
 }
-
-  /****************************/
- /*** CUSTOM CSS GOES HERE ***/
-/****************************/

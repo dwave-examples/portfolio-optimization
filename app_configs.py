@@ -35,10 +35,10 @@ while staying under some specified spending budget.
 #######################################
 
 TRANSACTION_COST = {
-    "min": 1,
-    "max": 100,
-    "step": 1,
-    "value": 5,
+    "min": 0,
+    "max": 5,
+    "step": 0.1,
+    "value": 2.5,
 }
 
 NUM_STOCKS = {
@@ -48,8 +48,7 @@ NUM_STOCKS = {
     "value": 5,
 }
 
-# an example dropdown
-DROPDOWN = ["Option 1", "Option 2"]
+PERIOD_OPTIONS = ["Single-Period", "Multi-Period Rebalancing"]
 
 # an example checklist
 CHECKLIST = ["Option 1", "Option 2"]
@@ -59,9 +58,9 @@ RADIO = ["Option 1", "Option 2"]
 
 BUDGET = {
     "min": 100,
-    "max": 1000,
+    "max": 5000,
     "step": 5,
-    "value": 100,
+    "value": 1000,
 }
 
 # solver time limits in seconds (value means default)

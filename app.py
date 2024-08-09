@@ -22,9 +22,15 @@ import diskcache
 from dash import MATCH, DiskcacheManager, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+import pandas as pd
+import plotly.graph_objs as go
+from src.utils import get_live_data
+import yfinance as yf
 
 from app_configs import APP_TITLE, THEME_COLOR, THEME_COLOR_SECONDARY
 from dash_html import generate_problem_details_table_rows, set_html
+from multi_period import MultiPeriod
+from single_period import SinglePeriod
 from src.enums import SamplerType
 
 cache = diskcache.Cache("./cache")
@@ -110,13 +116,37 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
 
 
+def generate_graph(
+    df: pd.DataFrame = None
+) -> go.Figure:
+    """Generates graph given df.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the data to plot.
+
+    Returns:
+        go.Figure: A Plotly figure object.
+    """
+    fig = go.Figure()
+
+    for col in list(df.columns.values):
+        if col != "Month":
+            fig.add_trace(go.Scatter(x=df["Month"] if "Month" in df.columns else df.index, y=df[col], mode="lines", name=col))
+
+    fig.update_layout(
+        title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
+    )
+
+    return fig
+
+
 @app.callback(
-    Output("input", "children"),
+    Output("input-graph", "figure"),
     inputs=[
-        Input("slider", "value"),
+        Input("period-options", "value"),
     ],
 )
-def render_initial_state(slider_value: int) -> str:
+def render_initial_state(period_value: int) -> str:
     """Runs on load and any time the value of the slider is updated.
         Add `prevent_initial_call=True` to skip on load runs.
 
@@ -126,7 +156,16 @@ def render_initial_state(slider_value: int) -> str:
     Returns:
         str: The content of the input tab.
     """
-    return f"Put demo input here. The current slider value is {slider_value}."
+    if period_value:
+        num = 0
+        dates = ['2010-01-01', '2012-12-31']
+        stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
+        baseline = ['^GSPC']
+        df, stocks, df_baseline = get_live_data(num, dates, stocks, baseline)
+    else:
+        df = pd.read_csv('data/basic_data.csv')
+
+    return generate_graph(df)
 
 
 class RunOptimizationReturn(NamedTuple):
@@ -140,17 +179,19 @@ class RunOptimizationReturn(NamedTuple):
 
 @app.callback(
     # The Outputs below must align with `RunOptimizationReturn`.
-    Output("results", "children"),
+    # Output("results", "children"),
     Output("problem-details", "children"),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
         State("sampler-type-select", "value"),
         State("solver-time-limit", "value"),
-        State("slider", "value"),
-        State("dropdown", "value"),
-        State("checklist", "value"),
-        State("radio", "value"),
+        State("budget", "value"),
+        State("transaction-cost", "value"),
+        # State("num-stocks", "value"),
+        State("period-options", "value"),
+        # State("date-range", "start_date"),
+        # State("date-range", "end_date"),
     ],
     running=[
         # Shows cancel button while running.
@@ -170,10 +211,12 @@ def run_optimization(
     run_click: int,
     sampler_type: Union[SamplerType, int],
     time_limit: float,
-    slider_value: int,
-    dropdown_value: int,
-    checklist_value: list,
-    radio_value: int,
+    budget: int,
+    transaction_cost: list,
+    # num_stocks: int,
+    period_options: int,
+    # start_date: date,
+    # end_date: date,
 ) -> RunOptimizationReturn:
     """Runs the optimization and updates UI accordingly.
 
@@ -209,30 +252,47 @@ def run_optimization(
     if isinstance(sampler_type, int):
         sampler_type = SamplerType(sampler_type)
 
-    print(
-        f"The form has the following values:\n\
-        Example Slider: {slider_value}\n\
-        Example Dropdown: {dropdown_value}\n\
-        Example Checklist: {checklist_value}\n\
-        Example Radio: {radio_value}\n\
-        Solver: {sampler_type}\n\
-        Time Limit: {time_limit}"
-    )
+    if period_options:
+        print(f"\nRebalancing portfolio optimization run...")
 
-    ###########################
-    ### YOUR CODE GOES HERE ###
-    ###########################
+        my_portfolio = MultiPeriod(
+            budget=budget,
+            sampler_args="{}",
+            gamma=True,
+            model_type=sampler_type,
+            stocks=['AAPL', 'MSFT', 'AAL', 'WMT'],
+            file_path='data/basic_data.csv',
+            alpha=[0.005],
+            baseline="^GSPC",
+            t_cost=0
+        )
+
+    else:
+        print(f"\nSingle period portfolio optimization run...")
+
+        my_portfolio = SinglePeriod(
+            budget=budget,
+            sampler_args="{}",
+            model_type=sampler_type,
+            stocks=['AAPL', 'MSFT', 'AAL', 'WMT'],
+            file_path='data/basic_data.csv',
+            alpha=[0.005],
+            t_cost=transaction_cost,
+        )
+
+    solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table_rows(
-        solver="Classical" if sampler_type is SamplerType.CLASSICAL else "Quantum Hybrid",
+        solver="CQM" if sampler_type is SamplerType.CQM else "DQM",
         time_limit=time_limit,
     )
 
-    return RunOptimizationReturn(
-        results="Put demo results here.",
-        problem_details_table=problem_details_table,
-    )
+    # return RunOptimizationReturn(
+    #     # results="Put demo results here.",
+    #     problem_details_table=problem_details_table,
+    # )
+    return problem_details_table
 
 
 # Imports the Dash HTML code and sets it in the app.

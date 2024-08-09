@@ -16,6 +16,7 @@ from itertools import product
 import json
 import random
 
+from src.enums import SamplerType
 import numpy as np
 import pandas as pd
 from dimod import Integer, Binary
@@ -23,6 +24,7 @@ from dimod import quicksum
 from dimod import ConstrainedQuadraticModel, DiscreteQuadraticModel
 from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 
+from src.utils import get_live_data
 import yfinance as yf
 
 
@@ -37,7 +39,7 @@ class SinglePeriod:
         gamma=None,
         file_path="data/basic_data.csv",
         dates=None,
-        model_type="CQM",
+        model_type=SamplerType.CQM,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -138,45 +140,9 @@ class SinglePeriod:
             if dates:
                 self.dates = dates
 
-            print(
-                f"\nLoading live data from the web from Yahoo! finance",
-                f"from {self.dates[0]} to {self.dates[1]}...",
-            )
+            self.df, self.stocks, self.df_baseline = get_live_data(num, self.dates, self.stocks, self.baseline)
+            self.df_all = self.df
 
-            # Generating randomn list of stocks
-            if num > 0:
-                if self.dates[0] < "2010-01-01":
-                    raise Exception(
-                        f"Start date must be >= '2010-01-01' " f"when using option 'num'."
-                    )
-                symbols_df = pd.read_csv("data/stocks_symbols.csv")
-                self.stocks = random.sample(list(symbols_df.loc[:, "Symbol"]), num)
-
-            # Read in daily data; resample to monthly
-            panel_data = yf.download(self.stocks, start=self.dates[0], end=self.dates[1])
-            panel_data = panel_data.resample("BM").last()
-            self.df_all = pd.DataFrame(index=panel_data.index, columns=self.stocks)
-
-            for i in self.stocks:
-                self.df_all[i] = panel_data[[("Adj Close", i)]]
-
-            nan_columns = self.df_all.columns[self.df_all.isna().any()].tolist()
-            if nan_columns:
-                print("The following tickers are dropped due to invalid data: ", nan_columns)
-                self.df_all = self.df_all.dropna(axis=1)
-                if len(self.df_all.columns) < 2:
-                    raise Exception(f"There must be at least 2 valid stock tickers.")
-                self.stocks = list(self.df_all.columns)
-
-            # Read in baseline data; resample to monthly
-            index_df = yf.download(self.baseline, start=self.dates[0], end=self.dates[1])
-            index_df = index_df.resample("BM").last()
-            self.df_baseline = pd.DataFrame(index=index_df.index)
-
-            for i in self.baseline:
-                self.df_baseline[i] = index_df[[("Adj Close")]]
-
-            self.df = self.df_all
         else:
             print("\nLoading data from provided CSV file...")
             if file_path:
@@ -327,51 +293,41 @@ class SinglePeriod:
 
         if not feasible_samples:
             raise Exception("No feasible solution could be found for this problem instance.")
-        else:
-            best_feasible = feasible_samples.first
 
-            solution = {}
+        best_feasible = feasible_samples.first
 
-            solution["stocks"] = {k: int(best_feasible.sample[k]) for k in self.stocks}
+        solution = {}
+        solution["stocks"] = {k: int(best_feasible.sample[k]) for k in self.stocks}
+        solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
 
-            solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
+        cost = sum(
+            [
+                self.price[s] * max(0, solution["stocks"][s] - self.init_holdings[s])
+                for s in self.stocks
+            ]
+        )
+        sales = sum(
+            [
+                self.price[s] * max(0, self.init_holdings[s] - solution["stocks"][s])
+                for s in self.stocks
+            ]
+        )
 
-            spending = sum(
-                [
-                    self.price[s] * max(0, solution["stocks"][s] - self.init_holdings[s])
-                    for s in self.stocks
-                ]
-            )
-            sales = sum(
-                [
-                    self.price[s] * max(0, self.init_holdings[s] - solution["stocks"][s])
-                    for s in self.stocks
-                ]
-            )
+        transaction = self.t_cost * (cost + sales)
 
-            transaction = self.t_cost * (spending + sales)
+        solution.update(
+            {
+                "energy": best_feasible.energy,
+                "sales": sales,
+                "cost": cost,
+                "transaction cost": transaction,
+                "number feasible": len(feasible_samples),
+                "number sampled": n_samples,
+                "best energy": self.sample_set["CQM"].first.energy,
+            }
+        )
 
-            if self.verbose:
-                print(
-                    f"Number of feasible solutions: {len(feasible_samples)} out of {n_samples} sampled."
-                )
-                print(f'\nBest energy: {self.sample_set["CQM"].first.energy: .2f}')
-                print(f"Best energy (feasible): {best_feasible.energy: .2f}")
-
-            print(f"\nBest feasible solution:")
-            print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution["stocks"].items()))
-
-            print(f"\nEstimated Returns: {solution['return']}")
-
-            print(f"Sales Revenue: {sales:.2f}")
-
-            print(f"Purchase Cost: {spending:.2f}")
-
-            print(f"Transaction Cost: {transaction:.2f}")
-
-            print(f"Variance: {solution['risk']}\n")
-
-            return solution
+        return solution
 
     def build_dqm(self, alpha=None, gamma=None):
         """Build DQM.
@@ -465,25 +421,19 @@ class SinglePeriod:
             self.model["DQM"], label="Example - Portfolio Optimization"
         )
 
-        solution = {}
-
         sample = self.sample_set["DQM"].first.sample
-        solution["stocks"] = {s: self.shares_intervals[s][sample[s]] for s in self.stocks}
 
+        solution = {}
+        solution["stocks"] = {s: self.shares_intervals[s][sample[s]] for s in self.stocks}
         solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
 
-        spending = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
+        cost = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
 
-        print(f"\nDQM -- solution for alpha == {self.alpha} and gamma == {self.gamma}:")
-        print(f"\nShares to buy:")
-
-        print("\n".join("{}\t{:>3}".format(k, v) for k, v in solution["stocks"].items()))
-
-        print(f"\nEstimated returns: {solution['return']}")
-
-        print(f"Purchase Cost: {spending:.2f}")
-
-        print(f"Variance: {solution['risk']}\n")
+        solution.update({
+            "cost": cost,
+            "alpha": self.alpha,
+            "gamma": self.gamma,
+        })
 
         return solution
 
@@ -535,7 +485,40 @@ class SinglePeriod:
 
         return round(est_return, 2), round(variance, 2)
 
-    def run(self, min_return=0, max_risk=0, num=0, init_holdings=None):
+
+    def print_results(self, solution):
+        is_cqm_run = self.model_type is SamplerType.CQM
+
+        if self.verbose and is_cqm_run:
+            print(
+                f"Number of feasible solutions: {solution['number feasible']} out of {solution['number sampled']} sampled.",
+                f"\nBest energy: {solution['best energy']:.2f}",
+                f"Best energy (feasible): {solution['energy']:.2f}",
+                sep="\n"
+            )
+
+        if not is_cqm_run:
+            print(f"\nSolution for alpha = {solution['alpha']} and gamma = {solution['gamma']}:")
+
+        print(
+            f"\nBest feasible solution:",
+            "\n".join(f"{k}\t{v:>3}" for k, v in solution["stocks"].items()),
+            f"\nEstimated Returns: {solution['return']}",
+            sep="\n"
+        )
+
+        if is_cqm_run:
+            print(f"Sales Revenue: {solution['sales']:.2f}")
+
+        print(f"Purchase Cost: {solution['cost']:.2f}")
+
+        if is_cqm_run:
+            print(f"Transaction Cost: {solution['transaction cost']:.2f}")
+
+        print(f"Variance: {solution['risk']}\n")
+
+
+    def run(self, min_return: float=0, max_risk: float=0, num: int=0, init_holdings=None):
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:
@@ -545,9 +528,9 @@ class SinglePeriod:
             init_holdings (float): Initial holdings, or initial portfolio state.
         """
         self.load_data(num=num)
-        if self.model_type == "CQM":
+        if self.model_type is SamplerType.CQM:
             print(f"\nCQM run...")
-            self.solution["CQM"] = self.solve_cqm(
+            solution = self.solve_cqm(
                 min_return=min_return, max_risk=max_risk, init_holdings=init_holdings
             )
         else:
@@ -557,4 +540,7 @@ class SinglePeriod:
                 self.dqm_grid_search()
 
             self.build_dqm()
-            self.solution["DQM"] = self.solve_dqm()
+            solution = self.solve_dqm()
+
+        self.print_results(solution=solution)
+        return solution

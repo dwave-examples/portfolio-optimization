@@ -14,6 +14,7 @@
 
 import click
 
+from src.enums import SamplerType
 from multi_period import MultiPeriod
 from single_period import SinglePeriod
 
@@ -78,7 +79,7 @@ from single_period import SinglePeriod
     "--dates",
     nargs=2,
     type=str,
-    help="Start and end date to query stock data from Yahoo! Finance",
+    help="Start and end date to query stock data from Yahoo Finance",
 )
 @click.option(
     "-m",
@@ -122,35 +123,54 @@ from single_period import SinglePeriod
     help="Transaction cost: percentage of transaction dollar value.",
 )
 def main(
-    stocks,
-    budget,
-    bin_size,
-    gamma,
-    params,
-    file_path,
-    max_risk,
-    num,
-    min_return,
-    baseline,
-    dates,
-    model_type,
-    rebalance,
-    alpha,
-    verbose,
-    t_cost,
+    stocks: list,
+    budget: int,
+    bin_size: int,
+    gamma: tuple,
+    params: str,
+    file_path: str,
+    max_risk: float,
+    num: int,
+    min_return: float,
+    baseline: str,
+    dates: str,
+    model_type: str,
+    rebalance: bool,
+    alpha: tuple,
+    verbose: bool,
+    t_cost: float,
 ):
+    # print(
+    #     type(stocks),
+    #     type(budget),
+    #     type(bin_size),
+    #     type(gamma),
+    #     type(params),
+    #     type(file_path),
+    #     type(max_risk),
+    #     type(num),
+    #     type(min_return),
+    #     type(baseline),
+    #     type(dates),
+    #     type(model_type),
+    #     type(rebalance),
+    #     type(alpha),
+    #     type(verbose),
+    #     type(t_cost),
+    # )
+    sampler_type = SamplerType.CQM if model_type == "CQM" else SamplerType.DQM
 
-    if (max_risk or min_return) and model_type != "CQM":
+    if (max_risk or min_return) and sampler_type is SamplerType.DQM:
         raise Exception("The bound options require a CQM.")
 
-    if (gamma or bin_size) and model_type != "DQM":
+    if (gamma or bin_size) and sampler_type is SamplerType.CQM:
         raise Exception("The option gamma or bin-size requires a DQM.")
 
     if num and not dates:
         raise Exception("User must provide dates with option 'num'.")
 
-    if t_cost and model_type != "CQM":
-        raise Exception("The transaction cost option requires a CQM. " "Set t_cost=0 for DQM.")
+    if t_cost and sampler_type is SamplerType.DQM:
+        raise Exception("The transaction cost option requires a CQM. Set t_cost=0 for DQM.")
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")
@@ -163,7 +183,7 @@ def main(
             dates=dates,
             file_path=file_path,
             gamma=gamma,
-            model_type=model_type,
+            model_type=sampler_type,
             alpha=alpha,
             verbose=verbose,
             baseline=baseline,
@@ -179,14 +199,15 @@ def main(
             gamma=gamma,
             file_path=file_path,
             dates=dates,
-            model_type=model_type,
+            model_type=sampler_type,
             alpha=alpha,
             verbose=verbose,
             sampler_args=params,
             t_cost=t_cost,
         )
 
-    my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
+    # my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
+    solution = my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
 
 
 if __name__ == "__main__":

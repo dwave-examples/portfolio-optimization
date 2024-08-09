@@ -16,7 +16,7 @@ from itertools import product
 import json
 import random
 
-from src.demo_enums import SamplerType
+from src.demo_enums import SolverType
 import numpy as np
 import pandas as pd
 from dimod import Integer, Binary
@@ -39,7 +39,7 @@ class SinglePeriod:
         gamma=None,
         file_path="data/basic_data.csv",
         dates=None,
-        model_type=SamplerType.CQM,
+        model_type=SolverType.CQM,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -122,13 +122,10 @@ class SinglePeriod:
 
         self.precision = 2
 
-    def load_data(self, file_path="", dates=None, df=None, num=0):
+    def load_data(self, df=None, num=0):
         """Load the relevant stock data from file, dataframe, or Yahoo!.
 
         Args:
-            file_path (string): Full path of csv file containing stock price data
-                for the single period problem.
-            dates (list): [Start_Date, End_Date] to query data from Yahoo!.
             df (dataframe): Table of stock prices.
             num (int): Number of stocks to be randomnly generated.
         """
@@ -136,18 +133,11 @@ class SinglePeriod:
             print("\nLoading data from DataFrame...")
             self.df = df
             self.stocks = df.columns.tolist()
-        elif dates or self.dates:
-            if dates:
-                self.dates = dates
-
+        elif self.dates:
             self.df, self.stocks, self.df_baseline = get_live_data(num, self.dates, self.stocks, self.baseline)
             self.df_all = self.df
-
         else:
             print("\nLoading data from provided CSV file...")
-            if file_path:
-                self.file_path = file_path
-
             self.df = pd.read_csv(self.file_path, index_col=0)
 
         self.init_holdings = {s: 0 for s in self.stocks}
@@ -487,7 +477,7 @@ class SinglePeriod:
 
 
     def print_results(self, solution):
-        is_cqm_run = self.model_type is SamplerType.CQM
+        is_cqm_run = self.model_type is SolverType.CQM
 
         if self.verbose and is_cqm_run:
             print(
@@ -528,7 +518,7 @@ class SinglePeriod:
             init_holdings (float): Initial holdings, or initial portfolio state.
         """
         self.load_data(num=num)
-        if self.model_type is SamplerType.CQM:
+        if self.model_type is SolverType.CQM:
             print(f"\nCQM run...")
             solution = self.solve_cqm(
                 min_return=min_return, max_risk=max_risk, init_holdings=init_holdings

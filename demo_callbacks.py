@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import NamedTuple, Union
 
 import dash
@@ -27,7 +28,7 @@ from src.utils import get_live_data
 from demo_interface import generate_problem_details_table_rows
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
-from src.demo_enums import SamplerType
+from src.demo_enums import PeriodType, SolverType
 
 
 @dash.callback(
@@ -71,8 +72,7 @@ def generate_graph(
     fig = go.Figure()
 
     for col in list(df.columns.values):
-        if col != "Month":
-            fig.add_trace(go.Scatter(x=df["Month"] if "Month" in df.columns else df.index, y=df[col], mode="lines", name=col))
+        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col))
 
     fig.update_layout(
         title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
@@ -84,10 +84,16 @@ def generate_graph(
 @dash.callback(
     Output("input-graph", "figure"),
     inputs=[
-        Input("period-options", "value"),
+        Input("date-range", "start_date"),
+        Input("date-range", "end_date"),
+        Input("stocks", "value"),
     ],
 )
-def render_initial_state(period_value: int) -> str:
+def render_initial_state(
+    start_date: str,
+    end_date: str,
+    stocks: list,
+) -> go.Figure:
     """Runs on load and any time the value of the slider is updated.
         Add `prevent_initial_call=True` to skip on load runs.
 
@@ -97,14 +103,11 @@ def render_initial_state(period_value: int) -> str:
     Returns:
         str: The content of the input tab.
     """
-    if period_value:
-        num = 0
-        dates = ['2010-01-01', '2012-12-31']
-        stocks = ['AAPL', 'MSFT', 'AAL', 'WMT']
-        baseline = ['^GSPC']
-        df, stocks, df_baseline = get_live_data(num, dates, stocks, baseline)
-    else:
-        df = pd.read_csv('data/basic_data.csv')
+    num = 0
+    dates = [start_date, end_date] if start_date and end_date else ['2010-01-01', '2012-12-31']
+    stocks = stocks if stocks else ['AAPL', 'MSFT', 'AAL', 'WMT']
+    baseline = ['^GSPC']
+    df, stocks, df_baseline = get_live_data(num, dates, stocks, baseline)
 
     return generate_graph(df)
 
@@ -131,8 +134,9 @@ class RunOptimizationReturn(NamedTuple):
         State("transaction-cost", "value"),
         # State("num-stocks", "value"),
         State("period-options", "value"),
-        # State("date-range", "start_date"),
-        # State("date-range", "end_date"),
+        State("date-range", "start_date"),
+        State("date-range", "end_date"),
+        State("stocks", "value"),
     ],
     running=[
         # Shows cancel button while running.
@@ -150,14 +154,15 @@ def run_optimization(
     # The parameters below must match the `Input` and `State` variables found
     # in the `inputs` list above.
     run_click: int,
-    sampler_type: Union[SamplerType, int],
+    solver_type: Union[SolverType, int],
     time_limit: float,
     budget: int,
     transaction_cost: list,
     # num_stocks: int,
-    period_options: int,
-    # start_date: date,
-    # end_date: date,
+    period_value: Union[PeriodType, int],
+    start_date: str,
+    end_date: str,
+    stocks: list,
 ) -> RunOptimizationReturn:
     """Runs the optimization and updates UI accordingly.
 
@@ -168,8 +173,8 @@ def run_optimization(
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
-        sampler_type: Either Quantum Hybrid (``0`` or ``SamplerType.HYBRID``),
-            or Classical (``1`` or ``SamplerType.CLASSICAL``).
+        solver_type: Either Quantum Hybrid (``0`` or ``SolverType.HYBRID``),
+            or Classical (``1`` or ``SolverType.CLASSICAL``).
         time_limit: The solver time limit.
         slider_value: The value of the slider.
         dropdown_value: The value of the dropdown.
@@ -190,19 +195,20 @@ def run_optimization(
     if run_click == 0 or ctx.triggered_id != "run-button":
         raise PreventUpdate
 
-    if isinstance(sampler_type, int):
-        sampler_type = SamplerType(sampler_type)
+    solver_type = SolverType(solver_type)
+    period_type = PeriodType(period_value)
 
-    if period_options:
+    if period_type is PeriodType.MULTI:
         print(f"\nRebalancing portfolio optimization run...")
 
         my_portfolio = MultiPeriod(
             budget=budget,
             sampler_args="{}",
             gamma=True,
-            model_type=sampler_type,
-            stocks=['AAPL', 'MSFT', 'AAL', 'WMT'],
-            file_path='data/basic_data.csv',
+            model_type=solver_type,
+            stocks=stocks,
+            # file_path='data/basic_data.csv',
+            dates=[start_date, end_date],
             alpha=[0.005],
             baseline="^GSPC",
             t_cost=0
@@ -214,9 +220,10 @@ def run_optimization(
         my_portfolio = SinglePeriod(
             budget=budget,
             sampler_args="{}",
-            model_type=sampler_type,
-            stocks=['AAPL', 'MSFT', 'AAL', 'WMT'],
-            file_path='data/basic_data.csv',
+            model_type=solver_type,
+            stocks=stocks,
+            # file_path='data/basic_data.csv',
+            dates=[start_date, end_date],
             alpha=[0.005],
             t_cost=transaction_cost,
         )
@@ -225,7 +232,7 @@ def run_optimization(
 
     # Generates a list of table rows for the problem details table.
     problem_details_table = generate_problem_details_table_rows(
-        solver="CQM" if sampler_type is SamplerType.CQM else "DQM",
+        solver="CQM" if solver_type is SolverType.CQM else "DQM",
         time_limit=time_limit,
     )
 

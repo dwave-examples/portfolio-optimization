@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import pandas as pd
-from src.demo_enums import SamplerType
+from src.demo_enums import SolverType
 import numpy as np
 import matplotlib
 matplotlib.use("agg")
@@ -33,7 +33,7 @@ class MultiPeriod(SinglePeriod):
         gamma=None,
         file_path=None,
         dates=None,
-        model_type=SamplerType.CQM,
+        model_type=SolverType.CQM,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -172,7 +172,7 @@ class MultiPeriod(SinglePeriod):
             plt.pause(0.05)
 
             # Making solve run
-            if self.model_type is SamplerType.DQM:
+            if self.model_type is SolverType.DQM:
                 print(f"\nMulti-Period DQM Run...")
 
                 self.build_dqm()

@@ -14,7 +14,7 @@
 
 import click
 
-from src.demo_enums import SamplerType
+from src.demo_enums import SolverType
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 
@@ -158,18 +158,18 @@ def main(
     #     type(verbose),
     #     type(t_cost),
     # )
-    sampler_type = SamplerType.CQM if model_type == "CQM" else SamplerType.DQM
+    solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
 
-    if (max_risk or min_return) and sampler_type is SamplerType.DQM:
+    if (max_risk or min_return) and solver_type is SolverType.DQM:
         raise Exception("The bound options require a CQM.")
 
-    if (gamma or bin_size) and sampler_type is SamplerType.CQM:
+    if (gamma or bin_size) and solver_type is SolverType.CQM:
         raise Exception("The option gamma or bin-size requires a DQM.")
 
     if num and not dates:
         raise Exception("User must provide dates with option 'num'.")
 
-    if t_cost and sampler_type is SamplerType.DQM:
+    if t_cost and solver_type is SolverType.DQM:
         raise Exception("The transaction cost option requires a CQM. Set t_cost=0 for DQM.")
 
     if rebalance:
@@ -183,7 +183,7 @@ def main(
             dates=dates,
             file_path=file_path,
             gamma=gamma,
-            model_type=sampler_type,
+            model_type=solver_type,
             alpha=alpha,
             verbose=verbose,
             baseline=baseline,
@@ -199,7 +199,7 @@ def main(
             gamma=gamma,
             file_path=file_path,
             dates=dates,
-            model_type=sampler_type,
+            model_type=solver_type,
             alpha=alpha,
             verbose=verbose,
             sampler_args=params,

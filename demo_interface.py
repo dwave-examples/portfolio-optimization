@@ -14,6 +14,7 @@
 
 """This file stores the HTML layout for the app."""
 from __future__ import annotations
+from datetime import date, timedelta
 
 from dash import dcc, html
 import plotly.graph_objs as go
@@ -21,20 +22,18 @@ import plotly.graph_objs as go
 
 from demo_configs import (
     BUDGET,
-    CHECKLIST,
     DESCRIPTION,
     MAIN_HEADER,
-    NUM_STOCKS,
     PERIOD_OPTIONS,
-    RADIO,
+    STOCK_OPTIONS,
     TRANSACTION_COST,
     SOLVER_TIME,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.demo_enums import SamplerType
+from src.demo_enums import SolverType
 
-SAMPLER_TYPES = {SamplerType.CQM: "Quantum Hybrid (CQM)", SamplerType.DQM: "Quantum Hybrid (DQM)"}
+SAMPLER_TYPES = {SolverType.CQM: "Quantum Hybrid (CQM)", SolverType.DQM: "Quantum Hybrid (DQM)"}
 
 
 def slider(label: str, id: str, config: dict) -> html.Div:
@@ -89,56 +88,6 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
     )
 
 
-def checklist(label: str, id: str, options: list, values: list, inline: bool = True) -> html.Div:
-    """Checklist element for option selection.
-
-    Args:
-        label: The title that goes above the checklist.
-        id: A unique selector for this element.
-        options: A list of dictionaries of labels and values.
-        values: A list of values that should be preselected in the checklist.
-        inline: Whether the options of the checklist are displayed beside or below each other.
-    """
-    return html.Div(
-        className="checklist-wrapper",
-        children=[
-            html.Label(label),
-            dcc.Checklist(
-                id=id,
-                className=f"checklist{' checklist--inline' if inline else ''}",
-                inline=inline,
-                options=options,
-                value=values,
-            ),
-        ],
-    )
-
-
-def radio(label: str, id: str, options: list, value: int, inline: bool = True) -> html.Div:
-    """Radio element for option selection.
-
-    Args:
-        label: The title that goes above the radio.
-        id: A unique selector for this element.
-        options: A list of dictionaries of labels and values.
-        value: The value of the radio that should be preselected.
-        inline: Whether the options are displayed beside or below each other.
-    """
-    return html.Div(
-        className="radio-wrapper",
-        children=[
-            html.Label(label),
-            dcc.RadioItems(
-                id=id,
-                className=f"radio{' radio--inline' if inline else ''}",
-                inline=inline,
-                options=options,
-                value=value,
-            ),
-        ],
-    )
-
-
 def generate_options(options_list: list) -> list[dict]:
     """Generates options for dropdowns, checklists, radios, etc."""
     return [{"label": label, "value": i} for i, label in enumerate(options_list)]
@@ -150,13 +99,11 @@ def generate_settings_form() -> html.Div:
     Returns:
         html.Div: A Div containing the settings for selecting the scenario, model, and solver.
     """
-    checklist_options = generate_options(CHECKLIST)
-    radio_options = generate_options(RADIO)
     period_options = generate_options(PERIOD_OPTIONS)
 
     sampler_options = [
-        {"label": label, "value": sampler_type.value}
-        for sampler_type, label in SAMPLER_TYPES.items()
+        {"label": label, "value": solver_type.value}
+        for solver_type, label in SAMPLER_TYPES.items()
     ]
 
     return html.Div(
@@ -167,26 +114,32 @@ def generate_settings_form() -> html.Div:
                 "period-options",
                 sorted(period_options, key=lambda op: op["value"]),
             ),
-            html.Label("Budget"),
+            html.Label("Stocks"),
+            dcc.Dropdown(
+                STOCK_OPTIONS["options"],
+                STOCK_OPTIONS["value"],
+                id="stocks",
+                multi=True,
+            ),
+            html.Label("Date Range"),
+            dcc.DatePickerRange(
+                id="date-range",
+                max_date_allowed=date.today() - timedelta(days=1), # yesterday
+                start_date=date.today() - timedelta(days=1825), # 5 years from today
+                end_date=date.today() - timedelta(days=1),
+                minimum_nights=30,
+            ),
+            html.Label("Budget (USD)"),
             dcc.Input(
                 id="budget",
                 type="number",
                 **BUDGET,
             ),
-            # slider(
-            #     "Number of Stocks",
-            #     "num-stocks",
-            #     NUM_STOCKS,
-            # ),
             slider(
                 "Percentage Transaction Cost",
                 "transaction-cost",
                 TRANSACTION_COST,
             ),
-            # html.Label("Date Range"),
-            # dcc.DatePickerRange(
-            #     id="date-range",
-            # ),
             dropdown(
                 "Solver",
                 "sampler-type-select",

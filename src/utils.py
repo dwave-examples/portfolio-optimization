@@ -35,8 +35,6 @@ def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
         stocks = random.sample(list(symbols_df.loc[:, "Symbol"]), num)
 
     # Read in daily data; resample to monthly
-    print(stocks)
-    print(dates)
     panel_data = yf.download(stocks, start=dates[0], end=dates[1])
     panel_data = panel_data.resample("BM").last()
     df_all = pd.DataFrame(index=panel_data.index, columns=stocks)

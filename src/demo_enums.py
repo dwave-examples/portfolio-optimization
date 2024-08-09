@@ -15,6 +15,10 @@
 from enum import Enum
 
 
-class SamplerType(Enum):
+class SolverType(Enum):
     CQM = 0
     DQM = 1
+
+class PeriodType(Enum):
+    SINGLE = 0
+    MULTI = 1

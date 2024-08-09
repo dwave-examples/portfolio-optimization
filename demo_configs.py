@@ -50,17 +50,32 @@ NUM_STOCKS = {
 
 PERIOD_OPTIONS = ["Single-Period", "Multi-Period Rebalancing"]
 
-# an example checklist
-CHECKLIST = ["Option 1", "Option 2"]
-
-# an example radio list
-RADIO = ["Option 1", "Option 2"]
+STOCK_OPTIONS = {
+    "options": [
+        {"label": "Amazon (AMZN)", "value": "AMZN"},
+        {"label": "American Airlines (AAL)", "value": "AAL"},
+        {"label": "Apple (AAPL)", "value": "AAPL"},
+        {"label": "Coca-Cola (KO)", "value": "KO"},
+        {"label": "Disney (DIS)", "value": "DIS"},
+        {"label": "Google (GOOG)", "value": "GOOG"},
+        {"label": "Johnson & Johnson (JNJ)", "value": "JNJ"},
+        {"label": "Mastercard (MA)", "value": "MA"},
+        {"label": "Meta (META)", "value": "META"},
+        {"label": "Microsoft (MSFT)", "value": "MSFT"},
+        {"label": "Netflix (NFLX)", "value": "NFLX"},
+        {"label": "Tesla (TSLA)", "value": "TSLA"},
+        {"label": "Visa (V)", "value": "V"},
+        {"label": "Walmart (WMT)", "value": "WMT"},
+        {"label": "Wells Fargo (WFC)", "value": "WFC"},
+    ],
+    "value": ['AAPL', 'MSFT', 'AAL', 'WMT'],
+}
 
 BUDGET = {
-    "min": 100,
-    "max": 5000,
-    "step": 5,
-    "value": 1000,
+    "min": 1000,
+    "max": 100000,
+    "step": 100,
+    "value": 5000,
 }
 
 # solver time limits in seconds (value means default)

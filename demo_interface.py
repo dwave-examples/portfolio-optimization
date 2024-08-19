@@ -18,23 +18,27 @@ from datetime import date, timedelta
 
 from dash import dcc, html
 import plotly.graph_objs as go
+import yfinance as yf
 
 
 from demo_configs import (
     BUDGET,
     DESCRIPTION,
     MAIN_HEADER,
-    PERIOD_OPTIONS,
     STOCK_OPTIONS,
     TRANSACTION_COST,
     SOLVER_TIME,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )
-from src.demo_enums import SolverType
+from src.demo_enums import PeriodType, SolverType
 
 SAMPLER_TYPES = {SolverType.CQM: "Quantum Hybrid (CQM)", SolverType.DQM: "Quantum Hybrid (DQM)"}
 
+stock_options = [
+    {"label": f"{yf.Ticker(ticker).info['shortName']} ({ticker})", "value": ticker}
+    for ticker in STOCK_OPTIONS["options"]
+]
 
 def slider(label: str, id: str, config: dict) -> html.Div:
     """Slider element for value selection.
@@ -99,8 +103,6 @@ def generate_settings_form() -> html.Div:
     Returns:
         html.Div: A Div containing the settings for selecting the scenario, model, and solver.
     """
-    period_options = generate_options(PERIOD_OPTIONS)
-
     sampler_options = [
         {"label": label, "value": solver_type.value}
         for solver_type, label in SAMPLER_TYPES.items()
@@ -109,14 +111,9 @@ def generate_settings_form() -> html.Div:
     return html.Div(
         className="settings",
         children=[
-            dropdown(
-                "Single/Multi-Period",
-                "period-options",
-                sorted(period_options, key=lambda op: op["value"]),
-            ),
             html.Label("Stocks"),
             dcc.Dropdown(
-                STOCK_OPTIONS["options"],
+                stock_options,
                 STOCK_OPTIONS["value"],
                 id="stocks",
                 multi=True,
@@ -125,7 +122,7 @@ def generate_settings_form() -> html.Div:
             dcc.DatePickerRange(
                 id="date-range",
                 max_date_allowed=date.today() - timedelta(days=1), # yesterday
-                start_date=date.today() - timedelta(days=1825), # 5 years from today
+                start_date=date.today() - timedelta(days=730), # 2 years from today
                 end_date=date.today() - timedelta(days=1),
                 minimum_nights=30,
             ),
@@ -136,7 +133,7 @@ def generate_settings_form() -> html.Div:
                 **BUDGET,
             ),
             slider(
-                "Percentage Transaction Cost",
+                "Transaction Cost (%)",
                 "transaction-cost",
                 TRANSACTION_COST,
             ),
@@ -253,8 +250,27 @@ def create_interface() -> html.Div:
         children=[
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
+            dcc.Store(id="iteration", data=0),  # Current iteration of results loop
+            dcc.Store(id="max-iterations", data=0),  # Max iterations of result loop
+            dcc.Store(id="selected-period", data=0),  # The currently selected period option
             # Header brand banner
-            html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
+            html.Div(
+                className="banner",
+                children=[
+                    html.Img(src=THUMBNAIL),
+                    html.Div(
+                        [
+                            html.Div(
+                                html.Button(
+                                    period.label,
+                                    id={"type": "period-option", "index": index},
+                                )
+                            )
+                            for index, period in enumerate(PeriodType)
+                        ]
+                    ),
+                ]
+            ),
             # Settings and results columns
             html.Div(
                 className="columns-main",
@@ -310,24 +326,14 @@ def create_interface() -> html.Div:
                                                 color=THEME_COLOR_SECONDARY,
                                                 # A Dash callback (in app.py) will generate content in the Div below
                                                 children=html.Div(
-                                                    # html.Img(src="static/portfolio.png"),
                                                     [
                                                         dcc.Graph(
                                                             # id={"type": f"graph", "index": 0},
                                                             id="input-graph",
                                                             responsive=True,
                                                             config={"displayModeBar": False},
-                                                            # figure=go.Figure(
-                                                            #     data=[
-                                                            #         go.Scatter(
-                                                            #             x=["Jan", "Mar", "May", "Jul", "Sep", "Nov"],
-                                                            #             y=[0, 0, 0, 0, 0, 0], mode="lines", line=go.scatter.Line(color="red"),
-                                                            #         )
-                                                            #     ]
-                                                            # )
                                                         )
                                                     ],
-                                                    # id="input",
                                                 ),
                                             ),
                                         ],
@@ -348,7 +354,14 @@ def create_interface() -> html.Div:
                                                         # A Dash callback (in app.py) will generate content in the Div below
                                                         children=html.Div(
                                                             # id="results"
-                                                            [html.Img(src="static/portfolio.png")]
+                                                            [
+                                                                dcc.Graph(
+                                                                    # id={"type": f"graph", "index": 0},
+                                                                    id="output-graph",
+                                                                    responsive=True,
+                                                                    config={"displayModeBar": False},
+                                                                )
+                                                            ],
                                                         ),
                                                     ),
                                                     # Problem details dropdown

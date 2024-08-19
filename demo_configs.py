@@ -41,32 +41,25 @@ TRANSACTION_COST = {
     "value": 2.5,
 }
 
-NUM_STOCKS = {
-    "min": 1,
-    "max": 10,
-    "step": 1,
-    "value": 5,
-}
-
-PERIOD_OPTIONS = ["Single-Period", "Multi-Period Rebalancing"]
-
+# A list of stock symbols/tickers for the options for the stocks dropdown,
+# "value" is the default list.
 STOCK_OPTIONS = {
     "options": [
-        {"label": "Amazon (AMZN)", "value": "AMZN"},
-        {"label": "American Airlines (AAL)", "value": "AAL"},
-        {"label": "Apple (AAPL)", "value": "AAPL"},
-        {"label": "Coca-Cola (KO)", "value": "KO"},
-        {"label": "Disney (DIS)", "value": "DIS"},
-        {"label": "Google (GOOG)", "value": "GOOG"},
-        {"label": "Johnson & Johnson (JNJ)", "value": "JNJ"},
-        {"label": "Mastercard (MA)", "value": "MA"},
-        {"label": "Meta (META)", "value": "META"},
-        {"label": "Microsoft (MSFT)", "value": "MSFT"},
-        {"label": "Netflix (NFLX)", "value": "NFLX"},
-        {"label": "Tesla (TSLA)", "value": "TSLA"},
-        {"label": "Visa (V)", "value": "V"},
-        {"label": "Walmart (WMT)", "value": "WMT"},
-        {"label": "Wells Fargo (WFC)", "value": "WFC"},
+        "AMZN",
+        "AAL",
+        "AAPL",
+        "KO",
+        "DIS",
+        "GOOG",
+        "JNJ",
+        "MA",
+        "META",
+        "MSFT",
+        "NFLX",
+        "TSLA",
+        "V",
+        "WMT",
+        "WFC",
     ],
     "value": ['AAPL', 'MSFT', 'AAL', 'WMT'],
 }

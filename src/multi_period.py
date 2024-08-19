@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
+import plotly.tools as tls
 
 from src.single_period import SinglePeriod
 
@@ -84,6 +85,7 @@ class MultiPeriod(SinglePeriod):
         """
         if not self.dates:
             self.dates = ["2010-01-01", "2012-12-31"]
+
         self.load_data()
 
         num_months = len(self.df_all)
@@ -211,4 +213,4 @@ class MultiPeriod(SinglePeriod):
         plt.savefig("portfolio.png")
         plt.show(block=False)
 
-        return self.opt_results_df
+        return tls.mpl_to_plotly(plt)

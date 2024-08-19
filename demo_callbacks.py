@@ -14,11 +14,11 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import NamedTuple, Union
 
 import dash
-from dash import MATCH, ctx
+from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import pandas as pd
@@ -29,6 +29,7 @@ from demo_interface import generate_problem_details_table_rows
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
+import numpy as np
 
 
 @dash.callback(
@@ -112,6 +113,78 @@ def render_initial_state(
     return generate_graph(df)
 
 
+@dash.callback(
+    Output("output-graph", "figure"),
+    Output("iteration", "data"),
+    inputs=[
+        Input("iteration", "data"),
+        State("max-iterations", "data"),
+    ],
+    prevent_initial_call = True,
+)
+def update_output(
+    iteration: int,
+    max_iterations: int
+) -> go.Figure:
+    """Iteratively updates output graph.
+
+    Args:
+
+    Returns:
+
+    """
+    if iteration > max_iterations:
+        raise PreventUpdate
+
+    return {}, iteration+1
+
+
+@dash.callback(
+    Output({"type": "period-option", "index": ALL}, "className"),
+    Output("selected-period", "data"),
+    Output("tabs", "value"),
+    Output("results-tab", "disabled"),
+    inputs=[
+        Input({"type": "period-option", "index": ALL}, "n_clicks"),
+        State("selected-period", "data"),
+    ],
+)
+def update_selected_period(
+    period_options: list[int],
+    selected_period: Union[PeriodType, int],
+) -> tuple:
+    """Updates the period that is selected (SINGLE or MULTI), hides/shows settings accordingly,
+        and updates the navigation options to indicate the currently active period option.
+
+    Args:
+        period_options: A list containing the number of times each period option has been clicked.
+        selected_period: The currently selected period.
+
+    Returns:
+        A tuple containing all outputs to be used when updating the HTML
+        template (in ``dash_html.py``). These are:
+            period_options_class (list): A list of classes for the period navigation options in the header.
+            selected_period (int): Either SINGLE (``0`` or ``PeriodType.SINGLE``) or
+                MULTI (``1`` or ``PeriodType.MULTI``).
+            selected_tab (str): The tab to select.
+            results_tab_disabled (bool): Whether the results tab should be disabled.
+    """
+    if ctx.triggered_id and selected_period == ctx.triggered_id["index"]:
+        raise PreventUpdate
+
+    nav_class_names = [""] * len(period_options)
+    is_single = not ctx.triggered_id or ctx.triggered_id["index"] is PeriodType.SINGLE.value
+
+    nav_class_names[PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value] = "active"
+
+    return (
+        nav_class_names,
+        PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value,
+        "input-tab",
+        True,
+    )
+
+
 class RunOptimizationReturn(NamedTuple):
     """Return type for the ``run_optimization`` callback function."""
 
@@ -125,6 +198,8 @@ class RunOptimizationReturn(NamedTuple):
     # The Outputs below must align with `RunOptimizationReturn`.
     # Output("results", "children"),
     Output("problem-details", "children"),
+    Output("output-graph", "figure", allow_duplicate=True),
+    Output("max-iterations", "data"),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
@@ -133,7 +208,7 @@ class RunOptimizationReturn(NamedTuple):
         State("budget", "value"),
         State("transaction-cost", "value"),
         # State("num-stocks", "value"),
-        State("period-options", "value"),
+        State("selected-period", "data"),
         State("date-range", "start_date"),
         State("date-range", "end_date"),
         State("stocks", "value"),
@@ -198,23 +273,17 @@ def run_optimization(
     solver_type = SolverType(solver_type)
     period_type = PeriodType(period_value)
 
-    if period_type is PeriodType.MULTI:
-        print(f"\nRebalancing portfolio optimization run...")
+    # Generates a list of table rows for the problem details table.
+    problem_details_table = generate_problem_details_table_rows(
+        solver="CQM" if solver_type is SolverType.CQM else "DQM",
+        time_limit=time_limit,
+    )
 
-        my_portfolio = MultiPeriod(
-            budget=budget,
-            sampler_args="{}",
-            gamma=True,
-            model_type=solver_type,
-            stocks=stocks,
-            # file_path='data/basic_data.csv',
-            dates=[start_date, end_date],
-            alpha=[0.005],
-            baseline="^GSPC",
-            t_cost=0
-        )
+    start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+    end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+    num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
 
-    else:
+    if period_type is PeriodType.SINGLE:
         print(f"\nSingle period portfolio optimization run...")
 
         my_portfolio = SinglePeriod(
@@ -222,22 +291,31 @@ def run_optimization(
             sampler_args="{}",
             model_type=solver_type,
             stocks=stocks,
-            # file_path='data/basic_data.csv',
             dates=[start_date, end_date],
             alpha=[0.005],
             t_cost=transaction_cost,
         )
+        solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
+        return problem_details_table, solution, num_months
+
+    print(f"\nRebalancing portfolio optimization run...")
+
+    my_portfolio = MultiPeriod(
+        budget=budget,
+        sampler_args="{}",
+        gamma=True,
+        model_type=solver_type,
+        stocks=stocks,
+        dates=[start_date, end_date],
+        alpha=[0.005],
+        baseline="^GSPC",
+        t_cost=0
+    )
 
     solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
-
-    # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        solver="CQM" if solver_type is SolverType.CQM else "DQM",
-        time_limit=time_limit,
-    )
 
     # return RunOptimizationReturn(
     #     # results="Put demo results here.",
     #     problem_details_table=problem_details_table,
     # )
-    return problem_details_table
+    return problem_details_table, generate_graph(solution), num_months

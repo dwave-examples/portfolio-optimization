@@ -39,3 +39,26 @@ limitations under the License.
 .input, .results, .input > div:first-child, #input-graph {
     height: 100%;
 }
+
+.banner > div {
+    display: flex;
+}
+
+.banner button {
+    opacity: 0.6;
+    font-size: 1.6rem;
+    font-weight: 500;
+    padding: 2rem 4rem;
+    text-underline-offset: 0.5rem;
+    border-radius: 0;
+}
+
+.banner button.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.banner button.active:hover {
+    filter: none;
+    cursor: default;
+}

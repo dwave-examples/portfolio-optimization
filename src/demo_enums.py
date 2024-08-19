@@ -22,3 +22,10 @@ class SolverType(Enum):
 class PeriodType(Enum):
     SINGLE = 0
     MULTI = 1
+
+    @property
+    def label(self):
+        return {
+            PeriodType.SINGLE: "Single-Period",
+            PeriodType.MULTI: "Multi-Period",
+        }[self]

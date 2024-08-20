@@ -100,6 +100,7 @@ class MultiPeriod(SinglePeriod):
         headers = ["Date", "Value"] + self.stocks + ["Variance", "Returns"]
         self.opt_results_df = pd.DataFrame(columns=headers)
         row = []
+        all_solutions = {}
 
         self.price_df = pd.DataFrame(columns=self.stocks)
 
@@ -124,8 +125,9 @@ class MultiPeriod(SinglePeriod):
             # Look at just the data up to the current month
             df = self.df_all.iloc[0 : i + 1, :].copy()
             baseline_df_current = self.df_baseline.iloc[0 : i + 1, :]
-            print("\nDate:", df.last_valid_index())
-            months.append(df.last_valid_index().date())
+            curr_date = df.last_valid_index()
+            print("\nDate:", curr_date)
+            months.append(curr_date.date())
 
             if first_purchase:
                 budget = self.budget
@@ -192,6 +194,7 @@ class MultiPeriod(SinglePeriod):
 
                 init_holdings = solution["stocks"]
 
+            all_solutions[curr_date.date()] = solution
             self.print_results(solution=solution)
 
             # Print results to command-line
@@ -213,4 +216,4 @@ class MultiPeriod(SinglePeriod):
         plt.savefig("portfolio.png")
         plt.show(block=False)
 
-        return tls.mpl_to_plotly(plt)
+        return all_solutions

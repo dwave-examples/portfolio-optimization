@@ -25,7 +25,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.utils import get_live_data
 
-from demo_interface import generate_problem_details_table_rows
+from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
@@ -185,6 +185,59 @@ def update_selected_period(
     )
 
 
+@dash.callback(
+    Output("transaction-cost-wrapper", "className"),
+    inputs=[
+        Input("sampler-type-select", "value"),
+    ],
+)
+def update_settings(
+    solver_type: Union[SolverType, int],
+) -> tuple:
+    """Hides the transaction cost when the DQM is selected and shows otherwise.
+
+    Args:
+        solver_type: Either Quantum Hybrid (``0`` or ``SolverType.HYBRID``),
+            or Classical (``1`` or ``SolverType.CLASSICAL``).
+
+    Returns:
+        transaction-cost-wrapper-classname: The class name to hide or show the
+            transaction cost selector.
+    """
+    return "display-none" if solver_type is SolverType.DQM.value else ""
+
+
+
+@dash.callback(
+    Output("dynamic-results-table", "children"),
+    inputs=[
+        Input("results-date-selector", "value"),
+        State("results-date-dict", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def update_results_date_table(
+    date_selected: str, date_dict: dict
+) -> tuple:
+    """Updates the results date table when the value of the results date selector is changed.
+
+    Args:
+        date_selected: The date that was just selected to trigger the callback.
+        date_dict: The store of period solution data with the date of the period as the key.
+
+    Returns:
+        dynamic-results-table: The new table based on the data from the date that was selected.
+    """
+    solution = date_dict[date_selected]
+    table = {
+        "Estimated Returns": f"${solution['return']}",
+        "Sales Revenue": solution['sales'],
+        "Variance": f"${solution['risk']:.2f}",
+    }
+
+    return generate_table(table)
+
+
 class RunOptimizationReturn(NamedTuple):
     """Return type for the ``run_optimization`` callback function."""
 
@@ -198,8 +251,9 @@ class RunOptimizationReturn(NamedTuple):
     # The Outputs below must align with `RunOptimizationReturn`.
     # Output("results", "children"),
     Output("problem-details", "children"),
-    Output("output-graph", "figure", allow_duplicate=True),
+    Output("solution-table", "children"),
     Output("max-iterations", "data"),
+    Output("results-date-dict", "data"),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
@@ -273,12 +327,6 @@ def run_optimization(
     solver_type = SolverType(solver_type)
     period_type = PeriodType(period_value)
 
-    # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        solver="CQM" if solver_type is SolverType.CQM else "DQM",
-        time_limit=time_limit,
-    )
-
     start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
     end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
     num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
@@ -296,26 +344,74 @@ def run_optimization(
             t_cost=transaction_cost,
         )
         solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
-        return problem_details_table, solution, num_months
 
-    print(f"\nRebalancing portfolio optimization run...")
+        output_tables = [
+            generate_solution_table(solution["stocks"]),
+            generate_solution_table(
+                {
+                    "Estimated Returns": f"${solution['return']}",
+                    "Sales Revenue": solution['sales'],
+                    "Purchase Cost": f"${solution['cost']:.2f}",
+                    "Transaction Cost": f"${solution['transaction cost']:.2f}",
+                    "Variance": f"${solution['risk']:.2f}",
+                }
+            )
+        ]
+    else:
+        print(f"\nRebalancing portfolio optimization run...")
 
-    my_portfolio = MultiPeriod(
-        budget=budget,
-        sampler_args="{}",
-        gamma=True,
-        model_type=solver_type,
-        stocks=stocks,
-        dates=[start_date, end_date],
-        alpha=[0.005],
-        baseline="^GSPC",
-        t_cost=0
+        my_portfolio = MultiPeriod(
+            budget=budget,
+            sampler_args="{}",
+            gamma=True,
+            model_type=solver_type,
+            stocks=stocks,
+            dates=[start_date, end_date],
+            alpha=[0.005],
+            baseline="^GSPC",
+            t_cost=transaction_cost,
+        )
+
+        all_solutions = my_portfolio.run(min_return=0, max_risk=0, num=0)
+        output_tables = []
+        is_first = True
+        dates = [{"label": date.strftime("%B %Y"), "value": date} for date in all_solutions.keys()]
+        for date, solution in all_solutions.items():
+            if is_first:
+                output_tables.append(
+                    generate_solution_table(solution["stocks"]),
+                )
+                table = {
+                    "Estimated Returns": f"${solution['return']}",
+                    "Sales Revenue": solution['sales'],
+                    "Purchase Cost": f"${solution['cost']:.2f}",
+                    "Transaction Cost": f"${solution['transaction cost']:.2f}",
+                    "Variance": f"${solution['risk']:.2f}",
+                }
+
+                output_tables.append(
+                    generate_solution_table(table)
+                )
+            else:
+                table = {
+                    "Estimated Returns": f"${solution['return']}",
+                    "Sales Revenue": solution['sales'],
+                    "Variance": f"${solution['risk']:.2f}",
+                }
+
+                output_tables.append(
+                    generate_solution_table(table, dates)
+                )
+
+            if not is_first: break
+            is_first = False
+
+    # Generates a list of table rows for the problem details table.
+    problem_details_table = generate_problem_details_table_rows(
+        num_solutions=solution['number feasible'],
+        energy=solution['best energy'],
+        solver="CQM" if solver_type is SolverType.CQM else "DQM",
+        time_limit=time_limit,
     )
 
-    solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
-
-    # return RunOptimizationReturn(
-    #     # results="Put demo results here.",
-    #     problem_details_table=problem_details_table,
-    # )
-    return problem_details_table, generate_graph(solution), num_months
+    return problem_details_table, output_tables, num_months, all_solutions if period_type is PeriodType.MULTI else dash.no_update

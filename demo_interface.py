@@ -40,16 +40,18 @@ stock_options = [
     for ticker in STOCK_OPTIONS["options"]
 ]
 
-def slider(label: str, id: str, config: dict) -> html.Div:
+def slider(label: str, id: str, config: dict, wrapper_id: str = "") -> html.Div:
     """Slider element for value selection.
 
     Args:
         label: The title that goes above the slider.
         id: A unique selector for this element.
         config: A dictionary of slider configerations, see dcc.Slider Dash docs.
+        wrapper_id: A unique selector for the wrapper element.
     """
     return html.Div(
         className="slider-wrapper",
+        id=wrapper_id,
         children=[
             html.Label(label),
             dcc.Slider(
@@ -80,7 +82,7 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
     return html.Div(
         className="dropdown-wrapper",
         children=[
-            html.Label(label),
+            html.Label(label) if label else (),
             dcc.Dropdown(
                 id=id,
                 options=options,
@@ -111,6 +113,17 @@ def generate_settings_form() -> html.Div:
     return html.Div(
         className="settings",
         children=[
+            dropdown(
+                "Solver",
+                "sampler-type-select",
+                sorted(sampler_options, key=lambda op: op["value"]),
+            ),
+            html.Label("Solver Time Limit (seconds)"),
+            dcc.Input(
+                id="solver-time-limit",
+                type="number",
+                **SOLVER_TIME,
+            ),
             html.Label("Stocks"),
             dcc.Dropdown(
                 stock_options,
@@ -136,17 +149,7 @@ def generate_settings_form() -> html.Div:
                 "Transaction Cost (%)",
                 "transaction-cost",
                 TRANSACTION_COST,
-            ),
-            dropdown(
-                "Solver",
-                "sampler-type-select",
-                sorted(sampler_options, key=lambda op: op["value"]),
-            ),
-            html.Label("Solver Time Limit (seconds)"),
-            dcc.Input(
-                id="solver-time-limit",
-                type="number",
-                **SOLVER_TIME,
+                "transaction-cost-wrapper",
             ),
         ],
     )
@@ -168,7 +171,7 @@ def generate_run_buttons() -> html.Div:
     )
 
 
-def generate_problem_details_table_rows(solver: str, time_limit: int) -> list[html.Tr]:
+def generate_problem_details_table_rows(solver: str, time_limit: int, energy: float, num_solutions: int) -> list[html.Tr]:
     """Generates table rows for the problem details table.
 
     Args:
@@ -180,8 +183,8 @@ def generate_problem_details_table_rows(solver: str, time_limit: int) -> list[ht
     """
 
     table_rows = (
+        ("Solutions:", num_solutions, "Best Energy:", round(energy, 3)),
         ("Solver:", solver, "Time Limit:", f"{time_limit}s"),
-        ### Add more table rows here. Each tuple is a row in the table.
     )
 
     return [html.Tr([html.Td(cell) for cell in row]) for row in table_rows]
@@ -243,6 +246,47 @@ def problem_details(index: int) -> html.Div:
     )
 
 
+def generate_table(table_dict: dict) -> html.Table:
+    """Generates solution table.
+
+    Args:
+        table_dict: Dictionary of table values where each key, value pair make a row of the table.
+    """
+
+    return html.Table(
+        children=[
+            html.Tbody(
+                [
+                    html.Tr([html.Td(key), html.Td(value)]) for key, value in table_dict.items()
+                ]
+            )
+        ]
+    )
+
+
+def generate_solution_table(results_dict: dict, dates: list = []) -> html.Tbody:
+    """Generates solution table.
+
+    Args:
+        results_dict: Dictionary of lists of results values from all previous runs.
+    """
+
+    return html.Div(
+        className="results-table",
+        children=[
+            dropdown(
+                "",
+                "results-date-selector",
+                dates,
+            ) if dates else (),
+            html.Div(
+                generate_table(results_dict),
+                id="dynamic-results-table" if dates else "",
+            )
+        ]
+    )
+
+
 def create_interface() -> html.Div:
     """Set the application HTML."""
     return html.Div(
@@ -253,6 +297,7 @@ def create_interface() -> html.Div:
             dcc.Store(id="iteration", data=0),  # Current iteration of results loop
             dcc.Store(id="max-iterations", data=0),  # Max iterations of result loop
             dcc.Store(id="selected-period", data=0),  # The currently selected period option
+            dcc.Store(id="results-date-dict"),  # Dictionary of date periods and their solutions
             # Header brand banner
             html.Div(
                 className="banner",
@@ -339,8 +384,8 @@ def create_interface() -> html.Div:
                                         ],
                                     ),
                                     dcc.Tab(
-                                        label="Results",
-                                        id="results-tab",
+                                        label="Graph",
+                                        id="graph-tab",
                                         className="tab",
                                         disabled=True,
                                         children=[
@@ -351,18 +396,37 @@ def create_interface() -> html.Div:
                                                         parent_className="results",
                                                         type="circle",
                                                         color=THEME_COLOR_SECONDARY,
-                                                        # A Dash callback (in app.py) will generate content in the Div below
                                                         children=html.Div(
-                                                            # id="results"
                                                             [
                                                                 dcc.Graph(
-                                                                    # id={"type": f"graph", "index": 0},
                                                                     id="output-graph",
                                                                     responsive=True,
                                                                     config={"displayModeBar": False},
                                                                 )
                                                             ],
                                                         ),
+                                                    ),
+                                                ],
+                                            )
+                                        ],
+                                    ),
+                                    dcc.Tab(
+                                        label="Results",
+                                        id="results-tab",
+                                        className="tab",
+                                        disabled=True,
+                                        children=[
+                                            html.Div(
+                                                className="tab-content-results",
+                                                children=[
+                                                    html.Div(
+                                                        [
+                                                            html.H2("Best Feasible Solution"),
+                                                            html.Div(
+                                                                id="solution-table",
+                                                                # add children dynamically using 'generate_table'
+                                                            )
+                                                        ]
                                                     ),
                                                     # Problem details dropdown
                                                     html.Div([html.Hr(), problem_details(1)]),

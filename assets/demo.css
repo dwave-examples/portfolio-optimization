@@ -28,11 +28,11 @@ limitations under the License.
     padding: 0 3rem 3rem;
 }
 
-.solution-stats-table td:nth-child(2n) {
+table td:nth-child(2n) {
     text-align: right;
 }
 
-.solution-stats-table td:nth-child(2n+1) {
+table td:nth-child(2n+1) {
     border-right: none;
 }
 
@@ -61,4 +61,26 @@ limitations under the License.
 .banner button.active:hover {
     filter: none;
     cursor: default;
+}
+
+#solution-table {
+    display: flex;
+    width: 100%;
+}
+
+.results-table:not(:last-child) {
+    margin-right: 3rem;
+}
+
+.results-table:last-child {
+    margin-left: 4rem;
+}
+
+#results-date-selector {
+    margin-bottom: 2rem;
+}
+
+#results-date-selector .Select-control {
+    background-color: rgba(0, 126, 255, .15);
+    font-weight: 500;
 }

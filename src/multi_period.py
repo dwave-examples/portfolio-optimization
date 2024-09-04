@@ -236,7 +236,6 @@ class MultiPeriod(SinglePeriod):
         df = self.df_all.iloc[0 : i + 1, :].copy()
         baseline_df_current = self.df_baseline.iloc[0 : i + 1, :]
         curr_date = df.last_valid_index()
-        print("\nDate:", curr_date)
         months.append(curr_date.date())
 
         if first_purchase:
@@ -250,9 +249,7 @@ class MultiPeriod(SinglePeriod):
 
             budget = sum([df.iloc[-1][s] * solution["stocks"][s] for s in self.stocks])
             self.update_values.append(budget - initial_budget)
-            for s in self.stocks:
-                print(solution["stocks"][s])
-            print([df.iloc[-1][s] * solution["stocks"][s] for s in self.stocks])
+
             # Compute profit of fund portfolio
             fund_value = sum(
                 [baseline_df_current.iloc[-1][s] * baseline_result[s] for s in self.baseline]
@@ -268,13 +265,9 @@ class MultiPeriod(SinglePeriod):
 
         # Making solve run
         if self.model_type is SolverType.DQM:
-            print(f"\nMulti-Period DQM Run...")
-
             self.build_dqm()
             solution = self.solve_dqm()
         else:
-            print(f"\nMulti-Period CQM Run...")
-
             # Set budget to 0 to enforce that portfolio is self-financing
             if self.t_cost and not first_purchase:
                 self.budget = 0
@@ -286,7 +279,6 @@ class MultiPeriod(SinglePeriod):
             init_holdings = solution["stocks"]
 
         all_solutions[curr_date.date()] = solution
-        self.print_results(solution=solution)
 
         # Print results to command-line
         value = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])

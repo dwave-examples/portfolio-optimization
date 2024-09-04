@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 import random
 
+import numpy as np
 import pandas as pd
+import plotly.graph_objs as go
+import dill as pickle
 
 import yfinance as yf
 
@@ -59,3 +63,115 @@ def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
         df_baseline[i] = index_df[[("Adj Close")]]
 
     return df_all, stocks, df_baseline
+
+# Serializing the object using pickle
+def serialize(obj):
+    return base64.b64encode(pickle.dumps(obj)).decode('utf-8')
+
+# Deserializing the object
+def deserialize(serialized_obj):
+    return pickle.loads(base64.b64decode(serialized_obj.encode('utf-8')))
+
+def generate_input_graph(
+    df: pd.DataFrame = None
+) -> go.Figure:
+    """Generates graph given df.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the data to plot.
+
+    Returns:
+        go.Figure: A Plotly figure object.
+    """
+    fig = go.Figure()
+
+    for col in list(df.columns.values):
+        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col))
+
+    fig.update_layout(
+        title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
+    )
+
+    return fig
+
+def initialize_output_graph(
+    num_months: int,
+    df_baseline: pd.DataFrame,
+    budget: int,
+) -> go.Figure:
+    fig = go.Figure()
+
+    break_even_trace = go.Scatter(
+        x=list(range(0, num_months)),
+        y=[0] * num_months,
+        mode='lines',
+        line=dict(color='red'),
+        name='Break-even'
+    )
+
+    fig = go.Figure(data=[break_even_trace])
+
+    fig.update_yaxes(range=[-1.5 * budget, 1.5 * budget])
+
+    fig.update_xaxes(
+        tickvals=list(range(0, num_months, 2)),
+        ticktext=df_baseline.index.strftime("%b")[::2],
+        tickangle=-90
+    )
+
+    fig.update_xaxes(nticks=int(num_months / 2))
+
+    return fig
+
+def update_output_graph(
+    # df: pd.DataFrame,
+    fig: go.Figure,
+    i: int,
+    update_values: list,
+    baseline_values: list,
+    df_all: pd.DataFrame,
+) -> go.Figure:
+    """Generates graph given df.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the data to plot.
+
+    Returns:
+        go.Figure: A Plotly figure object.
+    """
+    update_values = np.array(update_values, dtype=object)
+    baseline_values = np.array(baseline_values, dtype=object)
+
+    optimized_trace = go.Scatter(
+        x=list(range(3, i + 1)),
+        y=update_values,
+        mode='lines',
+        line=dict(color='blue'),
+        name='Optimized portfolio',
+        showlegend=i == 4,
+    )
+
+    fund_trace = go.Scatter(
+        x=list(range(3, i + 1)),
+        y=baseline_values,
+        mode='lines',
+        line=dict(color='grey'),
+        name='Fund portfolio',
+        showlegend=i == 4,
+    )
+
+    fig.add_trace(optimized_trace)
+    fig.add_trace(fund_trace)
+
+    if i == 4:
+        fig.update_layout(
+            title=f"Start: {df_all.first_valid_index().date()}, End: {df_all.last_valid_index().date()}",
+            legend=dict(
+                x=0,
+                y=0,
+                xanchor='left',
+                yanchor='bottom',
+            )
+        )
+
+    return fig

@@ -14,9 +14,7 @@
 
 from __future__ import annotations
 
-import base64
 from datetime import datetime
-import dill as pickle
 from typing import NamedTuple, Union
 import numpy as np
 
@@ -26,9 +24,9 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import pandas as pd
 import plotly.graph_objs as go
-from src.utils import get_live_data
+from src.utils import deserialize, generate_input_graph, get_live_data, initialize_output_graph, serialize, update_output_graph
 
-from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table, update_iteration
+from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
@@ -61,117 +59,6 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
 
 
-def generate_input_graph(
-    df: pd.DataFrame = None
-) -> go.Figure:
-    """Generates graph given df.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the data to plot.
-
-    Returns:
-        go.Figure: A Plotly figure object.
-    """
-    fig = go.Figure()
-
-    for col in list(df.columns.values):
-        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col))
-
-    fig.update_layout(
-        title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
-    )
-
-    return fig
-
-def initialize_output_graph(
-    num_months: int,
-    df_baseline: pd.DataFrame,
-    budget: int,
-) -> go.Figure:
-    fig = go.Figure()
-
-    # Create a trace for the "Break-even" line
-    break_even_trace = go.Scatter(
-        x=list(range(0, num_months)),
-        y=[0] * num_months,
-        mode='lines',
-        line=dict(color='red'),
-        name='Break-even'
-    )
-
-    # Create the figure and add the trace
-    fig = go.Figure(data=[break_even_trace])
-
-    # Update y-axis limits (equivalent to plt.ylim)
-    fig.update_yaxes(range=[-1.5 * budget, 1.5 * budget])
-
-    # Update x-axis ticks (equivalent to plt.xticks)
-    fig.update_xaxes(
-        tickvals=list(range(0, num_months, 2)),  # Positions of the ticks
-        ticktext=df_baseline.index.strftime("%b")[::2],  # Labels for the ticks
-        tickangle=-90  # Equivalent to 'rotation="vertical"' in matplotlib
-    )
-
-    # Optional: Set number of bins (ticks) on the x-axis
-    fig.update_xaxes(nticks=int(num_months / 2))
-
-    return fig
-
-
-def update_output_graph(
-    # df: pd.DataFrame,
-    fig: go.Figure,
-    i: int,
-    update_values: list,
-    baseline_values: list,
-    df_all: pd.DataFrame,
-) -> go.Figure:
-    """Generates graph given df.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the data to plot.
-
-    Returns:
-        go.Figure: A Plotly figure object.
-    """
-    update_values = np.array(update_values, dtype=object)
-    baseline_values = np.array(baseline_values, dtype=object)
-
-    optimized_trace = go.Scatter(
-        x=list(range(3, i + 1)),
-        y=update_values,
-        mode='lines',
-        line=dict(color='blue'),
-        name='Optimized portfolio',
-        showlegend=i == 4,
-    )
-
-    fund_trace = go.Scatter(
-        x=list(range(3, i + 1)),
-        y=baseline_values,
-        mode='lines',
-        line=dict(color='grey'),
-        name='Fund portfolio',
-        showlegend=i == 4,
-    )
-
-    fig.add_trace(optimized_trace)
-    fig.add_trace(fund_trace)
-
-    if i == 4:
-        fig.update_layout(
-            title=f"Start: {df_all.first_valid_index().date()}, End: {df_all.last_valid_index().date()}",
-            legend=dict(
-                x=0,
-                y=0,
-                xanchor='left',
-                yanchor='bottom',
-            )
-        )
-
-    return fig
-
-
 @dash.callback(
     Output("input-graph", "figure"),
     inputs=[
@@ -202,19 +89,15 @@ def render_initial_state(
 
     return generate_input_graph(df)
 
-# Serializing the object using pickle
-def serialize(obj):
-    return base64.b64encode(pickle.dumps(obj)).decode('utf-8')
-
-# Deserializing the object
-def deserialize(serialized_obj):
-    return pickle.loads(base64.b64decode(serialized_obj.encode('utf-8')))
-
 
 @dash.callback(
-    # Output('interval-component', 'disabled'),
     Output('loop-running', 'data'),
     Output('start-loop', 'data'),
+    Output("cancel-button", "className", allow_duplicate=True),
+    Output("run-button", "className", allow_duplicate=True),
+    Output("results-tab", "disabled", allow_duplicate=True),
+    Output("results-tab", "label", allow_duplicate=True),
+    Output("graph-tab", "disabled", allow_duplicate=True),
     inputs=[
         Input('loop-interval', 'n_intervals'),
         State('loop-running', 'data')
@@ -225,7 +108,7 @@ def start_loop(iteration, loop_running):
     if loop_running:
         raise PreventUpdate
 
-    return True, True
+    return True, True, "", "display-none", True, "Loading...", iteration==1
 
 
 class UpdateOutputReturn(NamedTuple):
@@ -244,6 +127,11 @@ class UpdateOutputReturn(NamedTuple):
     start_loop: bool = dash.no_update
     interval_disabled: bool = dash.no_update
     iteration: int = dash.no_update
+    cancel_button_class: str = dash.no_update
+    run_button_class: str = dash.no_update
+    results_tab_disabled: bool = dash.no_update
+    results_tab_label: str = dash.no_update
+    graph_tab_disabled: bool = dash.no_update
 
 
 @dash.callback(
@@ -259,6 +147,11 @@ class UpdateOutputReturn(NamedTuple):
     Output('loop-running', 'data', allow_duplicate=True),
     Output('start-loop', 'data', allow_duplicate=True),
     Output('loop-interval', 'disabled'),
+    Output("cancel-button", "className"),
+    Output("run-button", "className"),
+    Output("results-tab", "disabled", allow_duplicate=True),
+    Output("results-tab", "label"),
+    Output("graph-tab", "disabled"),
     inputs=[
         Input('start-loop', 'data'),
         State("max-iterations", "data"),
@@ -359,6 +252,10 @@ def update_output(
             loop_running=False,
             start_loop=False,
             interval_disabled=True,
+            cancel_button_class="display-none",
+            run_button_class="",
+            results_tab_disabled=False,
+            results_tab_label="Results",
         )
 
     elif iteration == 3:
@@ -395,6 +292,7 @@ def update_output(
             initial_budget=initial_budget,
             loop_running=False,
             start_loop=False,
+            graph_tab_disabled=False,
         )
 
     portfolio = deserialize(portfolio)
@@ -464,7 +362,7 @@ def update_selected_period(
         PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value,
         "input-tab",
         True,
-        {"display": "none"} if is_single else {"display": "block"},
+        {"display": "none !important"} if is_single else {"display": "block"},
     )
 
 
@@ -488,7 +386,6 @@ def update_settings(
             transaction cost selector.
     """
     return "display-none" if solver_type is SolverType.DQM.value else ""
-
 
 
 @dash.callback(
@@ -552,6 +449,7 @@ class RunOptimizationReturn(NamedTuple):
         (Output("cancel-button", "className"), "", "display-none"),
         (Output("run-button", "className"), "display-none", ""),  # Hides run button while running.
         (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
+        (Output("graph-tab", "disabled"), True, False),  # Disables graph tab while running.
         (Output("results-tab", "label"), "Loading...", "Results"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
         (Output("run-in-progress", "data"), True, False),  # Can block certain callbacks.
@@ -607,8 +505,6 @@ def run_optimization(
     period_type = PeriodType(period_value)
 
     if period_type is PeriodType.SINGLE:
-        print(f"\nSingle period portfolio optimization run...")
-
         my_portfolio = SinglePeriod(
             budget=budget,
             sampler_args="{}",
@@ -649,8 +545,6 @@ def run_optimization(
     start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
     end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
     num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
-
-    print(f"\nRebalancing portfolio optimization run...")
 
     return RunOptimizationReturn(
         max_iterations=num_months,

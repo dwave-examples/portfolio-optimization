@@ -401,8 +401,8 @@ def create_interface() -> html.Div:
                                     dcc.Tab(
                                         label="Graph",
                                         id="graph-tab",
-                                        className="tab display-none",
-                                        # disabled=True,
+                                        className="tab",
+                                        disabled=True,
                                         children=html.Div(
                                             [
                                                 dcc.Graph(

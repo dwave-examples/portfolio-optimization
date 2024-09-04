@@ -14,8 +14,11 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+import base64
+from datetime import datetime
+import dill as pickle
 from typing import NamedTuple, Union
+import numpy as np
 
 import dash
 from dash import ALL, MATCH, ctx
@@ -25,11 +28,10 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.utils import get_live_data
 
-from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table
+from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table, update_iteration
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
-import numpy as np
 
 
 @dash.callback(
@@ -59,7 +61,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
 
 
-def generate_graph(
+def generate_input_graph(
     df: pd.DataFrame = None
 ) -> go.Figure:
     """Generates graph given df.
@@ -78,6 +80,94 @@ def generate_graph(
     fig.update_layout(
         title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
     )
+
+    return fig
+
+def initialize_output_graph(
+    num_months: int,
+    df_baseline: pd.DataFrame,
+    budget: int,
+) -> go.Figure:
+    fig = go.Figure()
+
+    # Create a trace for the "Break-even" line
+    break_even_trace = go.Scatter(
+        x=list(range(0, num_months)),
+        y=[0] * num_months,
+        mode='lines',
+        line=dict(color='red'),
+        name='Break-even'
+    )
+
+    # Create the figure and add the trace
+    fig = go.Figure(data=[break_even_trace])
+
+    # Update y-axis limits (equivalent to plt.ylim)
+    fig.update_yaxes(range=[-1.5 * budget, 1.5 * budget])
+
+    # Update x-axis ticks (equivalent to plt.xticks)
+    fig.update_xaxes(
+        tickvals=list(range(0, num_months, 2)),  # Positions of the ticks
+        ticktext=df_baseline.index.strftime("%b")[::2],  # Labels for the ticks
+        tickangle=-90  # Equivalent to 'rotation="vertical"' in matplotlib
+    )
+
+    # Optional: Set number of bins (ticks) on the x-axis
+    fig.update_xaxes(nticks=int(num_months / 2))
+
+    return fig
+
+
+def update_output_graph(
+    # df: pd.DataFrame,
+    fig: go.Figure,
+    i: int,
+    update_values: list,
+    baseline_values: list,
+    df_all: pd.DataFrame,
+) -> go.Figure:
+    """Generates graph given df.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the data to plot.
+
+    Returns:
+        go.Figure: A Plotly figure object.
+    """
+    update_values = np.array(update_values, dtype=object)
+    baseline_values = np.array(baseline_values, dtype=object)
+
+    optimized_trace = go.Scatter(
+        x=list(range(3, i + 1)),
+        y=update_values,
+        mode='lines',
+        line=dict(color='blue'),
+        name='Optimized portfolio',
+        showlegend=i == 4,
+    )
+
+    fund_trace = go.Scatter(
+        x=list(range(3, i + 1)),
+        y=baseline_values,
+        mode='lines',
+        line=dict(color='grey'),
+        name='Fund portfolio',
+        showlegend=i == 4,
+    )
+
+    fig.add_trace(optimized_trace)
+    fig.add_trace(fund_trace)
+
+    if i == 4:
+        fig.update_layout(
+            title=f"Start: {df_all.first_valid_index().date()}, End: {df_all.last_valid_index().date()}",
+            legend=dict(
+                x=0,
+                y=0,
+                xanchor='left',
+                yanchor='bottom',
+            )
+        )
 
     return fig
 
@@ -110,22 +200,103 @@ def render_initial_state(
     baseline = ['^GSPC']
     df, stocks, df_baseline = get_live_data(num, dates, stocks, baseline)
 
-    return generate_graph(df)
+    return generate_input_graph(df)
+
+# Serializing the object using pickle
+def serialize(obj):
+    return base64.b64encode(pickle.dumps(obj)).decode('utf-8')
+
+# Deserializing the object
+def deserialize(serialized_obj):
+    return pickle.loads(base64.b64decode(serialized_obj.encode('utf-8')))
+
+
+@dash.callback(
+    # Output('interval-component', 'disabled'),
+    Output('loop-running', 'data'),
+    Output('start-loop', 'data'),
+    inputs=[
+        Input('loop-interval', 'n_intervals'),
+        State('loop-running', 'data')
+    ],
+    prevent_initial_call = True,
+)
+def start_loop(iteration, loop_running):
+    if loop_running:
+        raise PreventUpdate
+
+    return True, True
+
+
+class UpdateOutputReturn(NamedTuple):
+    """Return type for the ``update_output`` callback function."""
+
+    output_graph: go.Figure = dash.no_update
+    iteration: int = dash.no_update
+    problem_details_table: list = dash.no_update
+    solution_table: list = dash.no_update
+    results_date_dict: dict = dash.no_update
+    portfolio: MultiPeriod = dash.no_update
+    baseline_results: dict = dash.no_update
+    months: list = dash.no_update
+    initial_budget: int = dash.no_update
+    loop_running: bool = dash.no_update
+    start_loop: bool = dash.no_update
+    interval_disabled: bool = dash.no_update
+    iteration: int = dash.no_update
 
 
 @dash.callback(
     Output("output-graph", "figure"),
     Output("iteration", "data"),
+    Output("problem-details", "children"),
+    Output("solution-table", "children"),
+    Output("results-date-dict", "data"),
+    Output("portfolio", "data"),
+    Output("baseline-results", "data"),
+    Output("months", "data"),
+    Output("initial-budget", "data"),
+    Output('loop-running', 'data', allow_duplicate=True),
+    Output('start-loop', 'data', allow_duplicate=True),
+    Output('loop-interval', 'disabled'),
     inputs=[
-        Input("iteration", "data"),
+        Input('start-loop', 'data'),
         State("max-iterations", "data"),
+        State('iteration', 'data'),
+        State("sampler-type-select", "value"),
+        State("solver-time-limit", "value"),
+        State("budget", "value"),
+        State("transaction-cost", "value"),
+        State("date-range", "start_date"),
+        State("date-range", "end_date"),
+        State("stocks", "value"),
+        State("results-date-dict", "data"),
+        State("portfolio", "data"),
+        State("baseline-results", "data"),
+        State("months", "data"),
+        State("initial-budget", "data"),
+        State("output-graph", "figure"),
     ],
     prevent_initial_call = True,
 )
 def update_output(
+    start_loop: bool,
+    max_iterations: int,
     iteration: int,
-    max_iterations: int
-) -> go.Figure:
+    solver_type: Union[SolverType, int],
+    time_limit: float,
+    budget: int,
+    transaction_cost: list,
+    start_date: str,
+    end_date: str,
+    stocks: list,
+    results_date_dict: dict,
+    portfolio: MultiPeriod,
+    baseline_result: dict,
+    months: list,
+    initial_budget: int,
+    fig: go.Figure,
+) -> UpdateOutputReturn:
     """Iteratively updates output graph.
 
     Args:
@@ -133,10 +304,120 @@ def update_output(
     Returns:
 
     """
-    if iteration > max_iterations:
+    solver_type = SolverType(solver_type)
+
+    if not start_loop or iteration > max_iterations+1:
         raise PreventUpdate
 
-    return {}, iteration+1
+    elif iteration == max_iterations+1:
+        output_tables = []
+        is_first = True
+        dates = [{"label": datetime.strptime(date, '%Y-%m-%d').strftime("%B %Y"), "value": date} for date in results_date_dict.keys()]
+        for solution in results_date_dict.values():
+            if is_first:
+                output_tables.append(
+                    generate_solution_table(solution["stocks"]),
+                )
+                table = {
+                    "Estimated Returns": f"${solution['return']}",
+                    "Sales Revenue": solution['sales'],
+                    "Purchase Cost": f"${solution['cost']:.2f}",
+                    "Transaction Cost": f"${solution['transaction cost']:.2f}",
+                    "Variance": f"${solution['risk']:.2f}",
+                }
+
+                output_tables.append(
+                    generate_solution_table(table)
+                )
+            else:
+                table = {
+                    "Estimated Returns": f"${solution['return']}",
+                    "Sales Revenue": solution['sales'],
+                    "Variance": f"${solution['risk']:.2f}",
+                }
+
+                output_tables.append(
+                    generate_solution_table(table, dates)
+                )
+
+            if not is_first: break
+            is_first = False
+
+        # Generates a list of table rows for the problem details table.
+        problem_details_table = generate_problem_details_table_rows(
+            num_solutions=solution['number feasible'],
+            energy=solution['best energy'],
+            solver="CQM" if solver_type is SolverType.CQM else "DQM",
+            time_limit=time_limit,
+        )
+
+        return UpdateOutputReturn(
+            iteration=iteration+1,
+            problem_details_table=problem_details_table,
+            solution_table=output_tables,
+            results_date_dict=results_date_dict,
+            loop_running=False,
+            start_loop=False,
+            interval_disabled=True,
+        )
+
+    elif iteration == 3:
+        my_portfolio = MultiPeriod(
+            budget=budget,
+            sampler_args="{}",
+            gamma=True,
+            model_type=solver_type,
+            stocks=stocks,
+            dates=[start_date, end_date] if start_date and end_date else ["2010-01-01", "2012-12-31"],
+            alpha=[0.005],
+            baseline="^GSPC",
+            t_cost=transaction_cost,
+        )
+
+        my_portfolio.load_data()
+
+        my_portfolio.baseline_values=[0]
+        my_portfolio.update_values=[0]
+        my_portfolio.opt_results_df=pd.DataFrame(columns=["Date", "Value"] + stocks + ["Variance", "Returns"])
+        my_portfolio.price_df = pd.DataFrame(columns=stocks)
+
+        baseline_result, months, all_solutions, initial_budget, df_baseline, df_all = my_portfolio.run_interface(i=iteration)
+
+        fig = initialize_output_graph(max_iterations, df_baseline, budget)
+
+        return UpdateOutputReturn(
+            output_graph=fig,
+            iteration=iteration+1,
+            results_date_dict=all_solutions,
+            portfolio=serialize(my_portfolio),
+            baseline_results=baseline_result,
+            months=months,
+            initial_budget=initial_budget,
+            loop_running=False,
+            start_loop=False,
+        )
+
+    portfolio = deserialize(portfolio)
+    baseline_result, months, all_solutions, initial_budget, df_baseline, df_all = portfolio.run_interface(
+        i=iteration,
+        first_purchase=False,
+        baseline_result={key: np.array(value) for key, value in baseline_result.items()},
+        months=months,
+        initial_budget=initial_budget,
+        all_solutions=results_date_dict,
+    )
+
+    fig = update_output_graph(go.Figure(fig), iteration, portfolio.update_values, portfolio.baseline_values, df_all)
+    return UpdateOutputReturn(
+        output_graph=fig,
+        iteration=iteration+1,
+        results_date_dict=all_solutions,
+        portfolio=serialize(portfolio),
+        baseline_results=baseline_result,
+        months=months,
+        loop_running=False,
+        start_loop=False,
+    )
 
 
 @dash.callback(
@@ -144,6 +425,7 @@ def update_output(
     Output("selected-period", "data"),
     Output("tabs", "value"),
     Output("results-tab", "disabled"),
+    Output("graph-tab", "style"),
     inputs=[
         Input({"type": "period-option", "index": ALL}, "n_clicks"),
         State("selected-period", "data"),
@@ -182,6 +464,7 @@ def update_selected_period(
         PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value,
         "input-tab",
         True,
+        {"display": "none"} if is_single else {"display": "block"},
     )
 
 
@@ -241,19 +524,17 @@ def update_results_date_table(
 class RunOptimizationReturn(NamedTuple):
     """Return type for the ``run_optimization`` callback function."""
 
-    results: str = dash.no_update
     problem_details_table: list = dash.no_update
-    # Add more return variables here. Return values for callback functions
-    # with many variables should be returned as a NamedTuple for clarity.
+    solution_table: list = dash.no_update
+    max_iterations: int = dash.no_update
+    interval_disabled: bool = dash.no_update
 
 
 @dash.callback(
-    # The Outputs below must align with `RunOptimizationReturn`.
-    # Output("results", "children"),
-    Output("problem-details", "children"),
-    Output("solution-table", "children"),
-    Output("max-iterations", "data"),
-    Output("results-date-dict", "data"),
+    Output("problem-details", "children", allow_duplicate=True),
+    Output("solution-table", "children", allow_duplicate=True),
+    Output("max-iterations", "data", allow_duplicate=True),
+    Output('loop-interval', 'disabled', allow_duplicate=True),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
@@ -261,7 +542,6 @@ class RunOptimizationReturn(NamedTuple):
         State("solver-time-limit", "value"),
         State("budget", "value"),
         State("transaction-cost", "value"),
-        # State("num-stocks", "value"),
         State("selected-period", "data"),
         State("date-range", "start_date"),
         State("date-range", "end_date"),
@@ -287,7 +567,6 @@ def run_optimization(
     time_limit: float,
     budget: int,
     transaction_cost: list,
-    # num_stocks: int,
     period_value: Union[PeriodType, int],
     start_date: str,
     end_date: str,
@@ -327,10 +606,6 @@ def run_optimization(
     solver_type = SolverType(solver_type)
     period_type = PeriodType(period_value)
 
-    start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
-    end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
-    num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
-
     if period_type is PeriodType.SINGLE:
         print(f"\nSingle period portfolio optimization run...")
 
@@ -357,61 +632,27 @@ def run_optimization(
                 }
             )
         ]
-    else:
-        print(f"\nRebalancing portfolio optimization run...")
 
-        my_portfolio = MultiPeriod(
-            budget=budget,
-            sampler_args="{}",
-            gamma=True,
-            model_type=solver_type,
-            stocks=stocks,
-            dates=[start_date, end_date],
-            alpha=[0.005],
-            baseline="^GSPC",
-            t_cost=transaction_cost,
+        # Generates a list of table rows for the problem details table.
+        problem_details_table = generate_problem_details_table_rows(
+            num_solutions=solution['number feasible'],
+            energy=solution['best energy'],
+            solver="CQM" if solver_type is SolverType.CQM else "DQM",
+            time_limit=time_limit,
         )
 
-        all_solutions = my_portfolio.run(min_return=0, max_risk=0, num=0)
-        output_tables = []
-        is_first = True
-        dates = [{"label": date.strftime("%B %Y"), "value": date} for date in all_solutions.keys()]
-        for date, solution in all_solutions.items():
-            if is_first:
-                output_tables.append(
-                    generate_solution_table(solution["stocks"]),
-                )
-                table = {
-                    "Estimated Returns": f"${solution['return']}",
-                    "Sales Revenue": solution['sales'],
-                    "Purchase Cost": f"${solution['cost']:.2f}",
-                    "Transaction Cost": f"${solution['transaction cost']:.2f}",
-                    "Variance": f"${solution['risk']:.2f}",
-                }
+        return RunOptimizationReturn(
+            problem_details_table=problem_details_table,
+            solution_table=output_tables,
+        )
 
-                output_tables.append(
-                    generate_solution_table(table)
-                )
-            else:
-                table = {
-                    "Estimated Returns": f"${solution['return']}",
-                    "Sales Revenue": solution['sales'],
-                    "Variance": f"${solution['risk']:.2f}",
-                }
+    start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+    end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+    num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
 
-                output_tables.append(
-                    generate_solution_table(table, dates)
-                )
+    print(f"\nRebalancing portfolio optimization run...")
 
-            if not is_first: break
-            is_first = False
-
-    # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        num_solutions=solution['number feasible'],
-        energy=solution['best energy'],
-        solver="CQM" if solver_type is SolverType.CQM else "DQM",
-        time_limit=time_limit,
+    return RunOptimizationReturn(
+        max_iterations=num_months,
+        interval_disabled=False,
     )
-
-    return problem_details_table, output_tables, num_months, all_solutions if period_type is PeriodType.MULTI else dash.no_update

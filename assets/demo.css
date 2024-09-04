@@ -72,7 +72,7 @@ table td:nth-child(2n+1) {
     margin-right: 3rem;
 }
 
-.results-table:last-child {
+.results-table:nth-child(3) {
     margin-left: 4rem;
 }
 
@@ -83,4 +83,8 @@ table td:nth-child(2n+1) {
 #results-date-selector .Select-control {
     background-color: rgba(0, 126, 255, .15);
     font-weight: 500;
+}
+
+#output-graph {
+    height: 100%;
 }

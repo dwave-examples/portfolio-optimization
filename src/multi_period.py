@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import plotly.tools as tls
 
 from src.single_period import SinglePeriod
+from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 
 
 class MultiPeriod(SinglePeriod):
@@ -217,3 +218,91 @@ class MultiPeriod(SinglePeriod):
         plt.show(block=False)
 
         return all_solutions
+
+    def run_interface(self, i, first_purchase=True, initial_budget=0, baseline_result={}, months=[], all_solutions={}, max_risk=0, min_return=0, init_holdings=None):
+        """Solve the rebalancing portfolio optimization problem.
+
+        Args:
+            max_risk (int): Maximum risk for the CQM risk bounding formulation.
+            min_return (int): Minimum return for the CQM return bounding formulation.
+        """
+
+        self.sampler = {
+            "CQM": LeapHybridCQMSampler(**self.sampler_args),
+            "DQM": LeapHybridDQMSampler(**self.sampler_args),
+        }
+
+        # Look at just the data up to the current month
+        df = self.df_all.iloc[0 : i + 1, :].copy()
+        baseline_df_current = self.df_baseline.iloc[0 : i + 1, :]
+        curr_date = df.last_valid_index()
+        print("\nDate:", curr_date)
+        months.append(curr_date.date())
+
+        if first_purchase:
+            budget = self.budget
+            initial_budget = self.budget
+            baseline_shares = budget / baseline_df_current.iloc[-1]
+            baseline_result = {self.baseline[0]: baseline_shares}
+        else:
+            solution = all_solutions[list(all_solutions)[-1]]
+            # Compute profit of current portfolio
+
+            budget = sum([df.iloc[-1][s] * solution["stocks"][s] for s in self.stocks])
+            self.update_values.append(budget - initial_budget)
+            for s in self.stocks:
+                print(solution["stocks"][s])
+            print([df.iloc[-1][s] * solution["stocks"][s] for s in self.stocks])
+            # Compute profit of fund portfolio
+            fund_value = sum(
+                [baseline_df_current.iloc[-1][s] * baseline_result[s] for s in self.baseline]
+            )
+
+            self.baseline_values.append(*fund_value - initial_budget)
+
+            self.budget = budget
+
+        self.load_data(df=df)
+
+        self.price_df.loc[i - 2] = list(self.price.values)
+
+        # Making solve run
+        if self.model_type is SolverType.DQM:
+            print(f"\nMulti-Period DQM Run...")
+
+            self.build_dqm()
+            solution = self.solve_dqm()
+        else:
+            print(f"\nMulti-Period CQM Run...")
+
+            # Set budget to 0 to enforce that portfolio is self-financing
+            if self.t_cost and not first_purchase:
+                self.budget = 0
+
+            solution = self.solve_cqm(
+                max_risk=max_risk, min_return=min_return, init_holdings=init_holdings
+            )
+
+            init_holdings = solution["stocks"]
+
+        all_solutions[curr_date.date()] = solution
+        self.print_results(solution=solution)
+
+        # Print results to command-line
+        value = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
+        returns = solution["return"]
+        variance = solution["risk"]
+
+        row = (
+            [months[-1].strftime("%Y-%m-%d"), value]
+            + [solution["stocks"][s] for s in self.stocks]
+            + [variance, returns]
+        )
+        self.opt_results_df.loc[i - 2] = row
+
+        # Removing the following values to be able to serialize
+        self.model = {}
+        self.sampler = {}
+        self.sample_set = {}
+
+        return baseline_result, months, all_solutions, initial_budget, self.df_baseline, self.df_all

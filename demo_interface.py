@@ -134,8 +134,8 @@ def generate_settings_form() -> html.Div:
             html.Label("Date Range"),
             dcc.DatePickerRange(
                 id="date-range",
-                max_date_allowed=date.today() - timedelta(days=1), # yesterday
-                start_date=date.today() - timedelta(days=730), # 2 years from today
+                max_date_allowed=date.today() - timedelta(days=730), # yesterday
+                start_date=date.today() - timedelta(days=1460), # 3 years from today
                 end_date=date.today() - timedelta(days=1),
                 minimum_nights=30,
             ),
@@ -286,6 +286,9 @@ def generate_solution_table(results_dict: dict, dates: list = []) -> html.Tbody:
         ]
     )
 
+def update_iteration(iteration: int) -> html.Span:
+    return html.Span(iteration, id="iteration")
+
 
 def create_interface() -> html.Div:
     """Set the application HTML."""
@@ -294,10 +297,22 @@ def create_interface() -> html.Div:
         children=[
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
-            dcc.Store(id="iteration", data=0),  # Current iteration of results loop
             dcc.Store(id="max-iterations", data=0),  # Max iterations of result loop
             dcc.Store(id="selected-period", data=0),  # The currently selected period option
             dcc.Store(id="results-date-dict"),  # Dictionary of date periods and their solutions
+            dcc.Store(id="portfolio"),
+            dcc.Store(id="baseline-results"),
+            dcc.Store(id="months"),
+            dcc.Store(id="initial-budget"),
+            dcc.Interval(
+                id="loop-interval",
+                interval=50,  # Interval in milliseconds
+                n_intervals=0,
+                disabled=True
+            ),
+            dcc.Store(id="loop-running", data=False),
+            dcc.Store(id="start-loop", data=False),
+            dcc.Store(id="iteration", data=3),
             # Header brand banner
             html.Div(
                 className="banner",
@@ -386,29 +401,17 @@ def create_interface() -> html.Div:
                                     dcc.Tab(
                                         label="Graph",
                                         id="graph-tab",
-                                        className="tab",
-                                        disabled=True,
-                                        children=[
-                                            html.Div(
-                                                className="tab-content-results",
-                                                children=[
-                                                    dcc.Loading(
-                                                        parent_className="results",
-                                                        type="circle",
-                                                        color=THEME_COLOR_SECONDARY,
-                                                        children=html.Div(
-                                                            [
-                                                                dcc.Graph(
-                                                                    id="output-graph",
-                                                                    responsive=True,
-                                                                    config={"displayModeBar": False},
-                                                                )
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                            )
-                                        ],
+                                        className="tab display-none",
+                                        # disabled=True,
+                                        children=html.Div(
+                                            [
+                                                dcc.Graph(
+                                                    id="output-graph",
+                                                    responsive=True,
+                                                    config={"displayModeBar": False},
+                                                )
+                                            ],
+                                        ),
                                     ),
                                     dcc.Tab(
                                         label="Results",

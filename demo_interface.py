@@ -134,7 +134,7 @@ def generate_settings_form() -> html.Div:
             html.Label("Date Range"),
             dcc.DatePickerRange(
                 id="date-range",
-                max_date_allowed=date.today() - timedelta(days=730), # yesterday
+                max_date_allowed=date.today() - timedelta(days=1), # yesterday
                 start_date=date.today() - timedelta(days=1460), # 3 years from today
                 end_date=date.today() - timedelta(days=1),
                 minimum_nights=30,
@@ -171,7 +171,12 @@ def generate_run_buttons() -> html.Div:
     )
 
 
-def generate_problem_details_table_rows(solver: str, time_limit: int, energy: float, num_solutions: int) -> list[html.Tr]:
+def generate_problem_details_table_rows(
+    solver: str,
+    time_limit: int,
+    energy: float=0,
+    num_solutions: int=0,
+) -> list[html.Tr]:
     """Generates table rows for the problem details table.
 
     Args:
@@ -182,10 +187,10 @@ def generate_problem_details_table_rows(solver: str, time_limit: int, energy: fl
         list[html.Tr]: List of rows for the problem details table.
     """
 
-    table_rows = (
-        ("Solutions:", num_solutions, "Best Energy:", round(energy, 3)),
-        ("Solver:", solver, "Time Limit:", f"{time_limit}s"),
-    )
+    table_rows = [("Solver:", solver, "Time Limit:", f"{time_limit}s")]
+
+    if num_solutions:
+        table_rows.append(("Solutions:", num_solutions, "Best Energy:", round(energy, 3)))
 
     return [html.Tr([html.Td(cell) for cell in row]) for row in table_rows]
 
@@ -304,6 +309,7 @@ def create_interface() -> html.Div:
             dcc.Store(id="baseline-results"),
             dcc.Store(id="months"),
             dcc.Store(id="initial-budget"),
+            dcc.Store(id="init-holdings"),
             dcc.Interval(
                 id="loop-interval",
                 interval=50,  # Interval in milliseconds
@@ -402,7 +408,7 @@ def create_interface() -> html.Div:
                                         label="Graph",
                                         id="graph-tab",
                                         className="tab",
-                                        disabled=True,
+                                        style={"display": "none"},
                                         children=html.Div(
                                             [
                                                 dcc.Graph(

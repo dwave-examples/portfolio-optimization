@@ -15,6 +15,7 @@
 import base64
 import random
 
+from src.demo_enums import SolverType
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
@@ -175,3 +176,15 @@ def update_output_graph(
         )
 
     return fig
+
+def format_table_data(solver_type: SolverType, solution: dict, is_first: bool=True) -> dict[str, str]:
+    table = {"Estimated Returns": f"${solution['return']}"}
+    if solver_type is SolverType.CQM:
+        table.update({"Sales Revenue": solution['sales']})
+    if is_first:
+        table.update({"Purchase Cost": f"${solution['cost']:.2f}"})
+        if solver_type is SolverType.CQM:
+            table.update({"Transaction Cost": f"${solution['transaction cost']:.2f}"})
+    table.update({"Variance": f"${solution['risk']:.2f}"})
+
+    return table

@@ -219,7 +219,18 @@ class MultiPeriod(SinglePeriod):
 
         return all_solutions
 
-    def run_interface(self, i, first_purchase=True, initial_budget=0, baseline_result={}, months=[], all_solutions={}, max_risk=0, min_return=0, init_holdings=None):
+    def run_interface(
+        self,
+        i,
+        first_purchase=True,
+        initial_budget=0,
+        baseline_result={},
+        months=[],
+        all_solutions={},
+        max_risk=0,
+        min_return=0,
+        init_holdings=None
+    ):
         """Solve the rebalancing portfolio optimization problem.
 
         Args:
@@ -295,6 +306,7 @@ class MultiPeriod(SinglePeriod):
         # Removing the following values to be able to serialize
         self.model = {}
         self.sampler = {}
-        self.sample_set = {}
+        self.sample_set['CQM'] = {}
+        self.sample_set['DQM'] = {}
 
-        return baseline_result, months, all_solutions, initial_budget, self.df_baseline, self.df_all
+        return baseline_result, months, all_solutions, initial_budget, self.df_baseline, self.df_all, init_holdings

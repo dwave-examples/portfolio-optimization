@@ -269,7 +269,7 @@ def generate_table(table_dict: dict) -> html.Table:
     )
 
 
-def generate_solution_table(results_dict: dict, dates: list = []) -> html.Tbody:
+def generate_solution_table(results_dicts: dict, dates: list = []) -> html.Tbody:
     """Generates solution table.
 
     Args:
@@ -285,14 +285,11 @@ def generate_solution_table(results_dict: dict, dates: list = []) -> html.Tbody:
                 dates,
             ) if dates else (),
             html.Div(
-                generate_table(results_dict),
+                [generate_table(results_dict) for results_dict in results_dicts],
                 id="dynamic-results-table" if dates else "",
             )
         ]
     )
-
-def update_iteration(iteration: int) -> html.Span:
-    return html.Span(iteration, id="iteration")
 
 
 def create_interface() -> html.Div:
@@ -430,7 +427,7 @@ def create_interface() -> html.Div:
                                                 children=[
                                                     html.Div(
                                                         [
-                                                            html.H2("Best Feasible Solution"),
+                                                            html.H2("Solution"),
                                                             html.Div(
                                                                 id="solution-table",
                                                                 # add children dynamically using 'generate_table'

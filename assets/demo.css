@@ -63,17 +63,13 @@ table td:nth-child(2n+1) {
     cursor: default;
 }
 
-#solution-table {
+#dynamic-results-table {
     display: flex;
     width: 100%;
 }
 
-.results-table:not(:last-child) {
+.results-table table:not(:last-child) {
     margin-right: 3rem;
-}
-
-.results-table:nth-child(3) {
-    margin-left: 4rem;
 }
 
 #results-date-selector {

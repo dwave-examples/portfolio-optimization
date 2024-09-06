@@ -184,15 +184,10 @@ def update_results_date_table(
     Returns:
         dynamic-results-table: The new table based on the data from the date that was selected.
     """
+    solver_type = SolverType(solver_type)
     solution = date_dict[date_selected]
-    table = {"Estimated Returns": f"${solution['return']}"}
 
-    if solver_type is SolverType.CQM.value:
-        table.update({"Sales Revenue": solution['sales']})
-
-    table.update({"Variance": f"${solution['risk']:.2f}"})
-
-    return generate_table(table)
+    return [generate_table(solution["stocks"]), generate_table(format_table_data(solver_type, solution))]
 
 
 @dash.callback(
@@ -332,28 +327,19 @@ def update_output(
 
     elif iteration == max_iterations+1:
         output_tables = []
-        is_first = True
         dates = [{"label": datetime.strptime(date, '%Y-%m-%d').strftime("%B %Y"), "value": date} for date in results_date_dict.keys()]
-        for solution in results_date_dict.values():
+        solutions = list(results_date_dict.values())
 
-            table = format_table_data(solver_type, solution, is_first)
-
-            if is_first:
-                output_tables = [
-                    generate_solution_table(solution["stocks"]),
-                    generate_solution_table(table)
-                ]
-            else:
-                output_tables.append(generate_solution_table(table, dates))
-
-            if not is_first: break
-            is_first = False
+        output_tables = generate_solution_table(
+            [solutions[0]["stocks"], format_table_data(solver_type, solutions[0])],
+            dates
+        )
 
         # Generates a list of table rows for the problem details table.
         if solver_type is SolverType.CQM:
             problem_details_table = generate_problem_details_table_rows(
-                num_solutions=solution['number feasible'],
-                energy=solution['best energy'],
+                num_solutions=solutions[0]['number feasible'],
+                energy=solutions[0]['best energy'],
                 solver="CQM",
                 time_limit=time_limit,
             )

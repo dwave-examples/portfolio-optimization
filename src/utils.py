@@ -87,50 +87,51 @@ def generate_input_graph(
     fig = go.Figure()
 
     for col in list(df.columns.values):
-        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col))
+        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col, hovertemplate='$%{y:.2f}'))
 
     fig.update_layout(
-        title="Historical Stock Data", xaxis_title="Month", yaxis_title="Price"
+        title="Historical Stock Data",
+        xaxis_title="Month",
+        yaxis_title="Price",
+        hovermode="x",
+        xaxis_tickformat="%b %Y",
+        xaxis_tickvals=df.index[::2],
     )
 
     return fig
 
 def initialize_output_graph(
-    num_months: int,
-    df_baseline: pd.DataFrame,
+    df: pd.DataFrame,
     budget: int,
 ) -> go.Figure:
-    fig = go.Figure()
-
-    break_even_trace = go.Scatter(
-        x=list(range(0, num_months)),
-        y=[0] * num_months,
-        mode='lines',
-        line=dict(color='red'),
-        name='Break-even'
+    fig = go.Figure(
+        go.Scatter(
+            x=df.index,
+            y=[0] * (df.shape[0]),
+            mode='lines',
+            line=dict(color='red'),
+            name='Break-even',
+            hoverinfo='none'
+        )
     )
 
-    fig = go.Figure(data=[break_even_trace])
+    fig.update_layout(
+        title=f"{df.first_valid_index().date().strftime('%B %Y')} - {df.last_valid_index().date().strftime('%B %Y')}",
+        xaxis_tickformat="%b %Y",
+        xaxis_tickvals=df.index[::2],
+        hovermode="x"
+    )
 
     fig.update_yaxes(range=[-1.5 * budget, 1.5 * budget])
-
-    fig.update_xaxes(
-        tickvals=list(range(0, num_months, 2)),
-        ticktext=df_baseline.index.strftime("%b")[::2],
-        tickangle=-90
-    )
-
-    fig.update_xaxes(nticks=int(num_months / 2))
 
     return fig
 
 def update_output_graph(
-    # df: pd.DataFrame,
     fig: go.Figure,
     i: int,
     update_values: list,
     baseline_values: list,
-    df_all: pd.DataFrame,
+    df: pd.DataFrame,
 ) -> go.Figure:
     """Generates graph given df.
 
@@ -140,40 +141,33 @@ def update_output_graph(
     Returns:
         go.Figure: A Plotly figure object.
     """
-    update_values = np.array(update_values, dtype=object)
-    baseline_values = np.array(baseline_values, dtype=object)
-
-    optimized_trace = go.Scatter(
-        x=list(range(3, i + 1)),
-        y=update_values,
-        mode='lines',
-        line=dict(color='blue'),
-        name='Optimized portfolio',
-        showlegend=i == 4,
-    )
-
-    fund_trace = go.Scatter(
-        x=list(range(3, i + 1)),
-        y=baseline_values,
-        mode='lines',
-        line=dict(color='grey'),
-        name='Fund portfolio',
-        showlegend=i == 4,
-    )
-
-    fig.add_trace(optimized_trace)
-    fig.add_trace(fund_trace)
-
-    if i == 4:
-        fig.update_layout(
-            title=f"Start: {df_all.first_valid_index().date()}, End: {df_all.last_valid_index().date()}",
-            legend=dict(
-                x=0,
-                y=0,
-                xanchor='left',
-                yanchor='bottom',
-            )
+    if i==3:
+        optimized_trace = go.Scatter(
+            x=(df.index[3],),
+            y=update_values,
+            mode='lines',
+            line=dict(color='blue'),
+            name='Optimized portfolio',
+            hovertemplate='$%{y:.2f}'
         )
+
+        fund_trace = go.Scatter(
+            x=(df.index[3],),
+            y=baseline_values,
+            mode='lines',
+            line=dict(color='grey'),
+            name='Fund portfolio',
+            hovertemplate='$%{y:.2f}'
+        )
+
+        fig.add_trace(optimized_trace)
+        fig.add_trace(fund_trace)
+    else:
+        fig.data[1].x += (str(df.index[i]),)
+        fig.data[1].y = update_values
+
+        fig.data[2].x += (str(df.index[i]),)
+        fig.data[2].y = baseline_values
 
     return fig
 

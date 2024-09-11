@@ -36,9 +36,9 @@ while staying under some specified spending budget.
 
 TRANSACTION_COST = {
     "min": 0,
-    "max": 1,
-    "step": 0.01,
-    "value": 0.025,
+    "max": 10,
+    "step": 0.5,
+    "value": 2.5,
 }
 
 # A list of stock symbols/tickers for the options for the stocks dropdown,

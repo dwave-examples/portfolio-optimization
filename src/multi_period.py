@@ -251,7 +251,6 @@ class MultiPeriod(SinglePeriod):
 
         if first_purchase:
             budget = self.budget
-            initial_budget = self.budget
             baseline_shares = budget / baseline_df_current.iloc[-1]
             baseline_result = {self.baseline[0]: baseline_shares}
         else:
@@ -309,4 +308,4 @@ class MultiPeriod(SinglePeriod):
         self.sample_set['CQM'] = {}
         self.sample_set['DQM'] = {}
 
-        return baseline_result, months, all_solutions, initial_budget, self.df_baseline, self.df_all, init_holdings
+        return baseline_result, months, all_solutions, self.df_all, init_holdings

@@ -40,7 +40,7 @@ stock_options = [
     for ticker in STOCK_OPTIONS["options"]
 ]
 
-def slider(label: str, id: str, config: dict, wrapper_id: str = "") -> html.Div:
+def slider(label: str, id: str, config: dict, wrapper_id: str = "", marks: dict={}, show_tooltip: bool=True) -> html.Div:
     """Slider element for value selection.
 
     Args:
@@ -53,19 +53,19 @@ def slider(label: str, id: str, config: dict, wrapper_id: str = "") -> html.Div:
         className="slider-wrapper",
         id=wrapper_id,
         children=[
-            html.Label(label),
+            html.Label(label) if label else (),
             dcc.Slider(
                 id=id,
                 className="slider",
                 **config,
-                marks={
+                marks=marks if marks else {
                     config["min"]: str(config["min"]),
                     config["max"]: str(config["max"]),
                 },
                 tooltip={
                     "placement": "bottom",
                     "always_visible": True,
-                },
+                } if show_tooltip else None,
             ),
         ],
     )
@@ -134,10 +134,11 @@ def generate_settings_form() -> html.Div:
             html.Label("Date Range"),
             dcc.DatePickerRange(
                 id="date-range",
-                max_date_allowed=date.today() - timedelta(days=1), # yesterday
-                start_date=date.today() - timedelta(days=1460), # 3 years from today
-                end_date=date.today() - timedelta(days=1),
-                minimum_nights=30,
+                max_date_allowed=date.today().replace(day=1) - timedelta(days=1), # end of last month
+                start_date=date.today() - timedelta(days=730), # 2 years prior
+                end_date=date.today().replace(day=1) - timedelta(days=1),
+                minimum_nights=120,
+                # display_format='MM/Y',
             ),
             html.Label("Budget (USD)"),
             dcc.Input(
@@ -269,7 +270,7 @@ def generate_table(table_dict: dict) -> html.Table:
     )
 
 
-def generate_solution_table(results_dicts: dict, dates: list = []) -> html.Tbody:
+def generate_solution_table(results_dicts: list, dates: dict = {}) -> html.Tbody:
     """Generates solution table.
 
     Args:
@@ -277,16 +278,23 @@ def generate_solution_table(results_dicts: dict, dates: list = []) -> html.Tbody
     """
 
     return html.Div(
-        className="results-table",
-        children=[
-            dropdown(
+        [
+            slider(
                 "",
                 "results-date-selector",
-                dates,
-            ) if dates else (),
+                {
+                    "min": 0,
+                    "max": len(dates)-1,
+                    "value": len(dates)-1,
+                    "step": 1
+                },
+                marks=dates,
+                show_tooltip=False,
+            ) if dates and len(dates) > 1 else (),
             html.Div(
                 [generate_table(results_dict) for results_dict in results_dicts],
                 id="dynamic-results-table" if dates else "",
+                className="results-tables",
             )
         ]
     )
@@ -427,7 +435,7 @@ def create_interface() -> html.Div:
                                                 children=[
                                                     html.Div(
                                                         [
-                                                            html.H2("Solution"),
+                                                            html.H2("Solution Data Tables"),
                                                             html.Div(
                                                                 id="solution-table",
                                                                 # add children dynamically using 'generate_table'

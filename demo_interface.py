@@ -252,7 +252,7 @@ def problem_details(index: int) -> html.Div:
     )
 
 
-def generate_table(table_dict: dict) -> html.Table:
+def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
     """Generates solution table.
 
     Args:
@@ -263,40 +263,45 @@ def generate_table(table_dict: dict) -> html.Table:
         children=[
             html.Tbody(
                 [
-                    html.Tr([html.Td(key), html.Td(value)]) for key, value in table_dict.items()
+                    html.Tr(
+                        [
+                            html.Td(key),
+                            html.Td(
+                                [
+                                    table_dict[key],
+                                    html.Span(
+                                        "↑" if comparison[i] else "↓",
+                                        className=f"arrow-{comparison[i]}"
+                                    )
+                                ]
+                                if i < len(comparison) else table_dict[key]
+                            )
+                        ]
+                    ) for i, key in enumerate(table_dict)
                 ]
             )
         ]
     )
 
 
-def generate_solution_table(results_dicts: list, dates: dict = {}) -> html.Tbody:
-    """Generates solution table.
+def generate_dates_slider(dates: dict) -> html.Tbody:
+    """Generates date slider to switch between results tables.
 
     Args:
-        results_dict: Dictionary of lists of results values from all previous runs.
+        dates: TODO.
     """
 
-    return html.Div(
-        [
-            slider(
-                "",
-                "results-date-selector",
-                {
-                    "min": 0,
-                    "max": len(dates)-1,
-                    "value": len(dates)-1,
-                    "step": 1
-                },
-                marks=dates,
-                show_tooltip=False,
-            ) if dates and len(dates) > 1 else (),
-            html.Div(
-                [generate_table(results_dict) for results_dict in results_dicts],
-                id="dynamic-results-table" if dates else "",
-                className="results-tables",
-            )
-        ]
+    return slider(
+        "",
+        "results-date-selector",
+        {
+            "min": 0,
+            "max": len(dates)-1,
+            "value": len(dates)-1,
+            "step": 1
+        },
+        marks=dates,
+        show_tooltip=False,
     )
 
 
@@ -437,8 +442,13 @@ def create_interface() -> html.Div:
                                                         [
                                                             html.H2("Solution Data Tables"),
                                                             html.Div(
-                                                                id="solution-table",
-                                                                # add children dynamically using 'generate_table'
+                                                                [
+                                                                    html.Div(id="dates-slider"),
+                                                                    html.Div(
+                                                                        id="dynamic-results-table",
+                                                                        className="results-tables",
+                                                                    )
+                                                                ]
                                                             )
                                                         ]
                                                     ),

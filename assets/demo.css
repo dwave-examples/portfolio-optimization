@@ -72,6 +72,32 @@ table td:nth-child(2n+1) {
     width: 100%;
 }
 
+.results-tables .arrow-False {
+    margin-left: 1rem;
+    color: var(--red-light);
+    -webkit-text-stroke: 4px var(--red-light);
+}
+
+.results-tables .arrow-True {
+    margin-left: 1rem;
+    color: var(--teal-darker);
+    -webkit-text-stroke: 4px var(--teal-darker);
+}
+
+.results-tables table:nth-child(1) td,
+.results-tables table:nth-child(2) td {
+    color: var(--grey-medium);
+}
+
+.results-tables table:nth-last-child(1),
+.results-tables table:nth-last-child(2),
+.results-tables table:nth-last-child(1) td,
+.results-tables table:nth-last-child(2) td {
+    color: var(--grey-dark);
+    border-color: var(--grey-dark);
+
+}
+
 #results-date-selector {
     margin-bottom: 2rem;
 }

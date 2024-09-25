@@ -25,17 +25,13 @@ import yfinance as yf
 
 
 def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
-    print(
-        f"\nLoading live data from the web from Yahoo Finance",
-        f"from {dates[0]} to {dates[1]}...",
-    )
+    print(f"\nLoading live data from the web from Yahoo Finance from {dates[0]} to {dates[1]}...")
 
-    # Generating randomn list of stocks
+    # Generating random list of stocks
     if num > 0:
         if dates[0] < "2010-01-01":
-            raise Exception(
-                f"Start date must be >= '2010-01-01' " f"when using option 'num'."
-            )
+            raise Exception("Start date must be >= '2010-01-01' when using option 'num'.")
+
         symbols_df = pd.read_csv("data/stocks_symbols.csv")
         stocks = random.sample(list(symbols_df.loc[:, "Symbol"]), num)
 
@@ -52,7 +48,7 @@ def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
         print("The following tickers are dropped due to invalid data: ", nan_columns)
         df_all = df_all.dropna(axis=1)
         if len(df_all.columns) < 2:
-            raise Exception(f"There must be at least 2 valid stock tickers.")
+            raise Exception("There must be at least 2 valid stock tickers.")
         stocks = list(df_all.columns)
 
     # Read in baseline data; resample to monthly
@@ -179,6 +175,6 @@ def format_table_data(solver_type: SolverType, solution: dict) -> dict[str, str]
     table.update({"Purchase Cost": f"${solution['cost']:.2f}"})
     if solver_type is SolverType.CQM:
         table.update({"Transaction Cost": f"${solution['transaction cost']:.2f}"})
-    table.update({"Variance": f"${solution['risk']:.2f}"})
+    table.update({"Variance": f"{solution['risk']:.2f}"})
 
     return table

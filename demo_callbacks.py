@@ -26,7 +26,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.utils import deserialize, generate_input_graph, get_live_data, format_table_data, initialize_output_graph, serialize, update_output_graph
 
-from demo_interface import generate_problem_details_table_rows, generate_solution_table, generate_table
+from demo_interface import generate_dates_slider, generate_problem_details_table_rows, generate_table
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
@@ -186,9 +186,31 @@ def update_results_date_table(
     """
     solver_type = SolverType(solver_type)
 
-    solution = list(date_dict.values())[date_selected]
+    date_keys_list = list(date_dict.keys())
+    date = date_keys_list[date_selected]
+    date_values_list = list(date_dict.values())
+    solution = date_values_list[date_selected]
 
-    return [generate_table(solution["stocks"]), generate_table(format_table_data(solver_type, solution))]
+    if date_selected > 0:
+        prev_date = date_keys_list[date_selected-1]
+        prev_solution = date_values_list[date_selected-1]
+        compare_stocks = [prev < curr for prev, curr in zip(prev_solution["stocks"].values(), solution["stocks"].values())]
+
+        solution_keys = ['return', 'sales'] if solver_type is SolverType.CQM else ['return']
+        compare_solution = [prev_solution[key] < solution[key] for key in solution_keys]
+        output = [
+            generate_table(prev_solution["stocks"]),
+            generate_table(format_table_data(solver_type, prev_solution)),
+            generate_table(solution["stocks"], compare_stocks),
+            generate_table(format_table_data(solver_type, solution), compare_solution),
+        ]
+    else:
+        output = [
+            generate_table(solution["stocks"]),
+            generate_table(format_table_data(solver_type, solution)),
+        ]
+
+    return output
 
 
 @dash.callback(
@@ -247,6 +269,7 @@ class UpdateOutputReturn(NamedTuple):
     output_graph: go.Figure = dash.no_update
     iteration: int = dash.no_update
     problem_details_table: list = dash.no_update
+    dates_slider: list = dash.no_update
     solution_table: list = dash.no_update
     results_date_dict: dict = dash.no_update
     portfolio: MultiPeriod = dash.no_update
@@ -269,7 +292,8 @@ class UpdateOutputReturn(NamedTuple):
     Output("output-graph", "figure"),
     Output("iteration", "data"),
     Output("problem-details", "children"),
-    Output("solution-table", "children"),
+    Output("dates-slider", "children"),
+    Output("dynamic-results-table", "children", allow_duplicate=True),
     Output("results-date-dict", "data"),
     Output("portfolio", "data"),
     Output("baseline-results", "data"),
@@ -342,10 +366,12 @@ def update_output(
         dates = {i: datetime.strptime(date, '%Y-%m-%d').strftime("%b %Y") for i, date in enumerate(list(results_date_dict.keys()))}
         solutions = list(results_date_dict.values())
 
-        output_tables = generate_solution_table(
-            [solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
-            dates
-        )
+        output_tables = [
+            generate_table(solutions[-1]["stocks"]),
+            generate_table(format_table_data(solver_type, solutions[-1]))
+        ]
+
+        dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
 
         # Generates a list of table rows for the problem details table.
         if solver_type is SolverType.CQM:
@@ -364,6 +390,7 @@ def update_output(
         return UpdateOutputReturn(
             iteration=3,
             problem_details_table=problem_details_table,
+            dates_slider=dates_slider,
             solution_table=output_tables,
             results_date_dict=results_date_dict,
             loop_running=False,
@@ -504,7 +531,7 @@ def run_optimization(
 
 @dash.callback(
     Output("problem-details", "children", allow_duplicate=True),
-    Output("solution-table", "children", allow_duplicate=True),
+    Output("dynamic-results-table", "children", allow_duplicate=True),
     Output("cancel-button", "className", allow_duplicate=True),
     Output("run-button", "className", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
@@ -583,7 +610,7 @@ def run_optimization_single(
 
     table = format_table_data(solver_type, solution)
 
-    output_tables = generate_solution_table([solution["stocks"], table])
+    output_tables = [generate_table(solution["stocks"]), generate_table(table)]
 
     # Generates a list of table rows for the problem details table.
     if solver_type is SolverType.CQM:

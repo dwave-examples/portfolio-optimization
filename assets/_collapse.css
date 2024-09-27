@@ -51,6 +51,7 @@ limitations under the License.
     border-radius: 0;
     padding: 0 0 0 0.5rem;
     filter: none;
+    display: block;
 }
 
 .details-collapse,

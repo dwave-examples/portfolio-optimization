@@ -40,7 +40,15 @@ stock_options = [
     for ticker in STOCK_OPTIONS["options"]
 ]
 
-def slider(label: str, id: str, config: dict, wrapper_id: str = "", marks: dict={}, show_tooltip: bool=True) -> html.Div:
+def slider(
+    label: str,
+    id: str,
+    config: dict,
+    wrapper_id: str = "",
+    marks: dict={},
+    show_tooltip: bool=True,
+    dots: bool=False
+) -> html.Div:
     """Slider element for value selection.
 
     Args:
@@ -62,6 +70,7 @@ def slider(label: str, id: str, config: dict, wrapper_id: str = "", marks: dict=
                     config["min"]: str(config["min"]),
                     config["max"]: str(config["max"]),
                 },
+                dots=dots,
                 tooltip={
                     "placement": "bottom",
                     "always_visible": True,
@@ -260,27 +269,50 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
     """
 
     return html.Table(
-        children=[
-            html.Tbody(
-                [
-                    html.Tr(
-                        [
-                            html.Td(key),
-                            html.Td(
-                                [
-                                    table_dict[key],
-                                    html.Span(
-                                        "↑" if comparison[i] else "↓",
-                                        className=f"arrow-{comparison[i]}"
-                                    )
-                                ]
-                                if i < len(comparison) else table_dict[key]
-                            )
-                        ]
-                    ) for i, key in enumerate(table_dict)
-                ]
-            )
+        html.Tbody(
+            [
+                html.Tr(
+                    [
+                        html.Td(key),
+                        html.Td(
+                            [
+                                table_dict[key],
+                                html.Span(
+                                    "↑" if comparison[i] else "↓",
+                                    className=f"arrow-{comparison[i]}",
+                                    style={"visibility": "none"} if comparison[i] is None else {}
+                                )
+                            ]
+                            if i < len(comparison) else table_dict[key]
+                        )
+                    ]
+                ) for i, key in enumerate(table_dict)
+            ]
+        )
+    )
+
+
+def generate_table_group(
+    tables_data: list,
+    comparisons_data: list=[],
+    date: str="",
+) -> html.Table:
+    """TODO
+
+    Args:
+        table_dict: TODO
+    """
+    if comparisons_data:
+        tables = [
+            generate_table(table, comparison)
+            for table, comparison in zip(tables_data, comparisons_data)
         ]
+    else:
+        tables = [generate_table(table) for table in tables_data]
+
+    return html.Div(
+        [html.Div(date), html.Div(tables, className="results-tables")],
+        className="results-comparison"
     )
 
 
@@ -300,7 +332,8 @@ def generate_dates_slider(dates: dict) -> html.Tbody:
             "value": len(dates)-1,
             "step": 1
         },
-        marks=dates,
+        marks={0: dates[0], len(dates)-1: dates[len(dates)-1]},
+        dots=True,
         show_tooltip=False,
     )
 
@@ -440,16 +473,8 @@ def create_interface() -> html.Div:
                                                 children=[
                                                     html.Div(
                                                         [
-                                                            html.H2("Solution Data Tables"),
-                                                            html.Div(
-                                                                [
-                                                                    html.Div(id="dates-slider"),
-                                                                    html.Div(
-                                                                        id="dynamic-results-table",
-                                                                        className="results-tables",
-                                                                    )
-                                                                ]
-                                                            )
+                                                            html.Div(id="dates-slider"),
+                                                            html.Div(id="dynamic-results-table")
                                                         ]
                                                     ),
                                                     # Problem details dropdown

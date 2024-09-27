@@ -26,7 +26,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from src.utils import deserialize, generate_input_graph, get_live_data, format_table_data, initialize_output_graph, serialize, update_output_graph
 
-from demo_interface import generate_dates_slider, generate_problem_details_table_rows, generate_table
+from demo_interface import generate_dates_slider, generate_problem_details_table_rows, generate_table, generate_table_group
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
 from src.demo_enums import PeriodType, SolverType
@@ -187,28 +187,36 @@ def update_results_date_table(
     solver_type = SolverType(solver_type)
 
     date_keys_list = list(date_dict.keys())
-    date = date_keys_list[date_selected]
+    date = datetime.strptime(date_keys_list[date_selected], '%Y-%m-%d').strftime("%B %Y")
     date_values_list = list(date_dict.values())
     solution = date_values_list[date_selected]
 
     if date_selected > 0:
-        prev_date = date_keys_list[date_selected-1]
+        prev_date = datetime.strptime(date_keys_list[date_selected-1], '%Y-%m-%d').strftime("%B %Y")
         prev_solution = date_values_list[date_selected-1]
-        compare_stocks = [prev < curr for prev, curr in zip(prev_solution["stocks"].values(), solution["stocks"].values())]
+        compare_stocks = [
+            None if prev==curr else prev < curr
+            for prev, curr in zip(prev_solution["stocks"].values(), solution["stocks"].values())
+        ]
 
         solution_keys = ['return', 'sales'] if solver_type is SolverType.CQM else ['return']
         compare_solution = [prev_solution[key] < solution[key] for key in solution_keys]
         output = [
-            generate_table(prev_solution["stocks"]),
-            generate_table(format_table_data(solver_type, prev_solution)),
-            generate_table(solution["stocks"], compare_stocks),
-            generate_table(format_table_data(solver_type, solution), compare_solution),
+            generate_table_group(
+                tables_data=[prev_solution["stocks"], format_table_data(solver_type, prev_solution)],
+                date=prev_date
+            ),
+            generate_table_group(
+                tables_data=[solution["stocks"], format_table_data(solver_type, solution)],
+                comparisons_data=[compare_stocks, compare_solution],
+                date=date
+            )
         ]
     else:
-        output = [
-            generate_table(solution["stocks"]),
-            generate_table(format_table_data(solver_type, solution)),
-        ]
+        output = generate_table_group(
+            tables_data=[solution["stocks"], format_table_data(solver_type, solution)],
+            date=date
+        )
 
     return output
 
@@ -366,10 +374,10 @@ def update_output(
         dates = {i: datetime.strptime(date, '%Y-%m-%d').strftime("%b %Y") for i, date in enumerate(list(results_date_dict.keys()))}
         solutions = list(results_date_dict.values())
 
-        output_tables = [
-            generate_table(solutions[-1]["stocks"]),
-            generate_table(format_table_data(solver_type, solutions[-1]))
-        ]
+        output_tables = generate_table_group(
+            tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
+            date=dates[len(dates)-1]
+        )
 
         dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
 

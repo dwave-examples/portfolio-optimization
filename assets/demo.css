@@ -17,11 +17,13 @@ limitations under the License.
 /* Style rules for all custom CSS. */
 
 .tab-content-results {
-    padding: 0 3rem;
+    padding: 3rem 3rem 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
+    max-width: 85rem;
+    min-width: 80rem;
 }
 
 .tab-content {
@@ -63,7 +65,8 @@ table td:nth-child(2n+1) {
     cursor: default;
 }
 
-.results-tables table:not(:last-child) {
+.results-tables table:not(:last-child),
+.results-comparison:not(:last-child) {
     margin-right: 3rem;
 }
 
@@ -84,18 +87,27 @@ table td:nth-child(2n+1) {
     -webkit-text-stroke: 4px var(--teal-darker);
 }
 
-.results-tables table:nth-child(1) td,
-.results-tables table:nth-child(2) td {
+.results-comparison > div:first-child {
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--grey-medium);
+    color: var(--grey-medium);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.results-comparison:last-child > div:first-child {
+    color: var(--grey-dark);
+    border-color: var(--grey-dark);
+}
+
+.results-comparison:nth-child(1) td {
     color: var(--grey-medium);
 }
 
-.results-tables table:nth-last-child(1),
-.results-tables table:nth-last-child(2),
-.results-tables table:nth-last-child(1) td,
-.results-tables table:nth-last-child(2) td {
+.results-comparison:last-child table,
+.results-comparison:last-child td {
     color: var(--grey-dark);
     border-color: var(--grey-dark);
-
 }
 
 #results-date-selector {
@@ -109,4 +121,18 @@ table td:nth-child(2n+1) {
 
 #output-graph {
     height: 100%;
+}
+
+#date-labels span {
+    margin-right: 3rem;
+    text-transform: uppercase;
+}
+
+.rc-slider-mark-text {
+    width: 10rem;
+}
+
+#dynamic-results-table {
+    display: flex;
+    justify-content: space-between;
 }

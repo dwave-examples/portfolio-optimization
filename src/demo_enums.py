@@ -19,6 +19,13 @@ class SolverType(Enum):
     CQM = 0
     DQM = 1
 
+    @property
+    def label(self):
+        return {
+            SolverType.CQM: "CQM",
+            SolverType.DQM: "DQM",
+        }[self]
+
 class PeriodType(Enum):
     SINGLE = 0
     MULTI = 1

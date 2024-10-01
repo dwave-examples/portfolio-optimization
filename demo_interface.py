@@ -56,6 +56,9 @@ def slider(
         id: A unique selector for this element.
         config: A dictionary of slider configerations, see dcc.Slider Dash docs.
         wrapper_id: A unique selector for the wrapper element.
+        marks: Optional marks to show instead of max and min.
+        show_tooltip: Whether the tooltip should be visible.
+        dots: Whether dots should be shown where the important data points are.
     """
     return html.Div(
         className="slider-wrapper",
@@ -266,6 +269,10 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
 
     Args:
         table_dict: Dictionary of table values where each key, value pair make a row of the table.
+        comparison: A list of comparisons between tables.
+
+    Returns:
+        html.Table: A table containing results.
     """
 
     return html.Table(
@@ -280,7 +287,7 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
                                 html.Span(
                                     "↑" if comparison[i] else "↓",
                                     className=f"arrow-{comparison[i]}",
-                                    style={"visibility": "none"} if comparison[i] is None else {}
+                                    style={"visibility": "hidden"} if comparison[i] is None else {}
                                 )
                             ]
                             if i < len(comparison) else table_dict[key]
@@ -295,12 +302,17 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
 def generate_table_group(
     tables_data: list,
     comparisons_data: list=[],
-    date: str="",
-) -> html.Table:
-    """TODO
+    title: str="",
+) -> html.Div:
+    """Generates a grouped collection of tables with optional title and comparison data.
 
     Args:
-        table_dict: TODO
+        tables_data: A list of dictionaries of tables data.
+        comparisons_data: List of lists of comparison data between the passed in tables.
+        title: The title to display above the tables.
+
+    Returns:
+        html.Div: A div containing a title and grouped tables.
     """
     if comparisons_data:
         tables = [
@@ -311,28 +323,32 @@ def generate_table_group(
         tables = [generate_table(table) for table in tables_data]
 
     return html.Div(
-        [html.Div(date), html.Div(tables, className="results-tables")],
+        [html.Div(title), html.Div(tables, className="results-tables")],
         className="results-comparison"
     )
 
 
-def generate_dates_slider(dates: dict) -> html.Tbody:
+def generate_dates_slider(dates: list) -> html.Div:
     """Generates date slider to switch between results tables.
 
     Args:
-        dates: TODO.
+        dates: A list of the dates in the slider.
+
+    Returns:
+        html.Div: A div containing a dates slider.
     """
+    last_date = len(dates)-1
 
     return slider(
         "",
         "results-date-selector",
         {
             "min": 0,
-            "max": len(dates)-1,
-            "value": len(dates)-1,
+            "max": last_date,
+            "value": last_date,
             "step": 1
         },
-        marks={0: dates[0], len(dates)-1: dates[len(dates)-1]},
+        marks={0: dates[0], last_date: dates[-1]},
         dots=True,
         show_tooltip=False,
     )
@@ -360,7 +376,6 @@ def create_interface() -> html.Div:
                 disabled=True
             ),
             dcc.Store(id="loop-running", data=False),
-            dcc.Store(id="start-loop", data=False),
             dcc.Store(id="iteration", data=3),
             # Header brand banner
             html.Div(
@@ -433,11 +448,9 @@ def create_interface() -> html.Div:
                                                 className="input-loading",
                                                 type="circle",
                                                 color=THEME_COLOR_SECONDARY,
-                                                # A Dash callback (in app.py) will generate content in the Div below
                                                 children=html.Div(
                                                     [
                                                         dcc.Graph(
-                                                            # id={"type": f"graph", "index": 0},
                                                             id="input-graph",
                                                             responsive=True,
                                                             config={"displayModeBar": False},

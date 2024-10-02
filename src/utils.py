@@ -132,7 +132,7 @@ def initialize_output_graph(
     )
 
     fig.update_layout(
-        title=f"{df.first_valid_index().date().strftime('%B %Y')} - {df.last_valid_index().date().strftime('%B %Y')}",
+        title=f"{df.first_valid_index().date().strftime('%B %Y')} - {df.last_valid_index().date().strftime('%B %Y')}<br><sup><i>double click graph to rescale</i></sup>",
         xaxis_tickformat="%b %Y",
         xaxis_tickvals=df.index[::2],
         hovermode="x"

@@ -38,7 +38,7 @@ TRANSACTION_COST = {
     "min": 0,
     "max": 10,
     "step": 0.5,
-    "value": 2.5,
+    "value": 0,
 }
 
 # A list of stock symbols/tickers for the options for the stocks dropdown,
@@ -70,5 +70,5 @@ BUDGET = {
     "min": 1000,
     "max": 100000,
     "step": 100,
-    "value": 5000,
+    "value": 1000,
 }

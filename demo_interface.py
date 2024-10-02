@@ -137,10 +137,9 @@ def generate_settings_form() -> html.Div:
             dcc.DatePickerRange(
                 id="date-range",
                 max_date_allowed=date.today().replace(day=1) - timedelta(days=1), # end of last month
-                start_date=date.today() - timedelta(days=730), # 2 years prior
-                end_date=date.today().replace(day=1) - timedelta(days=1),
+                start_date='2010-01-01',
+                end_date='2012-12-31',
                 minimum_nights=120,
-                # display_format='MM/Y',
             ),
             html.Label("Budget (USD)"),
             dcc.Input(

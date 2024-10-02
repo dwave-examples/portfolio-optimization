@@ -85,7 +85,7 @@ def render_initial_state(
     """
     dates = [start_date, end_date] if start_date and end_date else ['2010-01-01', '2012-12-31']
     stocks = stocks if stocks else ['AAPL', 'MSFT', 'AAL', 'WMT']
-    df, stocks, df_baseline = get_live_data(dates, stocks, BASELINE)
+    df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
 
     return generate_input_graph(df)
 
@@ -127,17 +127,17 @@ def update_selected_period(
         raise PreventUpdate
 
     nav_class_names = [""] * len(period_options)
-    is_single = not ctx.triggered_id or ctx.triggered_id["index"] is PeriodType.SINGLE.value
+    new_period = ctx.triggered_id["index"] if ctx.triggered_id else PeriodType.SINGLE.value
 
-    nav_class_names[PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value] = "active"
+    nav_class_names[new_period] = "active"
 
     return (
         nav_class_names,
-        PeriodType.SINGLE.value if is_single else PeriodType.MULTI.value,
+        new_period,
         "input-tab",
         True,
-        not is_single,
-        {"display": "none" if is_single else "block"},
+        new_period is PeriodType.MULTI.value,
+        {"display": "none" if new_period is PeriodType.SINGLE.value else "block"},
     )
 
 
@@ -168,30 +168,29 @@ def update_settings(
     inputs=[
         Input("results-date-selector", "value"),
         State("results-date-dict", "data"),
-        State("sampler-type-select", "value"),
+        State("settings-store", "data"),
     ],
     prevent_initial_call=True,
 )
 def update_results_date_table(
-    date_selected: str, date_results: dict, solver_type: Union[SolverType, int],
+    date_selected: str, date_results: dict, settings_store: dict,
 ) -> list:
     """Updates the results date table when the value of the results date selector is changed.
 
     Args:
         date_selected: The date that was just selected to trigger the callback.
         date_results: The store of period solution data with the date of the period as the key.
-        solver_type: Either Quantum Hybrid (``0`` or ``SolverType.HYBRID``),
-            or Classical (``1`` or ``SolverType.CLASSICAL``).
+        settings_store: The settings that have been selected for this run.
 
     Returns:
         dynamic-results-table: The new table based on the data from the date that was selected.
     """
-    solver_type = SolverType(solver_type)
+    solver_type = SolverType(settings_store["solver type"])
 
     date_keys_list = list(date_results.keys())
+    date_values_list = list(date_results.values())
 
     date = datetime.strptime(date_keys_list[date_selected], '%Y-%m-%d').strftime("%B %Y")
-    date_values_list = list(date_results.values())
     solution = date_values_list[date_selected]
 
     if date_selected > 0:
@@ -237,7 +236,7 @@ def cancel(cancel_button_click: int) -> tuple[bool, str, str, int, str]:
         cancel_button_click: The number of times the cancel button has been clicked.
 
     Returns:
-        loop-interval-disabled: Whether to disable the trigger that starts ``update_output``.
+        loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
         cancel-button-class: The class for the cancel button.
         run-button-class: The class for the run button.
         iteration: The number to reset the iteration store to.
@@ -255,11 +254,11 @@ def cancel(cancel_button_click: int) -> tuple[bool, str, str, int, str]:
     prevent_initial_call = True,
 )
 def start_loop_iteration(interval_trigger, is_loop_running) -> bool:
-    """Triggers ``update_output`` when Interval is triggered.
+    """Triggers ``update_multi_output`` when Interval is triggered.
 
     Args:
         interval_trigger: The Dash Interval that triggers this function.
-        is_loop_running: Whether ``update_output`` is currently running.
+        is_loop_running: Whether ``update_multi_output`` is currently running.
 
     Returns:
         loop-running: Whether the loop is running.
@@ -270,8 +269,8 @@ def start_loop_iteration(interval_trigger, is_loop_running) -> bool:
     return True
 
 
-class UpdateOutputReturn(NamedTuple):
-    """Return type for the ``update_output`` callback function."""
+class UpdateMultiOutputReturn(NamedTuple):
+    """Return type for the ``update_multi_output`` callback function."""
 
     output_graph: go.Figure = dash.no_update
     iteration: int = dash.no_update
@@ -316,7 +315,7 @@ class UpdateOutputReturn(NamedTuple):
     cancel=[Input("cancel-button", "n_clicks")],
     prevent_initial_call = True,
 )
-def update_output(
+def update_multi_output(
     is_loop_running: bool,
     max_iterations: int,
     iteration: int,
@@ -325,11 +324,11 @@ def update_output(
     portfolio: MultiPeriod,
     loop_store: dict,
     fig: go.Figure,
-) -> UpdateOutputReturn:
+) -> UpdateMultiOutputReturn:
     """Iteratively updates output graph.
 
     Args:
-        start_loop: Whether the loop should start.
+        is_loop_running: Whether the loop is running.
         max_iterations: The maximum times to call run_update().
         iteration: Which iteration of run_update is currently executing.
         settings_store: The settings that have been selected for this run.
@@ -339,7 +338,7 @@ def update_output(
         fig: The graph to update.
 
     Returns:
-        A tuple UpdateOutputReturn that contains the following:
+        A NamedTuple ``UpdateMultiOutputReturn`` that contains the following:
             output_graph: The updated output graph.
             iteration: The next iteration count of the function.
             dates_slider: A slider of dates that updates the visible solution_table.
@@ -393,7 +392,7 @@ def update_output(
             fig, iteration, my_portfolio.update_values, my_portfolio.baseline_values, my_portfolio.df_all
         )
 
-        return UpdateOutputReturn(
+        return UpdateMultiOutputReturn(
             output_graph=fig,
             iteration=iteration+1,
             results_date_dict=all_solutions,
@@ -434,7 +433,7 @@ def update_output(
 
         dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
 
-        return UpdateOutputReturn(
+        return UpdateMultiOutputReturn(
             output_graph=fig,
             iteration=3,
             dates_slider=dates_slider,
@@ -451,7 +450,7 @@ def update_output(
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
     # Regular iteration
-    return UpdateOutputReturn(
+    return UpdateMultiOutputReturn(
         output_graph=fig,
         iteration=iteration+1,
         results_date_dict=all_solutions,
@@ -460,6 +459,19 @@ def update_output(
         is_loop_running=False,
     )
 
+
+class RunOptimizationReturn(NamedTuple):
+    """Return type for the ``run_optimization`` callback function."""
+
+    cancel_button_class: str = ""
+    run_button_class: str = "display-none"
+    results_tab_disabled: bool = True
+    results_tab_label: str = "Loading..."
+    tabs_value: str = "input-tab"
+    settings_store: dict = dash.no_update
+    max_iterations: int = dash.no_update
+    loop_interval_disabled: bool = dash.no_update
+    graph_tab_disabled: bool = dash.no_update
 
 @dash.callback(
     Output("cancel-button", "className"),
@@ -492,7 +504,7 @@ def run_optimization(
     start_date: str,
     end_date: str,
     stocks: list,
-) -> tuple[int, bool]:
+) -> RunOptimizationReturn:
     """Updates UI and triggers optimization run.
 
     Args:
@@ -506,20 +518,19 @@ def run_optimization(
         stocks: The list of selected stocks.
 
     Returns:
-        A tuple containing all outputs to be used when updating the HTML
-        template (in ``dash_html.py``). These are:
+        A NamedTuple ``RunOptimizationReturn`` containing:
             cancel-button-class: The class for the cancel button.
             run-button-class: The class for the run button.
+            results-tab-disabled: Whether the results tab should be disabled.
             results-tab-label: The label of the results tab.
             tabs-value: Which tab should be selected.
             settings-store: Storing all the settings for the run.
             max-iterations: The number of months between start and end date, which is the number of
-                times to run ``update_output`` (minus 3).
-            loop-interval-disabled: Whether to disable the trigger that starts ``update_output``.
+                times to run ``update_multi_output`` (minus 3).
+            loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
             graph-tab-disabled: Whether to disable the graph tab.
 
     """
-    return_vals = ("", "display-none", True, "Loading...", "input-tab")
     settings_store = {
         "solver type": solver_type,
         "budget": budget,
@@ -529,13 +540,18 @@ def run_optimization(
     }
 
     if period is PeriodType.SINGLE.value:
-        return  *return_vals, settings_store, dash.no_update, dash.no_update, dash.no_update
+        return  RunOptimizationReturn(settings_store=settings_store)
 
     start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
     end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
     num_months = (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
 
-    return *return_vals, settings_store, num_months, False, True
+    return RunOptimizationReturn(
+        settings_store=settings_store,
+        max_iterations=num_months,
+        loop_interval_disabled=False,
+        graph_tab_disabled=True
+    )
 
 
 @dash.callback(
@@ -555,27 +571,19 @@ def run_optimization(
 def run_optimization_single(
     settings_store: dict,
     period: Union[PeriodType, int],
-) -> tuple[list, list]:
-    """Runs the optimization and updates UI accordingly.
-
-    This is the main function which is called when the `Run Optimization` button is clicked.
-    This function takes in all form values and runs the optimization, updates the run/cancel
-    buttons, deactivates (and reactivates) the results tab, and updates all relevant HTML
-    components.
+) -> tuple[list, str, str, bool, str]:
+    """Runs the single period optimization and updates UI accordingly.
 
     Args:
         settings_store: The settings that have been selected for this run.
         period: The currently selected PeriodType either single-period or multi-period.
 
     Returns:
-        A tuple containing all outputs to be used when updating the HTML
-        template (in ``dash_html.py``). These are:
-            solution-table: The tables to display the solution.
-            cancel-button-class: The class for the cancel button.
-            run-button-class: The class for the run button.
-            results-tab-disabled: Whether the results tab should be disabled.
-            results-tab-label: The label of the results tab.
-
+        solution-table: The tables to display the solution.
+        cancel-button-class: The class for the cancel button.
+        run-button-class: The class for the run button.
+        results-tab-disabled: Whether the results tab should be disabled.
+        results-tab-label: The label of the results tab.
     """
     if period is PeriodType.MULTI.value:
         raise PreventUpdate

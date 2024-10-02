@@ -22,8 +22,8 @@ class SolverType(Enum):
     @property
     def label(self):
         return {
-            SolverType.CQM: "CQM",
-            SolverType.DQM: "DQM",
+            SolverType.CQM: "Quantum Hybrid (CQM)",
+            SolverType.DQM: "Quantum Hybrid (DQM)",
         }[self]
 
 class PeriodType(Enum):

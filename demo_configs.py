@@ -64,7 +64,7 @@ STOCK_OPTIONS = {
     "value": ['AAPL', 'MSFT', 'AAL', 'WMT'],
 }
 
-BASELINE = ['^GSPC']  # S&P 500
+BASELINE = '^GSPC'  # S&P 500
 
 BUDGET = {
     "min": 1000,

@@ -17,7 +17,6 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from dash import dcc, html
-import plotly.graph_objs as go
 import yfinance as yf
 
 
@@ -32,12 +31,6 @@ from demo_configs import (
 )
 from src.demo_enums import PeriodType, SolverType
 
-SAMPLER_TYPES = {SolverType.CQM: "Quantum Hybrid (CQM)", SolverType.DQM: "Quantum Hybrid (DQM)"}
-
-stock_options = [
-    {"label": f"{yf.Ticker(ticker).info['shortName']} ({ticker})", "value": ticker}
-    for ticker in STOCK_OPTIONS["options"]
-]
 
 def slider(
     label: str,
@@ -116,9 +109,13 @@ def generate_settings_form() -> html.Div:
     Returns:
         html.Div: A Div containing the settings for selecting the scenario, model, and solver.
     """
-    sampler_options = [
-        {"label": label, "value": solver_type.value}
-        for solver_type, label in SAMPLER_TYPES.items()
+    solver_options = [
+        {"label": solver_type.label, "value": solver_type.value} for solver_type in SolverType
+    ]
+
+    stock_options = [
+        {"label": f"{yf.Ticker(ticker).info['shortName']} ({ticker})", "value": ticker}
+        for ticker in STOCK_OPTIONS["options"]
     ]
 
     return html.Div(
@@ -127,7 +124,7 @@ def generate_settings_form() -> html.Div:
             dropdown(
                 "Solver",
                 "sampler-type-select",
-                sorted(sampler_options, key=lambda op: op["value"]),
+                sorted(solver_options, key=lambda op: op["value"]),
             ),
             html.Label("Stocks"),
             dcc.Dropdown(

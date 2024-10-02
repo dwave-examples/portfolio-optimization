@@ -87,7 +87,7 @@ table td:nth-child(2n+1) {
     -webkit-text-stroke: 4px var(--teal-darker);
 }
 
-.results-comparison > div:first-child {
+.results-comparison > div:first-child:not(:last-child) {
     text-transform: uppercase;
     border-bottom: 2px solid var(--grey-medium);
     color: var(--grey-medium);
@@ -95,7 +95,7 @@ table td:nth-child(2n+1) {
     font-weight: 600;
 }
 
-.results-comparison:last-child > div:first-child {
+.results-comparison:last-child > div:first-child:not(:last-child) {
     color: var(--grey-dark);
     border-color: var(--grey-dark);
 }

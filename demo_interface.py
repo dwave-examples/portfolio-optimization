@@ -130,12 +130,6 @@ def generate_settings_form() -> html.Div:
                 "sampler-type-select",
                 sorted(sampler_options, key=lambda op: op["value"]),
             ),
-            html.Label("Solver Time Limit (seconds)"),
-            dcc.Input(
-                id="solver-time-limit",
-                type="number",
-                **SOLVER_TIME,
-            ),
             html.Label("Stocks"),
             dcc.Dropdown(
                 stock_options,
@@ -179,86 +173,6 @@ def generate_run_buttons() -> html.Div:
                 children="Cancel Optimization",
                 n_clicks=0,
                 className="display-none",
-            ),
-        ],
-    )
-
-
-def generate_problem_details_table_rows(
-    solver: str,
-    time_limit: int,
-    energy: float=0,
-    num_solutions: int=0,
-) -> list[html.Tr]:
-    """Generates table rows for the problem details table.
-
-    Args:
-        solver: The solver used for optimization.
-        time_limit: The solver time limit.
-
-    Returns:
-        list[html.Tr]: List of rows for the problem details table.
-    """
-
-    table_rows = [("Solver:", solver, "Time Limit:", f"{time_limit}s")]
-
-    if num_solutions:
-        table_rows.append(("Solutions:", num_solutions, "Best Energy:", round(energy, 3)))
-
-    return [html.Tr([html.Td(cell) for cell in row]) for row in table_rows]
-
-
-def problem_details(index: int) -> html.Div:
-    """Generate the problem details section.
-
-    Args:
-        index: Unique element id to differentiate matching elements.
-            Must be different from left column collapse button.
-
-    Returns:
-        html.Div: Div containing a collapsable table.
-    """
-    return html.Div(
-        id={"type": "to-collapse-class", "index": index},
-        className="details-collapse-wrapper collapsed",
-        children=[
-            # Problem details collapsible button and header
-            html.Button(
-                id={"type": "collapse-trigger", "index": index},
-                className="details-collapse",
-                children=[
-                    html.H5("Problem Details"),
-                    html.Div(className="collapse-arrow"),
-                ],
-            ),
-            html.Div(
-                className="details-to-collapse",
-                children=[
-                    html.Table(
-                        className="solution-stats-table",
-                        children=[
-                            # Problem details table header (optional)
-                            html.Thead(
-                                [
-                                    html.Tr(
-                                        [
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Problem Specifics"],
-                                            ),
-                                            html.Th(
-                                                colSpan=2,
-                                                children=["Run Time"],
-                                            ),
-                                        ]
-                                    )
-                                ]
-                            ),
-                            # A Dash callback function will generate content in Tbody
-                            html.Tbody(id="problem-details"),
-                        ],
-                    ),
-                ],
             ),
         ],
     )
@@ -323,7 +237,7 @@ def generate_table_group(
         tables = [generate_table(table) for table in tables_data]
 
     return html.Div(
-        [html.Div(title), html.Div(tables, className="results-tables")],
+        [html.Div(title) if title else (), html.Div(tables, className="results-tables")],
         className="results-comparison"
     )
 
@@ -365,10 +279,8 @@ def create_interface() -> html.Div:
             dcc.Store(id="selected-period", data=0),  # The currently selected period option
             dcc.Store(id="results-date-dict"),  # Dictionary of date periods and their solutions
             dcc.Store(id="portfolio"),
-            dcc.Store(id="baseline-results"),
-            dcc.Store(id="months"),
-            dcc.Store(id="initial-budget"),
-            dcc.Store(id="init-holdings"),
+            dcc.Store(id="loop-store"),
+            dcc.Store(id="settings-store"),
             dcc.Interval(
                 id="loop-interval",
                 interval=50,  # Interval in milliseconds
@@ -489,10 +401,8 @@ def create_interface() -> html.Div:
                                                             html.Div(id="dates-slider"),
                                                             html.Div(id="dynamic-results-table")
                                                         ]
-                                                    ),
-                                                    # Problem details dropdown
-                                                    html.Div([html.Hr(), problem_details(1)]),
-                                                ],
+                                                    )
+                                                ]
                                             )
                                         ],
                                     ),

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import NamedTuple, Union
+from demo_configs import BASELINE
 import numpy as np
 
 import dash
@@ -82,11 +83,9 @@ def render_initial_state(
     Returns:
         input-graph: The input stocks graph.
     """
-    num = 0
     dates = [start_date, end_date] if start_date and end_date else ['2010-01-01', '2012-12-31']
     stocks = stocks if stocks else ['AAPL', 'MSFT', 'AAL', 'WMT']
-    baseline = ['^GSPC']
-    df, stocks, df_baseline = get_live_data(num, dates, stocks, baseline)
+    df, stocks, df_baseline = get_live_data(dates, stocks, BASELINE)
 
     return generate_input_graph(df)
 
@@ -372,7 +371,7 @@ def update_output(
             stocks=stocks,
             dates=settings_store["dates"],
             alpha=[0.005],
-            baseline="^GSPC",
+            baseline=BASELINE,
             t_cost=settings_store["transaction cost"]*0.01,
             verbose=False
         )
@@ -494,7 +493,7 @@ def run_optimization(
     end_date: str,
     stocks: list,
 ) -> tuple[int, bool]:
-    """Updates UI to prepare for optimization run.
+    """Updates UI and triggers optimization run.
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
@@ -571,7 +570,7 @@ def run_optimization_single(
     Returns:
         A tuple containing all outputs to be used when updating the HTML
         template (in ``dash_html.py``). These are:
-            solution-table: TODO
+            solution-table: The tables to display the solution.
             cancel-button-class: The class for the cancel button.
             run-button-class: The class for the run button.
             results-tab-disabled: Whether the results tab should be disabled.
@@ -592,7 +591,7 @@ def run_optimization_single(
         alpha=[0.005],
         t_cost=settings_store["transaction cost"]*0.01,
     )
-    solution = my_portfolio.run(min_return=0, max_risk=0, num=0)
+    solution = my_portfolio.run()
 
     table = format_table_data(solver_type, solution)
 

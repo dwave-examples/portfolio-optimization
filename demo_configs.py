@@ -64,17 +64,11 @@ STOCK_OPTIONS = {
     "value": ['AAPL', 'MSFT', 'AAL', 'WMT'],
 }
 
+BASELINE = ['^GSPC']  # S&P 500
+
 BUDGET = {
     "min": 1000,
     "max": 100000,
     "step": 100,
     "value": 5000,
-}
-
-# solver time limits in seconds (value means default)
-SOLVER_TIME = {
-    "min": 10,
-    "max": 300,
-    "step": 5,
-    "value": 10,
 }

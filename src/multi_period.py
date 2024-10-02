@@ -160,7 +160,7 @@ class MultiPeriod(SinglePeriod):
             i: Current loop iteration.
             first_purchase: Whether this is the first loop iteration.
             initial_budget: The budget going into this iteration.
-            baseline_result: TODO
+            baseline_result: The baseline stock for multi-period portfolio optimization run.
             months: A list of the months for solutions already found.
             all_solutions: A dict of month, solution key-value pairs.
             init_holdings: The stocks to start the run with.
@@ -208,7 +208,7 @@ class MultiPeriod(SinglePeriod):
             i: Current loop iteration.
             first_purchase: Whether this is the first loop iteration.
             initial_budget: The budget going into this iteration.
-            baseline_result: TODO
+            baseline_result: The baseline stock for multi-period portfolio optimization run.
             months: A list of the months for solutions already found.
             all_solutions: A dict of month, solution key-value pairs.
             max_risk: Maximum risk for the CQM risk bounding formulation.
@@ -237,7 +237,6 @@ class MultiPeriod(SinglePeriod):
             self.update_values.append(budget - initial_budget)
 
             # Compute profit of fund portfolio
-            print(baseline_result)
             fund_value = sum(
                 [baseline_df_current.iloc[-1][s] * baseline_result[s] for s in self.baseline]
             )

@@ -134,7 +134,7 @@ class SinglePeriod:
             self.df = df
             self.stocks = df.columns.tolist()
         elif self.dates:
-            self.df, self.stocks, self.df_baseline = get_live_data(num, self.dates, self.stocks, self.baseline)
+            self.df, self.stocks, self.df_baseline = get_live_data(self.dates, self.stocks, self.baseline, num)
             self.df_all = self.df
         else:
             print("\nLoading data from provided CSV file...")

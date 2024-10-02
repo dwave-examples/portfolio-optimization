@@ -24,7 +24,18 @@ import dill as pickle
 import yfinance as yf
 
 
-def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
+def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
+    """Gets live data from Yahoo Finance and generates a dataframe.
+
+    Args:
+        dates: The dates to get the stock data for.
+        stocks: The stocks to get data for.
+        baseline: The baseline stock for multi-period portfolio optimization run.
+        num: The number of random stocks to get data for.
+
+    Returns:
+        pd.DataFrame: A dataframe containing the finance data.
+    """
     print(f"\nLoading live data from the web from Yahoo Finance from {dates[0]} to {dates[1]}...")
 
     # Generating random list of stocks
@@ -61,13 +72,13 @@ def get_live_data(num, dates, stocks, baseline) -> pd.DataFrame:
 
     return df_all, stocks, df_baseline
 
-# Serializing the object using pickle
 def serialize(obj):
+    """Serialize the object using pickle"""
     return base64.b64encode(pickle.dumps(obj)).decode('utf-8')
 
-# Deserializing the object
-def deserialize(serialized_obj):
-    return pickle.loads(base64.b64decode(serialized_obj.encode('utf-8')))
+def deserialize(obj):
+    """Deserialize the object"""
+    return pickle.loads(base64.b64decode(obj.encode('utf-8')))
 
 def generate_input_graph(
     df: pd.DataFrame = None
@@ -100,6 +111,15 @@ def initialize_output_graph(
     df: pd.DataFrame,
     budget: int,
 ) -> go.Figure:
+    """Creates a go.Figure given a dataframe.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the data to plot.
+        budget (int): The budget setting for the run.
+
+    Returns:
+        go.Figure: A Plotly figure object.
+    """
     fig = go.Figure(
         go.Scatter(
             x=df.index,
@@ -129,9 +149,13 @@ def update_output_graph(
     baseline_values: list,
     df: pd.DataFrame,
 ) -> go.Figure:
-    """Generates graph given df.
+    """Updates a go.Figure with new values.
 
     Args:
+        fig: The go.Figure to update.
+        i: The index to add to the go.Figure.
+        update_values: The new y values for the optimized portfolio.
+        baseline_values: The new y values for the fund portfolio.
         df (pd.DataFrame): A DataFrame containing the data to plot.
 
     Returns:
@@ -168,13 +192,22 @@ def update_output_graph(
     return fig
 
 def format_table_data(solver_type: SolverType, solution: dict) -> dict[str, str]:
-    table = {"Estimated Returns": f"${solution['return']}"}
-    if solver_type is SolverType.CQM:
-        table.update({"Sales Revenue": f"${solution['sales']:.2f}"})
+    """Formats solution data into dict for easy table display.
 
-    table.update({"Purchase Cost": f"${solution['cost']:.2f}"})
-    if solver_type is SolverType.CQM:
-        table.update({"Transaction Cost": f"${solution['transaction cost']:.2f}"})
-    table.update({"Variance": f"{solution['risk']:.2f}"})
+    Args:
+        solver_type: The solver type of the run.
+        solution: The solution from the last run.
 
-    return table
+    Returns:
+        table_data: dict of str keys and str values.
+    """
+    table_data = {"Estimated Returns": f"${solution['return']}"}
+    if solver_type is SolverType.CQM:
+        table_data.update({"Sales Revenue": f"${solution['sales']:.2f}"})
+
+    table_data.update({"Purchase Cost": f"${solution['cost']:.2f}"})
+    if solver_type is SolverType.CQM:
+        table_data.update({"Transaction Cost": f"${solution['transaction cost']:.2f}"})
+    table_data.update({"Variance": f"{solution['risk']:.2f}"})
+
+    return table_data

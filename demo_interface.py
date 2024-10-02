@@ -27,7 +27,6 @@ from demo_configs import (
     MAIN_HEADER,
     STOCK_OPTIONS,
     TRANSACTION_COST,
-    SOLVER_TIME,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
 )

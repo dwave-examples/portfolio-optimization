@@ -140,24 +140,7 @@ def main(
     verbose: bool,
     t_cost: float,
 ):
-    # print(
-    #     type(stocks),
-    #     type(budget),
-    #     type(bin_size),
-    #     type(gamma),
-    #     type(params),
-    #     type(file_path),
-    #     type(max_risk),
-    #     type(num),
-    #     type(min_return),
-    #     type(baseline),
-    #     type(dates),
-    #     type(model_type),
-    #     type(rebalance),
-    #     type(alpha),
-    #     type(verbose),
-    #     type(t_cost),
-    # )
+
     solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
 
     if (max_risk or min_return) and solver_type is SolverType.DQM:
@@ -206,8 +189,7 @@ def main(
             t_cost=t_cost,
         )
 
-    # my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
-    solution = my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
+    my_portfolio.run(min_return=min_return, max_risk=max_risk, num=num)
 
 
 if __name__ == "__main__":

@@ -11,38 +11,61 @@ Optimizing a portfolio of stocks is a challenging problem that looks to identify
 of shares of each stock to purchase in order to minimize risk (variance) and maximize returns,
 while staying under some specified spending budget.
 
-## Problem Definition
-Consider a set of n types of stocks to choose from, with an average monthly return per dollar spent
-of r<sub>i</sub> for each stock i. Furthermore, let &sigma;<sub>i,j</sub> be the covariance of the
-returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub> denote the number
-of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization
-problem can be represented as
+![Demo Example](static/demo.png)
 
-![Model Formulation](static/equation.png)
+## Installation
+You can run this example without installation in cloud-based IDEs that support the
+[Development Containers specification](https://containers.dev/supporting) (aka "devcontainers")
+such as GitHub Codespaces.
 
-Here, &alpha; &gt; 0 is the trade-off coefficient between the risk (variance) and the returns, also
-known as the risk aversion coefficient. Notice that while we are minimizing the variance, we are
-also minimizing the negative of the return (which is equivalent to maximizing the return).
+For development environments that do not support `devcontainers`, install requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+If you are cloning the repo to your local system, working in a
+[virtual environment](https://docs.python.org/3/library/venv.html) is recommended.
+
+## Usage
+This demo can be run with a browser interface, as seen in the screenshot above, or entirely through
+the command line.
+
+### Run with Interface
+Your development environment should be configured to access the
+[Leap&trade; Quantum Cloud Service](https://docs.ocean.dwavesys.com/en/stable/overview/sapi.html).
+You can see information about supported IDEs and authorizing access to your Leap account
+[here](https://docs.dwavesys.com/docs/latest/doc_leap_dev_env.html).
+
+Run the following terminal command to start the Dash app:
+
+```bash
+python app.py
+```
+
+Access the user interface with your browser at http://127.0.0.1:8050/.
+
+The demo program opens an interface where you can configure problems and submit these problems to
+a solver.
+
+Configuration options can be found in the [demo_configs.py](demo_configs.py) file.
+
+> [!NOTE]\
+> If you plan on editing any files while the app is running,
+please run the app with the `--debug` command-line argument for live reloads and easier debugging:
+`python app.py --debug`
 
 
-## Running the Demos
+### Run Through CLI
 
-There are two main demos included in this repository. For each demo, two models are showcased for
-the formulation of the portfolio problem:
-- Discrete Quadratic Modeling (DQM)
-- Constrained Quadratic Modeling (CQM)
-
-
-### Single-Period Demo
-
-#### CQM Runs 
+#### Single-Period
 
 The single-period demo determines the optimal number of shares to purchase from 4 stocks based on
 the historical price data provided. To run the demo, type:
 
 ```python portfolio.py```
 
-This runs the single-period portfolio optimization problem, as formulated above, using default data
+This runs the single-period portfolio optimization problem using default data
 stored in `basic_data.csv`, builds the constrained quadratic model (CQM), and runs the CQM on
 D-Wave's hybrid solver. The output of the run is printed to the console as follows.
 
@@ -65,8 +88,6 @@ Purchase Cost: 998.43
 Transaction Cost: 0.00
 Variance: 1373.85
 ```
-
-##### CQM Bounding Formulations 
 
 The demo allows the user to choose among two additional CQM formulations for the portfolio
 optimization problem:
@@ -102,22 +123,12 @@ We can do similarly for the return-bounding formulation, with this command:
 
 `python portfolio.py -m 'CQM' --min-return 17.5`
 
-##### CQM Transaction Cost Model
-
 The demo allows the user to model transaction costs as a percentage of the total transactions value.
-For a transaction cost factor c and initial holdings x<sup>0</sup>, a new 0-1 variable y<sub>i</sub>
-is defined to indicate the transaction direction (1 for a sale and 0 for purchase) along with the
-following new constraints:
-x<sub>i</sub> &geq; y<sub>i</sub> x<sub>i</sub><sup>0</sup>
-x<sub>i</sub><sup>0</sup> &geq; x<sub>i</sub>(1 - y<sub>i</sub>)
-The balance constraint then becomes:
-&Sigma;<sub>i</sub> (p<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>) + cp<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>)(2y<sub>i</sub> - 1)) &leq; B
-
 A default CQM run with a transaction cost factor of 1% can be done with the following command:
 
 `python portfolio.py -m 'CQM' -t 0.01`
 
-#### DQM Runs
+##### DQM Runs
 
 The user can select to build a disctrete quadratic model (DQM) using the following command:
 
@@ -158,7 +169,7 @@ for &alpha; (ie. `[0.5, 0.0005]`) and &gamma; (ie.`[10, 100]`) as follows:
 ``python portfolio.py  -m 'DQM' -a 0.5 -a 0.0005 -g 10 -g 100``
 
 
-### Multi-Period Demo
+#### Multi-Period
 
 The multi-period demo provides an analysis of portfolio value over time: rebalancing the
 portfolio at each time period until the target time. To run the demo with default data and
@@ -180,6 +191,19 @@ At the end of the analysis, the plot is saved as a .png file, as shown below.
 ![Example Plot](static/portfolio.png)
 
 ## Problem Set Up
+
+### Problem Definition
+Consider a set of n types of stocks to choose from, with an average monthly return per dollar spent
+of r<sub>i</sub> for each stock i. Furthermore, let &sigma;<sub>i,j</sub> be the covariance of the
+returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub> denote the number
+of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization
+problem can be represented as
+
+![Model Formulation](static/equation.png)
+
+Here, &alpha; &gt; 0 is the trade-off coefficient between the risk (variance) and the returns, also
+known as the risk aversion coefficient. Notice that while we are minimizing the variance, we are
+also minimizing the negative of the return (which is equivalent to maximizing the return).
 
 ### Variance
 
@@ -205,6 +229,16 @@ the budget (e.g., 90% of the budget). This encoding of the budget requirement ha
 implications in that it allows the investor to specify a minimum amount to spend. In
 addition, specifying a lower bound on the expenses will aid with the model formulation: the
 higher the bound, the fewer slack variables needed for the DQM formulation.
+
+### Transaction Cost
+
+For a transaction cost factor c and initial holdings x<sup>0</sup>, a new 0-1 variable y<sub>i</sub>
+is defined to indicate the transaction direction (1 for a sale and 0 for purchase) along with the
+following new constraints:
+x<sub>i</sub> &geq; y<sub>i</sub> x<sub>i</sub><sup>0</sup>
+x<sub>i</sub><sup>0</sup> &geq; x<sub>i</sub>(1 - y<sub>i</sub>)
+The balance constraint then becomes:
+&Sigma;<sub>i</sub> (p<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>) + cp<sub>i</sub>(x<sub>i</sub> - x<sub>i</sub><sup>0</sup>)(2y<sub>i</sub> - 1)) &leq; B
 
 ## Code 
 
@@ -241,7 +275,7 @@ and the risk-aversion coefficient &alpha; that result in the best objective valu
 ### CQM
 
 ### Variables
-Each x<sub>i</sub> denotes the number of shares of stock $i$ to be purchased.
+Each x<sub>i</sub> denotes the number of shares of stock i to be purchased.
 
 ### Constraints
 

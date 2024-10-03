@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from itertools import product
 import json
 import random
+from itertools import product
 
-from src.demo_enums import SolverType
 import numpy as np
 import pandas as pd
-from dimod import Integer, Binary
-from dimod import quicksum
-from dimod import ConstrainedQuadraticModel, DiscreteQuadraticModel
-from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
-
-from src.utils import get_live_data
 import yfinance as yf
+from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
+from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
+
+from src.demo_enums import SolverType
+from src.utils import get_live_data
 
 
 class SinglePeriod:
@@ -134,7 +132,9 @@ class SinglePeriod:
             self.df = df
             self.stocks = df.columns.tolist()
         elif self.dates:
-            self.df, self.stocks, self.df_baseline = get_live_data(self.dates, self.stocks, self.baseline, num)
+            self.df, self.stocks, self.df_baseline = get_live_data(
+                self.dates, self.stocks, self.baseline, num
+            )
             self.df_all = self.df
         else:
             print("\nLoading data from provided CSV file...")
@@ -419,11 +419,13 @@ class SinglePeriod:
 
         cost = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
 
-        solution.update({
-            "cost": cost,
-            "alpha": self.alpha,
-            "gamma": self.gamma,
-        })
+        solution.update(
+            {
+                "cost": cost,
+                "alpha": self.alpha,
+                "gamma": self.gamma,
+            }
+        )
 
         return solution
 
@@ -475,7 +477,6 @@ class SinglePeriod:
 
         return round(est_return, 2), round(variance, 2)
 
-
     def print_results(self, solution):
         is_cqm_run = self.model_type is SolverType.CQM
 
@@ -484,7 +485,7 @@ class SinglePeriod:
                 f"Number of feasible solutions: {solution['number feasible']} out of {solution['number sampled']} sampled.",
                 f"\nBest energy: {solution['best energy']:.2f}",
                 f"Best energy (feasible): {solution['energy']:.2f}",
-                sep="\n"
+                sep="\n",
             )
 
         if not is_cqm_run:
@@ -494,7 +495,7 @@ class SinglePeriod:
             f"\nBest feasible solution:",
             "\n".join(f"{k}\t{v:>3}" for k, v in solution["stocks"].items()),
             f"\nEstimated Returns: {solution['return']}",
-            sep="\n"
+            sep="\n",
         )
 
         if is_cqm_run:
@@ -507,8 +508,7 @@ class SinglePeriod:
 
         print(f"Variance: {solution['risk']}\n")
 
-
-    def run(self, min_return: float=0, max_risk: float=0, num: int=0, init_holdings=None):
+    def run(self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings=None):
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:

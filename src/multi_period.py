@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pandas as pd
-from src.demo_enums import SolverType
-import numpy as np
 import matplotlib
+import numpy as np
+import pandas as pd
+
+from src.demo_enums import SolverType
+
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 import plotly.tools as tls
+from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.single_period import SinglePeriod
-from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 
 
 class MultiPeriod(SinglePeriod):
@@ -132,7 +134,7 @@ class MultiPeriod(SinglePeriod):
                 max_risk=max_risk,
                 min_return=min_return,
                 init_holdings=init_holdings,
-                cli_run=True
+                cli_run=True,
             )
 
             first_purchase = False
@@ -147,12 +149,12 @@ class MultiPeriod(SinglePeriod):
     def initiate_run_update(
         self,
         i: int,
-        first_purchase: bool=True,
-        initial_budget: float=0,
-        baseline_result: dict={},
-        months: list=[],
-        all_solutions: dict={},
-        init_holdings: list=None
+        first_purchase: bool = True,
+        initial_budget: float = 0,
+        baseline_result: dict = {},
+        months: list = [],
+        all_solutions: dict = {},
+        init_holdings: list = None,
     ):
         """Solve the rebalancing portfolio optimization problem.
 
@@ -184,23 +186,23 @@ class MultiPeriod(SinglePeriod):
         # Removing the following values to be able to serialize
         self.model = {}
         self.sampler = {}
-        self.sample_set['CQM'] = {}
-        self.sample_set['DQM'] = {}
+        self.sample_set["CQM"] = {}
+        self.sample_set["DQM"] = {}
 
         return baseline_result, months, all_solutions, init_holdings
 
     def run_update(
         self,
         i: int,
-        first_purchase: bool=True,
-        initial_budget: float=0,
-        baseline_result: dict={},
-        months: list=[],
-        all_solutions: dict={},
-        max_risk: float=0,
-        min_return: float=0,
-        init_holdings: list=None,
-        cli_run: bool=False
+        first_purchase: bool = True,
+        initial_budget: float = 0,
+        baseline_result: dict = {},
+        months: list = [],
+        all_solutions: dict = {},
+        max_risk: float = 0,
+        min_return: float = 0,
+        init_holdings: list = None,
+        cli_run: bool = False,
     ):
         """Solve the rebalancing portfolio optimization problem.
 
@@ -222,7 +224,8 @@ class MultiPeriod(SinglePeriod):
         curr_date = df.last_valid_index()
         months.append(curr_date.date())
 
-        if cli_run: print("\nDate:", curr_date)
+        if cli_run:
+            print("\nDate:", curr_date)
 
         if first_purchase:
             budget = self.budget
@@ -293,7 +296,8 @@ class MultiPeriod(SinglePeriod):
 
         all_solutions[curr_date.date().strftime("%Y-%m-%d")] = solution
 
-        if cli_run: self.print_results(solution=solution)
+        if cli_run:
+            self.print_results(solution=solution)
 
         # Print results to command-line
         value = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])

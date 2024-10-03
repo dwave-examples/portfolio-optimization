@@ -14,20 +14,20 @@
 
 """This file stores the HTML layout for the app."""
 from __future__ import annotations
+
 from datetime import date, timedelta
 
-from dash import dcc, html
 import yfinance as yf
-
+from dash import dcc, html
 
 from demo_configs import (
     BUDGET,
     DESCRIPTION,
     MAIN_HEADER,
     STOCK_OPTIONS,
-    TRANSACTION_COST,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
+    TRANSACTION_COST,
 )
 from src.demo_enums import PeriodType, SolverType
 
@@ -37,9 +37,9 @@ def slider(
     id: str,
     config: dict,
     wrapper_id: str = "",
-    marks: dict={},
-    show_tooltip: bool=True,
-    dots: bool=False
+    marks: dict = {},
+    show_tooltip: bool = True,
+    dots: bool = False,
 ) -> html.Div:
     """Slider element for value selection.
 
@@ -61,15 +61,23 @@ def slider(
                 id=id,
                 className="slider",
                 **config,
-                marks=marks if marks else {
-                    config["min"]: str(config["min"]),
-                    config["max"]: str(config["max"]),
-                },
+                marks=(
+                    marks
+                    if marks
+                    else {
+                        config["min"]: str(config["min"]),
+                        config["max"]: str(config["max"]),
+                    }
+                ),
                 dots=dots,
-                tooltip={
-                    "placement": "bottom",
-                    "always_visible": True,
-                } if show_tooltip else None,
+                tooltip=(
+                    {
+                        "placement": "bottom",
+                        "always_visible": True,
+                    }
+                    if show_tooltip
+                    else None
+                ),
             ),
         ],
     )
@@ -136,9 +144,9 @@ def generate_settings_form() -> html.Div:
             html.Label("Date Range"),
             dcc.DatePickerRange(
                 id="date-range",
-                max_date_allowed=date.today().replace(day=1) - timedelta(days=1), # end of last month
-                start_date='2010-01-01',
-                end_date='2012-12-31',
+                max_date_allowed=date.today().replace(day=1) - timedelta(days=1),  # prev month end
+                start_date="2010-01-01",
+                end_date="2012-12-31",
                 minimum_nights=120,
             ),
             html.Label("Budget (USD)"),
@@ -173,7 +181,7 @@ def generate_run_buttons() -> html.Div:
     )
 
 
-def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
+def generate_table(table_dict: dict, comparison: list = []) -> html.Table:
     """Generates solution table.
 
     Args:
@@ -196,13 +204,15 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
                                 html.Span(
                                     "↑" if comparison[i] else "↓",
                                     className=f"arrow-{comparison[i]}",
-                                    style={"visibility": "hidden"} if comparison[i] is None else {}
-                                )
+                                    style={"visibility": "hidden"} if comparison[i] is None else {},
+                                ),
                             ]
-                            if i < len(comparison) else table_dict[key]
-                        )
+                            if i < len(comparison)
+                            else table_dict[key]
+                        ),
                     ]
-                ) for i, key in enumerate(table_dict)
+                )
+                for i, key in enumerate(table_dict)
             ]
         )
     )
@@ -210,8 +220,8 @@ def generate_table(table_dict: dict, comparison: list=[]) -> html.Table:
 
 def generate_table_group(
     tables_data: list,
-    comparisons_data: list=[],
-    title: str="",
+    comparisons_data: list = [],
+    title: str = "",
 ) -> html.Div:
     """Generates a grouped collection of tables with optional title and comparison data.
 
@@ -233,7 +243,7 @@ def generate_table_group(
 
     return html.Div(
         [html.Div(title) if title else (), html.Div(tables, className="results-tables")],
-        className="results-comparison"
+        className="results-comparison",
     )
 
 
@@ -246,17 +256,12 @@ def generate_dates_slider(dates: list) -> html.Div:
     Returns:
         html.Div: A div containing a dates slider.
     """
-    last_date = len(dates)-1
+    last_date = len(dates) - 1
 
     return slider(
         "",
         "results-date-selector",
-        {
-            "min": 0,
-            "max": last_date,
-            "value": last_date,
-            "step": 1
-        },
+        {"min": 0, "max": last_date, "value": last_date, "step": 1},
         marks={0: dates[0], last_date: dates[-1]},
         dots=True,
         show_tooltip=False,
@@ -280,7 +285,7 @@ def create_interface() -> html.Div:
                 id="loop-interval",
                 interval=50,  # Interval in milliseconds
                 n_intervals=0,
-                disabled=True
+                disabled=True,
             ),
             dcc.Store(id="loop-running", data=False),
             dcc.Store(id="iteration", data=3),
@@ -300,7 +305,7 @@ def create_interface() -> html.Div:
                             for index, period in enumerate(PeriodType)
                         ]
                     ),
-                ]
+                ],
             ),
             # Settings and results columns
             html.Div(
@@ -394,10 +399,10 @@ def create_interface() -> html.Div:
                                                     html.Div(
                                                         [
                                                             html.Div(id="dates-slider"),
-                                                            html.Div(id="dynamic-results-table")
+                                                            html.Div(id="dynamic-results-table"),
                                                         ]
                                                     )
-                                                ]
+                                                ],
                                             )
                                         ],
                                     ),

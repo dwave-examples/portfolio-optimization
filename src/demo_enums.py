@@ -26,6 +26,7 @@ class SolverType(Enum):
             SolverType.DQM: "Quantum Hybrid (DQM)",
         }[self]
 
+
 class PeriodType(Enum):
     SINGLE = 0
     MULTI = 1

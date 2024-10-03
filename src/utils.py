@@ -15,13 +15,13 @@
 import base64
 import random
 
-from src.demo_enums import SolverType
+import dill as pickle
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-import dill as pickle
-
 import yfinance as yf
+
+from src.demo_enums import SolverType
 
 
 def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
@@ -72,17 +72,18 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
 
     return df_all, stocks, df_baseline
 
+
 def serialize(obj):
     """Serialize the object using pickle"""
-    return base64.b64encode(pickle.dumps(obj)).decode('utf-8')
+    return base64.b64encode(pickle.dumps(obj)).decode("utf-8")
+
 
 def deserialize(obj):
     """Deserialize the object"""
-    return pickle.loads(base64.b64decode(obj.encode('utf-8')))
+    return pickle.loads(base64.b64decode(obj.encode("utf-8")))
 
-def generate_input_graph(
-    df: pd.DataFrame = None
-) -> go.Figure:
+
+def generate_input_graph(df: pd.DataFrame = None) -> go.Figure:
     """Generates graph given df.
 
     Args:
@@ -94,7 +95,9 @@ def generate_input_graph(
     fig = go.Figure()
 
     for col in list(df.columns.values):
-        fig.add_trace(go.Scatter(x=df.index, y=df[col], mode="lines", name=col, hovertemplate='$%{y:.2f}'))
+        fig.add_trace(
+            go.Scatter(x=df.index, y=df[col], mode="lines", name=col, hovertemplate="$%{y:.2f}")
+        )
 
     fig.update_layout(
         title="Historical Stock Data",
@@ -106,6 +109,7 @@ def generate_input_graph(
     )
 
     return fig
+
 
 def initialize_output_graph(
     df: pd.DataFrame,
@@ -124,10 +128,10 @@ def initialize_output_graph(
         go.Scatter(
             x=df.index,
             y=[0] * (df.shape[0]),
-            mode='lines',
-            line=dict(color='red'),
-            name='Break-even',
-            hoverinfo='none'
+            mode="lines",
+            line=dict(color="red"),
+            name="Break-even",
+            hoverinfo="none",
         )
     )
 
@@ -135,12 +139,13 @@ def initialize_output_graph(
         title=f"{df.first_valid_index().date().strftime('%B %Y')} - {df.last_valid_index().date().strftime('%B %Y')}<br><sup><i>double click graph to rescale</i></sup>",
         xaxis_tickformat="%b %Y",
         xaxis_tickvals=df.index[::2],
-        hovermode="x"
+        hovermode="x",
     )
 
     fig.update_yaxes(range=[-1.5 * budget, 1.5 * budget])
 
     return fig
+
 
 def update_output_graph(
     fig: go.Figure,
@@ -161,23 +166,23 @@ def update_output_graph(
     Returns:
         go.Figure: A Plotly figure object.
     """
-    if i==3:
+    if i == 3:
         optimized_trace = go.Scatter(
             x=(df.index[3],),
             y=update_values,
-            mode='lines',
-            line=dict(color='blue'),
-            name='Optimized portfolio',
-            hovertemplate='$%{y:.2f}'
+            mode="lines",
+            line=dict(color="blue"),
+            name="Optimized portfolio",
+            hovertemplate="$%{y:.2f}",
         )
 
         fund_trace = go.Scatter(
             x=(df.index[3],),
             y=baseline_values,
-            mode='lines',
-            line=dict(color='grey'),
-            name='Fund portfolio',
-            hovertemplate='$%{y:.2f}'
+            mode="lines",
+            line=dict(color="grey"),
+            name="Fund portfolio",
+            hovertemplate="$%{y:.2f}",
         )
 
         fig.add_trace(optimized_trace)
@@ -190,6 +195,7 @@ def update_output_graph(
         fig.data[2].y = baseline_values
 
     return fig
+
 
 def format_table_data(solver_type: SolverType, solution: dict) -> dict[str, str]:
     """Formats solution data into dict for easy table display.

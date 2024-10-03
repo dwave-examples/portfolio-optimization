@@ -19,7 +19,7 @@ import unittest
 
 import pandas as pd
 
-from single_period import SinglePeriod
+from src.single_period import SinglePeriod
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -80,8 +80,9 @@ class TestDemo(unittest.TestCase):
 
     def test_build_random_cqm_instance(self):
         test_portfolio = SinglePeriod(model_type="CQM")
+        test_portfolio.dates = ["2010-01-01", "2010-12-31"]
 
-        test_portfolio.load_data(dates=["2010-01-01", "2010-12-31"], num=10)
+        test_portfolio.load_data(num=10)
         test_portfolio.build_cqm()
 
         k = len(test_portfolio.stocks)
@@ -134,13 +135,13 @@ class TestIntegration(unittest.TestCase):
         project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, "portfolio.py")
 
-        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM", "-t", "0"])
+        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM"])
         output = output.decode("utf-8")  # Bytes to str
         output = output.lower()
 
         self.assertIn("dqm run", output)
-        self.assertIn("dqm -- solution", output)
-        self.assertIn("shares to buy", output)
+        self.assertIn("solution for alpha", output)
+        self.assertIn("best feasible solution", output)
         self.assertIn("estimated returns", output)
         self.assertIn("purchase cost", output)
         self.assertIn("variance", output)

@@ -38,6 +38,7 @@ class MultiPeriod(SinglePeriod):
         file_path=None,
         dates=None,
         model_type=SolverType.CQM,
+        time_limit=5,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -56,6 +57,7 @@ class MultiPeriod(SinglePeriod):
             file_path (str): Full path of CSV file containing stock data.
             dates (list of str): Pair of strings for start date and end date.
             model_type (str): CQM or DQM.
+            time_limit (int): The time limit for the runs.
             alpha (float or int or list or tuple): Risk aversion coefficient.
                 If alpha is a tuple/list and model is DQM, grid search will be done;
                 otherwise, no grid search.
@@ -73,6 +75,7 @@ class MultiPeriod(SinglePeriod):
             file_path=file_path,
             dates=dates,
             model_type=model_type,
+            time_limit=time_limit,
             alpha=alpha,
             baseline=baseline,
             sampler_args=sampler_args,

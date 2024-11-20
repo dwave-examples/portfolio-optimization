@@ -38,6 +38,7 @@ class SinglePeriod:
         file_path="data/basic_data.csv",
         dates=None,
         model_type=SolverType.CQM,
+        time_limit=5,
         alpha=0.005,
         baseline="^GSPC",
         sampler_args=None,
@@ -56,6 +57,7 @@ class SinglePeriod:
             file_path (str): Full path of CSV file containing stock data.
             dates (list of str): Pair of strings for start date and end date.
             model_type (str): CQM or DQM.
+            time_limit (int): The time limit for the runs.
             alpha (float or int or list or tuple): Risk aversion coefficient.
                 If alpha is a tuple/list and model is DQM, grid search will be done;
                 otherwise, no grid search.
@@ -71,6 +73,7 @@ class SinglePeriod:
         self.file_path = file_path
         self.dates = dates
         self.model_type = model_type
+        self.time_limit = time_limit
         self.alpha_list = []
         self.baseline = [baseline]
         self.verbose = verbose
@@ -275,7 +278,7 @@ class SinglePeriod:
         self.build_cqm(max_risk, min_return, init_holdings)
 
         self.sample_set["CQM"] = self.sampler["CQM"].sample_cqm(
-            self.model["CQM"], label="Example - Portfolio Optimization"
+            self.model["CQM"], label="Example - Portfolio Optimization", time_limit=self.time_limit
         )
         n_samples = len(self.sample_set["CQM"].record)
 
@@ -408,7 +411,7 @@ class SinglePeriod:
             self.build_dqm()
 
         self.sample_set["DQM"] = self.sampler["DQM"].sample_dqm(
-            self.model["DQM"], label="Example - Portfolio Optimization"
+            self.model["DQM"], label="Example - Portfolio Optimization", time_limit=self.time_limit
         )
 
         sample = self.sample_set["DQM"].first.sample

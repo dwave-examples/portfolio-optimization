@@ -380,6 +380,7 @@ def update_multi_output(
             sampler_args="{}",
             gamma=100,
             model_type=solver_type,
+            time_limit=settings_store["time limit"],
             stocks=stocks,
             dates=settings_store["dates"],
             alpha=[0.005],
@@ -514,6 +515,7 @@ class RunOptimizationReturn(NamedTuple):
         Input("run-button", "n_clicks"),
         State("selected-period", "data"),
         State("sampler-type-select", "value"),
+        State("solver-time-limit", "value"),
         State("budget", "value"),
         State("transaction-cost", "value"),
         State("date-range", "start_date"),
@@ -526,6 +528,7 @@ def run_optimization(
     run_click: int,
     period: Union[PeriodType, int],
     solver_type: Union[SolverType, int],
+    time_limit: int,
     budget: int,
     transaction_cost: float,
     start_date: str,
@@ -538,6 +541,7 @@ def run_optimization(
         run_click: The (total) number of times the run button has been clicked.
         period: The currently selected PeriodType either single-period or multi-period.
         solver_type: Which solver was selected.
+        time_limit: The time limit for all runs.
         budget: The budget for the run.
         transaction_cost: The selected transaction cost.
         start_date: The selected start date.
@@ -560,6 +564,7 @@ def run_optimization(
     """
     settings_store = {
         "solver type": solver_type,
+        "time limit": time_limit,
         "budget": budget,
         "transaction cost": transaction_cost,
         "dates": (
@@ -625,6 +630,7 @@ def run_optimization_single(
         budget=settings_store["budget"],
         sampler_args="{}",
         model_type=solver_type,
+        time_limit=settings_store["time limit"],
         stocks=settings_store["stocks"],
         dates=settings_store["dates"],
         alpha=[0.005],

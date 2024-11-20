@@ -72,3 +72,11 @@ BUDGET = {
     "step": 100,
     "value": 1000,
 }
+
+# solver time limits in seconds (value means default)
+SOLVER_TIME = {
+    "min": 5,
+    "max": 300,
+    "step": 5,
+    "value": 5,
+}

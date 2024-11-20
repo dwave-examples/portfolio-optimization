@@ -24,6 +24,7 @@ from demo_configs import (
     BUDGET,
     DESCRIPTION,
     MAIN_HEADER,
+    SOLVER_TIME,
     STOCK_OPTIONS,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
@@ -133,6 +134,12 @@ def generate_settings_form() -> html.Div:
                 "Solver",
                 "sampler-type-select",
                 sorted(solver_options, key=lambda op: op["value"]),
+            ),
+            html.Label("Solver Time Limit (seconds)"),
+            dcc.Input(
+                id="solver-time-limit",
+                type="number",
+                **SOLVER_TIME,
             ),
             html.Label("Stocks"),
             dcc.Dropdown(

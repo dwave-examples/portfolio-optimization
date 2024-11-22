@@ -262,10 +262,16 @@ def cancel(cancel_button_click: int) -> tuple[bool, str, str, int, str]:
 
 @dash.callback(
     Output("loop-running", "data"),
-    inputs=[Input("loop-interval", "n_intervals"), State("loop-running", "data")],
+    Output("graph-update-status", "children"),
+    inputs=[
+        Input("loop-interval", "n_intervals"),
+        State("loop-running", "data"),
+        State("iteration", "data"),
+        State("max-iterations", "data"),
+    ],
     prevent_initial_call=True,
 )
-def start_loop_iteration(interval_trigger, is_loop_running) -> bool:
+def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> bool:
     """Triggers ``update_multi_output`` when Interval is triggered.
 
     Args:
@@ -278,7 +284,7 @@ def start_loop_iteration(interval_trigger, is_loop_running) -> bool:
     if is_loop_running:
         raise PreventUpdate
 
-    return True
+    return True, f"Submitting problem {iter-3} of {max_iter-3}..."
 
 
 class UpdateMultiOutputReturn(NamedTuple):
@@ -298,6 +304,7 @@ class UpdateMultiOutputReturn(NamedTuple):
     results_tab_disabled: bool = dash.no_update
     results_tab_label: str = dash.no_update
     graph_tab_disabled: bool = dash.no_update
+    graph_update_status: str = dash.no_update
 
 
 @dash.callback(
@@ -315,6 +322,7 @@ class UpdateMultiOutputReturn(NamedTuple):
     Output("results-tab", "disabled", allow_duplicate=True),
     Output("results-tab", "label", allow_duplicate=True),
     Output("graph-tab", "disabled", allow_duplicate=True),
+    Output("graph-update-status", "children", allow_duplicate=True),
     inputs=[
         Input("loop-running", "data"),
         State("max-iterations", "data"),
@@ -472,6 +480,7 @@ def update_multi_output(
             run_button_class="",
             results_tab_disabled=False,
             results_tab_label="Results",
+            graph_update_status=""
         )
 
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})

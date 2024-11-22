@@ -30,6 +30,10 @@ limitations under the License.
     padding: 0 3rem 3rem;
 }
 
+.tab-content > div {
+    position: relative;
+}
+
 table td:nth-child(2n) {
     text-align: right;
 }
@@ -135,4 +139,12 @@ table td:nth-child(2n+1) {
 #dynamic-results-table {
     display: flex;
     justify-content: space-between;
+}
+
+#graph-update-status {
+    position: absolute;
+    z-index: 10;
+    top: 5rem;
+    right: 19rem;
+    font-style: italic;
 }

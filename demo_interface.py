@@ -386,6 +386,7 @@ def create_interface() -> html.Div:
                                         style={"display": "none"},
                                         children=html.Div(
                                             [
+                                                html.P(id="graph-update-status"),
                                                 dcc.Graph(
                                                     id="output-graph",
                                                     responsive=True,

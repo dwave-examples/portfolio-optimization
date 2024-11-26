@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import base64
+import math
 import random
 
 import dill as pickle
@@ -214,6 +215,6 @@ def format_table_data(solver_type: SolverType, solution: dict) -> dict[str, str]
     table_data.update({"Purchase Cost": f"${solution['cost']:.2f}"})
     if solver_type is SolverType.CQM:
         table_data.update({"Transaction Cost": f"${solution['transaction cost']:.2f}"})
-    table_data.update({"Variance": f"{solution['risk']:.2f}"})
+    table_data.update({"Standard Deviation": f"${math.sqrt(solution['risk']):.2f}"})
 
     return table_data

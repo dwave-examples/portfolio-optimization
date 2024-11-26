@@ -277,9 +277,12 @@ def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> b
     Args:
         interval_trigger: The Dash Interval that triggers this function.
         is_loop_running: Whether ``update_multi_output`` is currently running.
+        iter: Which iteration of run_update is currently executing.
+        max_iter: The maximum times to call run_update().
 
     Returns:
         loop-running: Whether the loop is running.
+        graph-update-status: The text to indicate the iteration progress.
     """
     if is_loop_running:
         raise PreventUpdate
@@ -374,6 +377,7 @@ def update_multi_output(
             results_tab_disabled: Whether the results tab should be disabled.
             results_tab_label: The label of the results tab.
             graph_tab_disabled: Whether the graph tab should be disabled.
+            graph_update_status: The text to indicate the iteration progress.
     """
     solver_type = SolverType(settings_store["solver type"])
     stocks = settings_store["stocks"]
@@ -478,21 +482,36 @@ def update_multi_output(
             interval_disabled=True,
             cancel_button_class="display-none",
             run_button_class="",
-            results_tab_disabled=False,
             results_tab_label="Results",
             graph_update_status=""
         )
 
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
+    dates = [
+        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y")
+        for date in results_date_dict.keys()
+    ]
+    solutions = list(results_date_dict.values())
+
+    output_tables = generate_table_group(
+        tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
+        title=dates[-1],
+    )
+
+    dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
+
     # Regular iteration
     return UpdateMultiOutputReturn(
         output_graph=fig,
         iteration=iteration + 1,
+        dates_slider=dates_slider,
+        solution_tables=output_tables,
         results_date_dict=all_solutions,
         portfolio=serialize(portfolio),
         loop_store=loop_store,
         is_loop_running=False,
+        results_tab_disabled=False,
     )
 
 

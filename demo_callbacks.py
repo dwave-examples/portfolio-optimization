@@ -413,7 +413,10 @@ def update_multi_output(
         fig = initialize_output_graph(my_portfolio.df_baseline, budget)
 
         baseline_result, months, all_solutions, init_holdings = my_portfolio.initiate_run_update(
-            i=iteration
+            i=iteration,
+            baseline_result={},
+            months=[],
+            all_solutions={},
         )
 
         fig = update_output_graph(

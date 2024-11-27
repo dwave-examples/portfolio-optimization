@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -21,7 +20,6 @@ from src.demo_enums import SolverType
 
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
-import plotly.tools as tls
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.single_period import SinglePeriod
@@ -153,11 +151,11 @@ class MultiPeriod(SinglePeriod):
     def initiate_run_update(
         self,
         i: int,
+        baseline_result: dict,
+        months: list,
+        all_solutions: dict,
         first_purchase: bool = True,
         initial_budget: float = 0,
-        baseline_result: Optional[dict] = None,
-        months: Optional[list] = None,
-        all_solutions: Optional[dict] = None,
         init_holdings: list = None,
     ):
         """Solve the rebalancing portfolio optimization problem.
@@ -198,11 +196,11 @@ class MultiPeriod(SinglePeriod):
     def run_update(
         self,
         i: int,
+        baseline_result: dict,
+        months: list,
+        all_solutions: dict,
         first_purchase: bool = True,
         initial_budget: float = 0,
-        baseline_result: Optional[dict] = None,
-        months: Optional[list] = None,
-        all_solutions: Optional[dict] = None,
         max_risk: float = 0,
         min_return: float = 0,
         init_holdings: list = None,

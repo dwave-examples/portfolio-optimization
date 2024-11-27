@@ -38,7 +38,7 @@ def slider(
     id: str,
     config: dict,
     wrapper_id: str = "",
-    marks: dict = {},
+    marks: Optional[dict] = None,
     show_tooltip: bool = True,
     dots: bool = False,
 ) -> html.Div:

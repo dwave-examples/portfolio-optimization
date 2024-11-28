@@ -15,9 +15,9 @@
 import base64
 import math
 import random
+from typing import Any
 
 import dill as pickle
-import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import yfinance as yf
@@ -74,12 +74,12 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
     return df_all, stocks, df_baseline
 
 
-def serialize(obj):
+def serialize(obj: Any) -> str:
     """Serialize the object using pickle"""
     return base64.b64encode(pickle.dumps(obj)).decode("utf-8")
 
 
-def deserialize(obj):
+def deserialize(obj: str) -> Any:
     """Deserialize the object"""
     return pickle.loads(base64.b64decode(obj.encode("utf-8")))
 

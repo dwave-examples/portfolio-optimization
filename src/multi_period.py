@@ -158,7 +158,8 @@ class MultiPeriod(SinglePeriod):
         initial_budget: float = 0,
         init_holdings: list = None,
     ):
-        """Solve the rebalancing portfolio optimization problem.
+        """Initiate a single run of the rebalancing portfolio optimization problem for runs
+        initiated through the Dash user interface.
 
         Args:
             i: Current loop iteration.
@@ -168,6 +169,12 @@ class MultiPeriod(SinglePeriod):
             months: A list of the months for solutions already found.
             all_solutions: A dict of month, solution key-value pairs.
             init_holdings: The stocks to start the run with.
+
+        Returns:
+            baseline_result: The baseline stock for multi-period portfolio optimization run.
+            months: A list of the months for solutions already found.
+            all_solutions: A dict of month, solution key-value pairs.
+            init_holdings: The stocks to start the next run with.
         """
 
         self.sampler = {
@@ -206,19 +213,27 @@ class MultiPeriod(SinglePeriod):
         init_holdings: list = None,
         cli_run: bool = False,
     ):
-        """Solve the rebalancing portfolio optimization problem.
+        """Conduct one iteration of the rebalancing portfolio optimization problem. Optionally plots
+        the results in a matplotlib graph.
 
         Args:
             i: Current loop iteration.
-            first_purchase: Whether this is the first loop iteration.
-            initial_budget: The budget going into this iteration.
             baseline_result: The baseline stock for multi-period portfolio optimization run.
             months: A list of the months for solutions already found.
             all_solutions: A dict of month, solution key-value pairs.
+            first_purchase: Whether this is the first loop iteration.
+            initial_budget: The budget going into this iteration.
             max_risk: Maximum risk for the CQM risk bounding formulation.
             min_return: Minimum return for the CQM return bounding formulation.
             init_holdings: The stocks to start the run with.
             cli_run: Prints to command line interface and outputs portfolio png if True.
+
+        Returns:
+            baseline_result: The baseline stock for multi-period portfolio optimization run.
+            months: A list of the months for solutions already found.
+            all_solutions: A dict of month, solution key-value pairs.
+            init_holdings: The stocks to start the next run with.
+            initial_budget: The budget coming out of this iteration.
         """
         # Look at just the data up to the current month
         df = self.df_all.iloc[0 : i + 1, :].copy()
@@ -299,9 +314,9 @@ class MultiPeriod(SinglePeriod):
         all_solutions[curr_date.date().strftime("%Y-%m-%d")] = solution
 
         if cli_run:
+            # Print results to command-line
             self.print_results(solution=solution)
 
-        # Print results to command-line
         value = sum([self.price[s] * solution["stocks"][s] for s in self.stocks])
         returns = solution["return"]
         variance = solution["risk"]

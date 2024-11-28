@@ -480,7 +480,8 @@ class SinglePeriod:
 
         return round(est_return, 2), round(variance, 2)
 
-    def print_results(self, solution):
+    def print_results(self, solution: dict):
+        """Print results to the console given a solution dictionary."""
         is_cqm_run = self.model_type is SolverType.CQM
 
         if self.verbose and is_cqm_run:
@@ -511,7 +512,7 @@ class SinglePeriod:
 
         print(f"Variance: {solution['risk']}\n")
 
-    def run(self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings=None):
+    def run(self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None):
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:
@@ -519,6 +520,9 @@ class SinglePeriod:
             min_return (int): Minimum return for the return bounding formulation.
             num (int): Number of stocks to be randomnly generated.
             init_holdings (float): Initial holdings, or initial portfolio state.
+
+        Returns:
+            solution (dict): A dictionary containing solution data.
         """
         self.load_data(num=num)
         if self.model_type is SolverType.CQM:

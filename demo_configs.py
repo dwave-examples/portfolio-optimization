@@ -66,6 +66,8 @@ STOCK_OPTIONS = {
 
 BASELINE = "^GSPC"  # The S&P 500 symbol
 
+DATES_DEFAULT = ["2010-01-01", "2012-12-31"]
+
 BUDGET = {
     "min": 1000,
     "max": 100000,

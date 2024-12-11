@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import matplotlib
+from demo_configs import DATES_DEFAULT
 import numpy as np
 import pandas as pd
 
@@ -89,7 +90,7 @@ class MultiPeriod(SinglePeriod):
             min_return (int): Minimum return for the CQM return bounding formulation.
         """
         if not self.dates:
-            self.dates = ["2010-01-01", "2012-12-31"]
+            self.dates = DATES_DEFAULT
 
         self.load_data()
 

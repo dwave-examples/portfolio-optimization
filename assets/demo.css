@@ -148,3 +148,14 @@ table td:nth-child(2n+1) {
     right: 19rem;
     font-style: italic;
 }
+
+#stocks-error {
+    color: var(--red-light);
+    font-weight: 500;
+}
+
+#run-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+}

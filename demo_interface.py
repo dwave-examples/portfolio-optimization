@@ -23,6 +23,7 @@ from dash import dcc, html
 
 from demo_configs import (
     BUDGET,
+    DATES_DEFAULT,
     DESCRIPTION,
     MAIN_HEADER,
     SOLVER_TIME,
@@ -149,12 +150,13 @@ def generate_settings_form() -> html.Div:
                 id="stocks",
                 multi=True,
             ),
+            html.P("Please select at least 2 stocks", id="stocks-error", className="display-none"),
             html.Label("Date Range"),
             dcc.DatePickerRange(
                 id="date-range",
                 max_date_allowed=date.today().replace(day=1) - timedelta(days=1),  # prev month end
-                start_date="2010-01-01",
-                end_date="2012-12-31",
+                start_date=DATES_DEFAULT[0],
+                end_date=DATES_DEFAULT[1],
                 minimum_nights=120,
             ),
             html.Label("Budget (USD)"),

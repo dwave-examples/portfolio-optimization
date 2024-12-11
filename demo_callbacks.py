@@ -25,7 +25,7 @@ from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from demo_configs import BASELINE, STOCK_OPTIONS
+from demo_configs import BASELINE, DATES_DEFAULT, STOCK_OPTIONS
 from demo_interface import generate_dates_slider, generate_table_group
 from src.demo_enums import PeriodType, SolverType
 from src.multi_period import MultiPeriod
@@ -70,6 +70,8 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 
 @dash.callback(
     Output("input-graph", "figure"),
+    Output("stocks-error", "className"),
+    Output("run-button", "disabled"),
     inputs=[
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
@@ -80,7 +82,7 @@ def render_initial_state(
     start_date: str,
     end_date: str,
     stocks: list,
-) -> go.Figure:
+) -> tuple[go.Figure, str, bool]:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
@@ -90,13 +92,18 @@ def render_initial_state(
 
     Returns:
         input-graph: The input stocks graph.
+        stocks-error: The class name for the stock error.
+        run-button: Whether the run button should be disabled.
     """
-    dates = [start_date, end_date] if start_date and end_date else ["2010-01-01", "2012-12-31"]
 
+    if len(stocks) < 2:
+        return dash.no_update, "", True
+
+    dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
     stocks = stocks if stocks else STOCK_OPTIONS["value"]
     df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
 
-    return generate_input_graph(df)
+    return generate_input_graph(df), "display-none", False
 
 
 @dash.callback(
@@ -600,7 +607,7 @@ def run_optimization(
         "budget": budget,
         "transaction cost": transaction_cost,
         "dates": (
-            [start_date, end_date] if start_date and end_date else ["2010-01-01", "2012-12-31"]
+            [start_date, end_date] if start_date and end_date else DATES_DEFAULT
         ),
         "stocks": stocks,
     }

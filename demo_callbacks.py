@@ -25,7 +25,7 @@ from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from demo_configs import BASELINE
+from demo_configs import BASELINE, STOCK_OPTIONS
 from demo_interface import generate_dates_slider, generate_table_group
 from src.demo_enums import PeriodType, SolverType
 from src.multi_period import MultiPeriod
@@ -92,7 +92,8 @@ def render_initial_state(
         input-graph: The input stocks graph.
     """
     dates = [start_date, end_date] if start_date and end_date else ["2010-01-01", "2012-12-31"]
-    stocks = stocks if stocks else ["AAPL", "MSFT", "AAL", "WMT"]
+
+    stocks = stocks if stocks else STOCK_OPTIONS["value"]
     df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
 
     return generate_input_graph(df)

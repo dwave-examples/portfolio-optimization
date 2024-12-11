@@ -30,7 +30,7 @@ class MultiPeriod(SinglePeriod):
 
     def __init__(
         self,
-        stocks=("AAPL", "MSFT", "AAL", "WMT"),
+        stocks,
         budget=1000,
         bin_size=None,
         gamma=None,

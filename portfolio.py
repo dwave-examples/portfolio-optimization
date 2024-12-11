@@ -14,6 +14,7 @@
 
 import click
 
+from demo_configs import STOCK_OPTIONS
 from src.demo_enums import SolverType
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
@@ -25,7 +26,7 @@ from src.single_period import SinglePeriod
     "--stocks",
     multiple=True,
     type=str,
-    default=["AAPL", "MSFT", "AAL", "WMT"],
+    default=STOCK_OPTIONS["value"],
     show_default=True,
     help="Stock name to be included."
     "When a file is provided, stock name must be included in the file ",

@@ -52,8 +52,11 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
     panel_data = panel_data.resample("BM").last()
     df_all = pd.DataFrame(index=panel_data.index, columns=stocks)
 
-    for i in stocks:
-        df_all[i] = panel_data[[("Adj Close", i)]]
+    if len(stocks) == 1:
+        df_all[stocks[0]] = panel_data[["Adj Close"]]
+    else:
+        for i in stocks:
+            df_all[i] = panel_data[[("Adj Close", i)]]
 
     nan_columns = df_all.columns[df_all.isna().any()].tolist()
     if nan_columns:

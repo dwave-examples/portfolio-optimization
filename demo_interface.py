@@ -157,8 +157,9 @@ def generate_settings_form() -> html.Div:
                 max_date_allowed=date.today().replace(day=1) - timedelta(days=1),  # prev month end
                 start_date=DATES_DEFAULT[0],
                 end_date=DATES_DEFAULT[1],
-                minimum_nights=120,
+                minimum_nights=125,
             ),
+            html.P("Date range must be at least four months.", className="date-range-text"),
             html.Label("Budget (USD)"),
             dcc.Input(
                 id="budget",

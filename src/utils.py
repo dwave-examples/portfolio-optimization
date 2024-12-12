@@ -49,7 +49,7 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
 
     # Read in daily data; resample to monthly
     panel_data = yf.download(stocks, start=dates[0], end=dates[1])
-    panel_data = panel_data.resample("BM").last()
+    panel_data = panel_data.resample("BME").last()
     df_all = pd.DataFrame(index=panel_data.index, columns=stocks)
 
     if len(stocks) == 1:
@@ -68,7 +68,7 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
 
     # Read in baseline data; resample to monthly
     index_df = yf.download(baseline, start=dates[0], end=dates[1])
-    index_df = index_df.resample("BM").last()
+    index_df = index_df.resample("BME").last()
     df_baseline = pd.DataFrame(index=index_df.index)
 
     for i in baseline:

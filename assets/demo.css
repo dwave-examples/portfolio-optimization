@@ -159,3 +159,8 @@ table td:nth-child(2n+1) {
     cursor: not-allowed;
     filter: none;
 }
+
+.date-range-text {
+    font-size: 1.3rem;
+    color: var(--grey-medium);
+}

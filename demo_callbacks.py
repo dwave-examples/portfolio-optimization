@@ -72,6 +72,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
     Output("run-button", "disabled"),
+    Output("max-iterations", "data"),
     inputs=[
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
@@ -82,7 +83,7 @@ def render_initial_state(
     start_date: str,
     end_date: str,
     stocks: list,
-) -> tuple[go.Figure, str, bool]:
+) -> tuple[go.Figure, str, bool, int]:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
@@ -94,6 +95,8 @@ def render_initial_state(
         input-graph: The input stocks graph.
         stocks-error: The class name for the stock error.
         run-button: Whether the run button should be disabled.
+        max-iterations: The number of months between start and end date, which is the number of
+            times to run ``update_multi_output`` (minus 3).
     """
 
     if len(stocks) < 2:
@@ -103,7 +106,7 @@ def render_initial_state(
     stocks = stocks if stocks else STOCK_OPTIONS["value"]
     df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
 
-    return generate_input_graph(df), "display-none", False
+    return generate_input_graph(df), "display-none", False, len(df) - 1
 
 
 @dash.callback(
@@ -535,7 +538,6 @@ class RunOptimizationReturn(NamedTuple):
     results_tab_label: str = "Loading..."
     tabs_value: str = "input-tab"
     settings_store: dict = dash.no_update
-    max_iterations: int = dash.no_update
     loop_interval_disabled: bool = dash.no_update
     graph_tab_disabled: bool = dash.no_update
 
@@ -547,7 +549,6 @@ class RunOptimizationReturn(NamedTuple):
     Output("results-tab", "label"),
     Output("tabs", "value", allow_duplicate=True),
     Output("settings-store", "data"),
-    Output("max-iterations", "data", allow_duplicate=True),
     Output("loop-interval", "disabled", allow_duplicate=True),
     Output("graph-tab", "disabled", allow_duplicate=True),
     inputs=[
@@ -595,8 +596,6 @@ def run_optimization(
             results-tab-label: The label of the results tab.
             tabs-value: Which tab should be selected.
             settings-store: Storing all the settings for the run.
-            max-iterations: The number of months between start and end date, which is the number of
-                times to run ``update_multi_output`` (minus 3).
             loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
             graph-tab-disabled: Whether to disable the graph tab.
 
@@ -615,15 +614,8 @@ def run_optimization(
     if period is PeriodType.SINGLE.value:
         return RunOptimizationReturn(settings_store=settings_store)
 
-    start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-    end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
-    num_months = (
-        (end_datetime.year - start_datetime.year) * 12 + end_datetime.month - start_datetime.month
-    )
-
     return RunOptimizationReturn(
         settings_store=settings_store,
-        max_iterations=num_months,
         loop_interval_disabled=False,
         graph_tab_disabled=True,
     )

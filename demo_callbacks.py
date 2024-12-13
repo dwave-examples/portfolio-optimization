@@ -496,8 +496,9 @@ def update_multi_output(
             interval_disabled=True,
             cancel_button_class="display-none",
             run_button_class="",
+            results_tab_disabled=False,
             results_tab_label="Results",
-            graph_update_status=""
+            graph_update_status="",
         )
 
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
@@ -627,6 +628,7 @@ def run_optimization(
     Output("run-button", "className", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
     Output("results-tab", "label", allow_duplicate=True),
+    Output("dates-slider", "children", allow_duplicate=True),
     background=True,
     inputs=[
         Input("settings-store", "data"),
@@ -638,7 +640,7 @@ def run_optimization(
 def run_optimization_single(
     settings_store: dict,
     period: Union[PeriodType, int],
-) -> tuple[list, str, str, bool, str]:
+) -> tuple[list, str, str, bool, str, str]:
     """Runs the single period optimization and updates UI accordingly.
 
     Args:
@@ -651,6 +653,7 @@ def run_optimization_single(
         run-button-class: The class for the run button.
         results-tab-disabled: Whether the results tab should be disabled.
         results-tab-label: The label of the results tab.
+        dates_slider: A slider of dates that updates the visible solution_table.
     """
     if period is PeriodType.MULTI.value:
         raise PreventUpdate
@@ -673,4 +676,4 @@ def run_optimization_single(
 
     output_tables = generate_table_group(tables_data=[solution["stocks"], table])
 
-    return output_tables, "display-none", "", False, "Results"
+    return output_tables, "display-none", "", False, "Results", ""

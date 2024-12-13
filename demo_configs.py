@@ -53,15 +53,13 @@ STOCK_OPTIONS = {
         "GOOG",
         "JNJ",
         "MA",
-        "META",
         "MSFT",
         "NFLX",
-        "TSLA",
         "V",
         "WMT",
         "WFC",
     ],
-    "value": ["AAPL", "MSFT", "AAL", "WMT"],
+    "value": ["AAPL", "MSFT", "WMT"],
 }
 
 BASELINE = "^GSPC"  # The S&P 500 symbol

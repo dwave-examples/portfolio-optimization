@@ -124,11 +124,6 @@ def generate_settings_form() -> html.Div:
         {"label": solver_type.label, "value": solver_type.value} for solver_type in SolverType
     ]
 
-    stock_options = [
-        {"label": f"{yf.Ticker(ticker).info['shortName']} ({ticker})", "value": ticker}
-        for ticker in STOCK_OPTIONS["options"]
-    ]
-
     return html.Div(
         className="settings",
         children=[
@@ -145,7 +140,7 @@ def generate_settings_form() -> html.Div:
             ),
             html.Label("Stocks"),
             dcc.Dropdown(
-                stock_options,
+                STOCK_OPTIONS["options"],
                 STOCK_OPTIONS["value"],
                 id="stocks",
                 multi=True,

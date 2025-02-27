@@ -53,10 +53,10 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
     df_all = pd.DataFrame(index=panel_data.index, columns=stocks)
 
     if len(stocks) == 1:
-        df_all[stocks[0]] = panel_data[["Adj Close"]]
+        df_all[stocks[0]] = panel_data[["Close"]]
     else:
         for i in stocks:
-            df_all[i] = panel_data[[("Adj Close", i)]]
+            df_all[i] = panel_data[[("Close", i)]]
 
     nan_columns = df_all.columns[df_all.isna().any()].tolist()
     if nan_columns:
@@ -72,7 +72,7 @@ def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
     df_baseline = pd.DataFrame(index=index_df.index)
 
     for i in baseline:
-        df_baseline[i] = index_df[[("Adj Close")]]
+        df_baseline[i] = index_df[[("Close")]]
 
     return df_all, stocks, df_baseline
 

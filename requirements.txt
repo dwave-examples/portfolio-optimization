@@ -2,5 +2,5 @@ dimod>=0.10.7
 dwave-system>=1.10.0
 pandas-datareader>=0.10.0
 matplotlib>=3.3.4
-yfinance>=0.2.3
+yfinance==0.2.54
 dash[diskcache]==2.17.1

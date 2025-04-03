@@ -138,12 +138,12 @@ class SinglePeriod:
             # Read in daily data; resample to monthly
             panel_data = yf.download(self.stocks, 
                                      start=self.dates[0], end=self.dates[1])
-            panel_data = panel_data.resample('BM').last()
+            panel_data = panel_data.resample('BME').last()
             self.df_all = pd.DataFrame(index=panel_data.index, 
                                        columns=self.stocks)
 
             for i in self.stocks:
-                self.df_all[i] = panel_data[[('Adj Close',  i)]]
+                self.df_all[i] = panel_data[[('Close',  i)]]
 
             nan_columns = self.df_all.columns[self.df_all.isna().any()].tolist()
             if nan_columns:
@@ -156,11 +156,11 @@ class SinglePeriod:
             # Read in baseline data; resample to monthly
             index_df = yf.download(self.baseline, 
                                    start=self.dates[0], end=self.dates[1])
-            index_df = index_df.resample('BM').last()
+            index_df = index_df.resample('BME').last()
             self.df_baseline = pd.DataFrame(index=index_df.index)
             
             for i in self.baseline:
-                self.df_baseline[i] = index_df[[('Adj Close')]]
+                self.df_baseline[i] = index_df[[('Close')]]
 
             self.df = self.df_all 
         else:

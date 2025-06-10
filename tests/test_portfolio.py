@@ -19,7 +19,7 @@ import unittest
 
 import pandas as pd
 
-from demo_configs import STOCK_OPTIONS
+from demo_configs import DEFAULT_STOCKS
 from src.single_period import SinglePeriod
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,7 +48,7 @@ class TestDemo(unittest.TestCase):
             bin_size=5,
             model_type="DQM",
             t_cost=0,
-            stocks=STOCK_OPTIONS["value"]
+            stocks=DEFAULT_STOCKS
         )
 
         data = {
@@ -67,7 +67,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(test_portfolio.model["DQM"].num_cases(), 28)
 
     def test_build_cqm(self):
-        test_portfolio = SinglePeriod(model_type="CQM", stocks=STOCK_OPTIONS["value"])
+        test_portfolio = SinglePeriod(model_type="CQM", stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],
@@ -85,7 +85,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(test_portfolio.model["CQM"].constraints), 8)
 
     def test_build_random_cqm_instance(self):
-        test_portfolio = SinglePeriod(model_type="CQM", stocks=STOCK_OPTIONS["value"])
+        test_portfolio = SinglePeriod(model_type="CQM", stocks=DEFAULT_STOCKS)
         test_portfolio.dates = ["2010-01-01", "2010-12-31"]
 
         test_portfolio.load_data(num=10)
@@ -97,7 +97,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(test_portfolio.model["CQM"].constraints), 3 * k + 2)
 
     def test_build_cqm_no_transaction(self):
-        test_portfolio = SinglePeriod(model_type="CQM", t_cost=0, stocks=STOCK_OPTIONS["value"])
+        test_portfolio = SinglePeriod(model_type="CQM", t_cost=0, stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],

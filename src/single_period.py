@@ -13,17 +13,15 @@
 # limitations under the License.
 
 import json
-import random
 from itertools import product
 
+from demo_configs import DATES_DEFAULT
 import numpy as np
-import pandas as pd
-import yfinance as yf
 from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.demo_enums import SolverType
-from src.utils import get_live_data
+from src.utils import get_requested_stocks, get_stock_data
 
 
 class SinglePeriod:
@@ -134,14 +132,14 @@ class SinglePeriod:
             print("\nLoading data from DataFrame...")
             self.df = df
             self.stocks = df.columns.tolist()
-        elif self.dates:
-            self.df, self.stocks, self.df_baseline = get_live_data(
-                self.dates, self.stocks, self.baseline, num
+        else:
+            if not self.dates: self.dates = DATES_DEFAULT
+
+            df, _, self.df_baseline = get_stock_data()
+            self.df = get_requested_stocks(
+                df, self.dates, self.stocks, num
             )
             self.df_all = self.df
-        else:
-            print("\nLoading data from provided CSV file...")
-            self.df = pd.read_csv(self.file_path, index_col=0)
 
         self.init_holdings = {s: 0 for s in self.stocks}
 

@@ -14,9 +14,11 @@
 
 import base64
 import math
+import os
 import random
 from typing import Any
 
+from demo_configs import BASELINE
 import dill as pickle
 import pandas as pd
 import plotly.graph_objs as go
@@ -25,56 +27,105 @@ import yfinance as yf
 from src.demo_enums import SolverType
 
 
-def get_live_data(dates, stocks, baseline, num=0) -> pd.DataFrame:
-    """Gets live data from Yahoo Finance and generates a dataframe.
+def clean_stock_data(df, col_name):
+    # Convert Date column to datetime to get 1 per month
+    df['Date'] = pd.to_datetime(df['Date'])
+    monthly_stocks = df.groupby(df['Date'].dt.to_period('M'), as_index=False).first()
+
+    # Rename Close column to stock name and remove unnecessary columns
+    monthly_stocks.rename({"Close/Last": col_name}, axis=1, inplace=True)
+    monthly_stocks.drop(["Open", "High", "Low"], axis=1, inplace=True)
+
+    monthly_stocks = monthly_stocks.set_index("Date")
+
+    if monthly_stocks[col_name].dtype == 'object':
+        monthly_stocks[col_name] = monthly_stocks[col_name].str.replace('$', '').astype('float')
+
+    return monthly_stocks
+
+
+def get_stock_data() -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
+    """Reads stock CSVs and returns stock dataframe and baseline dataframe.
+
+    Returns:
+        pd.DataFrame: A dataframe containing all stock data in historical_data directory.
+        list[str]: A list of all the stock names in the dataframe.
+        pd.DataFrame: A dataframe containing the baseline S&P 500 data.
+    """
+    print("\nReading in all stock data.")
+
+    stock_names = []
+    df_all_stocks = pd.DataFrame()
+
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    historical_data = os.path.join(project_dir, "data/historical_data")
+    directory = os.fsencode(historical_data)
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        if filename.endswith(".csv"):
+            # Get stock name from csv file name
+            stock_name = " ".join([word.capitalize() for word in filename.split(".")[0].split("_")])
+            stock_names.append(stock_name)
+
+            # Read csv to a dataframe
+            df_stock = pd.read_csv(os.path.join(historical_data, filename))
+
+            monthly_stocks = clean_stock_data(df_stock, stock_name)
+            monthly_stocks.drop(["Volume"], axis=1, inplace=True)
+
+            # Add all stocks to one dataframe
+            if df_all_stocks.empty:
+                df_all_stocks = monthly_stocks
+            else:
+                df_all_stocks = pd.merge(df_all_stocks, monthly_stocks, left_on='Date', right_on='Date', how='left')
+
+        else:
+            raise ValueError("Expected CSV stock data file type.")
+
+    # Read baseline data from file
+    baseline_filename = os.path.join(project_dir, "data/baseline.csv")
+    df_baseline = pd.read_csv(baseline_filename)
+    df_baseline = clean_stock_data(df_baseline, BASELINE)
+
+    return df_all_stocks, stock_names, df_baseline
+
+
+def get_requested_stocks(df, dates, stocks=[], num_stocks=0) -> pd.DataFrame:
+    """Given a dataframe of stocks and stocks/dates to get, returns a dataframe containing
+    requested stocks stocks as columns and dates as rows.
 
     Args:
+        df: The dataframe of all stocks.
         dates: The dates to get the stock data for.
         stocks: The stocks to get data for.
-        baseline: The baseline stock for multi-period portfolio optimization run.
-        num: The number of random stocks to get data for.
+        num_stocks: The number of random stocks to get data for.
 
     Returns:
         pd.DataFrame: A dataframe containing the finance data.
     """
-    print(f"\nLoading live data from the web from Yahoo Finance from {dates[0]} to {dates[1]}...")
+    print(f"\nGetting stock data for {dates[0]} to {dates[1]}...")
 
-    # Generating random list of stocks
-    if num > 0:
-        if dates[0] < "2010-01-01":
-            raise Exception("Start date must be >= '2010-01-01' when using option 'num'.")
+    first_date = df.index[0]
+    last_date = df.index[-1]
+    requested_start = pd.to_datetime(dates[0])
+    requested_end = pd.to_datetime(dates[1])
 
-        symbols_df = pd.read_csv("data/stocks_symbols.csv")
-        stocks = random.sample(list(symbols_df.loc[:, "Symbol"]), num)
+    if requested_start < first_date or requested_end > last_date:
+        raise Exception("Data does not exist for requested date.")
+    
+    df_date_filtered = df[(df.index >= requested_start) & (df.index <= requested_end)]
 
-    # Read in daily data; resample to monthly
-    panel_data = yf.download(stocks, start=dates[0], end=dates[1])
-    panel_data = panel_data.resample("BME").last()
-    df_all = pd.DataFrame(index=panel_data.index, columns=stocks)
+    if not len(stocks):
+        # Generating random list of stocks
+        if num_stocks == 0: num_stocks = 3
 
-    if len(stocks) == 1:
-        df_all[stocks[0]] = panel_data[["Close"]]
+        all_stocks = list(df.columns)
+        df_date_filtered = df_date_filtered[random.sample(all_stocks, num_stocks)]
     else:
-        for i in stocks:
-            df_all[i] = panel_data[[("Close", i)]]
+        df_date_filtered = df_date_filtered[stocks]
 
-    nan_columns = df_all.columns[df_all.isna().any()].tolist()
-    if nan_columns:
-        print("The following tickers are dropped due to invalid data: ", nan_columns)
-        df_all = df_all.dropna(axis=1)
-        if len(df_all.columns) < 2:
-            raise Exception("There must be at least 2 valid stock tickers.")
-        stocks = list(df_all.columns)
-
-    # Read in baseline data; resample to monthly
-    index_df = yf.download(baseline, start=dates[0], end=dates[1])
-    index_df = index_df.resample("BME").last()
-    df_baseline = pd.DataFrame(index=index_df.index)
-
-    for i in baseline:
-        df_baseline[i] = index_df[[("Close")]]
-
-    return df_all, stocks, df_baseline
+    return df_date_filtered
 
 
 def serialize(obj: Any) -> str:

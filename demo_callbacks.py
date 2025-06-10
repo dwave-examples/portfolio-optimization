@@ -25,7 +25,7 @@ from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from demo_configs import BASELINE, DATES_DEFAULT, STOCK_OPTIONS
+from demo_configs import BASELINE, DATES_DEFAULT
 from demo_interface import generate_dates_slider, generate_table_group
 from src.demo_enums import PeriodType, SolverType
 from src.multi_period import MultiPeriod
@@ -34,7 +34,8 @@ from src.utils import (
     deserialize,
     format_table_data,
     generate_input_graph,
-    get_live_data,
+    get_requested_stocks,
+    get_stock_data,
     initialize_output_graph,
     serialize,
     update_output_graph,
@@ -73,17 +74,23 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     Output("stocks-error", "className"),
     Output("run-button", "disabled"),
     Output("max-iterations", "data"),
+    Output("stocks", "options"),
+    Output("stocks", "value"),
+    Output("all-stocks-store", "data"),
+    Output("stocks-store", "data"),
     inputs=[
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
         Input("stocks", "value"),
+        State("all-stocks-store", "data"),
     ],
 )
 def render_initial_state(
     start_date: str,
     end_date: str,
     stocks: list,
-) -> tuple[go.Figure, str, bool, int]:
+    all_stocks_store: list,
+) -> tuple[go.Figure, str, bool, int, list, str, str]:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
@@ -98,15 +105,42 @@ def render_initial_state(
         max-iterations: The number of months between start and end date, which is the number of
             times to run ``update_multi_output`` (minus 3).
     """
+    # First load, initialize stock dropdown
+    if not all_stocks_store:
+        df_all_stocks, stock_names, df_baseline = get_stock_data()
+
+        if not set(stocks) <= set(stock_names):
+            raise ValueError("No historical data files for requested stocks.")
+
+        df = get_requested_stocks(df_all_stocks, DATES_DEFAULT, stocks=stocks[:3])
+
+        return (
+            generate_input_graph(df),
+            "display-none",
+            False,
+            len(df) - 1,
+            stock_names,
+            stocks,
+            serialize(df_all_stocks),
+            serialize(df)
+        )
 
     if len(stocks) < 2:
-        return dash.no_update, "", True
+        return dash.no_update, "", True, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
     dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
-    stocks = stocks if stocks else STOCK_OPTIONS["value"]
-    df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
+    df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
 
-    return generate_input_graph(df), "display-none", False, len(df) - 1
+    return (
+        generate_input_graph(df),
+        "display-none",
+        False,
+        len(df) - 1,
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+        serialize(df),
+    )
 
 
 @dash.callback(

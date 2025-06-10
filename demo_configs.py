@@ -43,34 +43,17 @@ TRANSACTION_COST = {
 
 # A list of stock symbols/tickers for the options for the stocks dropdown,
 # "value" is the default list.
-STOCK_OPTIONS = {
-    "options": [
-        {"label": "Amazon (AMZN)", "value": "AMZN"},
-        {"label": "American Airlines (AAL)", "value": "AAL"},
-        {"label": "Apple (AAPL)", "value": "AAPL"},
-        {"label": "Coca-Cola (KO)", "value": "KO"},
-        {"label": "Disney (DIS)", "value": "DIS"},
-        {"label": "Google (GOOG)", "value": "GOOG"},
-        {"label": "Johnson & Johnson (JNJ)", "value": "JNJ"},
-        {"label": "Mastercard (MA)", "value": "MA"},
-        {"label": "Microsoft (MSFT)", "value": "MSFT"},
-        {"label": "Netflix (NFLX)", "value": "NFLX"},
-        {"label": "Visa (V)", "value": "V"},
-        {"label": "Walmart (WMT)", "value": "WMT"},
-        {"label": "Wells Fargo (WFC)", "value": "WFC"},
-    ],
-    "value": ["AAPL", "MSFT", "WMT"],
-}
+DEFAULT_STOCKS = ["Search Engine", "Large Retailer", "Coffee Company"]
 
 BASELINE = "^GSPC"  # The S&P 500 symbol
 
-DATES_DEFAULT = ["2010-01-01", "2012-12-31"]
+DATES_DEFAULT = ["2023-01-01", "2024-12-31"]
 
 BUDGET = {
-    "min": 1000,
+    "min": 5000,
     "max": 100000,
     "step": 100,
-    "value": 1000,
+    "value": 10000,
 }
 
 # solver time limits in seconds (value means default)

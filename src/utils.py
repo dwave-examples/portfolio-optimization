@@ -22,7 +22,6 @@ from demo_configs import BASELINE
 import dill as pickle
 import pandas as pd
 import plotly.graph_objs as go
-import yfinance as yf
 
 from src.demo_enums import SolverType
 

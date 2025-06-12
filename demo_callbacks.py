@@ -69,6 +69,20 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
 
 
+class RenderInitialStateReturn(NamedTuple):
+    """Return type for the ``render_initial_state`` callback function."""
+
+    input_graph: go.Figure = dash.no_update
+    stocks_error: str = "display-none"
+    run_button_disabled: bool = False
+    max_iter: int = dash.no_update
+    stocks_options: list = dash.no_update
+    stocks_value: list = dash.no_update
+    all_stocks_store: str = dash.no_update
+    stocks_store: str = dash.no_update
+    date_range_min: str = dash.no_update
+    date_range_max: str = dash.no_update
+
 @dash.callback(
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
@@ -78,6 +92,8 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     Output("stocks", "value"),
     Output("all-stocks-store", "data"),
     Output("stocks-store", "data"),
+    Output("date-range", "min_date_allowed"),
+    Output("date-range", "max_date_allowed"),
     inputs=[
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
@@ -90,7 +106,7 @@ def render_initial_state(
     end_date: str,
     stocks: list,
     all_stocks_store: list,
-) -> tuple[go.Figure, str, bool, int, list, str, str]:
+) -> RenderInitialStateReturn:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
@@ -114,32 +130,27 @@ def render_initial_state(
 
         df = get_requested_stocks(df_all_stocks, DATES_DEFAULT, stocks=stocks[:3])
 
-        return (
-            generate_input_graph(df),
-            "display-none",
-            False,
-            len(df) - 1,
-            stock_names,
-            stocks,
-            serialize(df_all_stocks),
-            serialize(df)
+        return RenderInitialStateReturn(
+            input_graph=generate_input_graph(df),
+            max_iter=len(df) - 1,
+            stocks_options=stock_names,
+            stocks_value=stocks,
+            all_stocks_store=serialize(df_all_stocks),
+            stocks_store=serialize(df),
+            date_range_min=df_all_stocks.index[0],
+            date_range_max=df_all_stocks.index[-1],
         )
 
     if len(stocks) < 2:
-        return dash.no_update, "", True, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+        return RenderInitialStateReturn(stocks_error="", run_button_disabled=True)
 
     dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
     df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
 
-    return (
-        generate_input_graph(df),
-        "display-none",
-        False,
-        len(df) - 1,
-        dash.no_update,
-        dash.no_update,
-        dash.no_update,
-        serialize(df),
+    return RenderInitialStateReturn(
+        input_graph=generate_input_graph(df),
+        max_iter=len(df) - 1,
+        stocks_store=serialize(df),
     )
 
 

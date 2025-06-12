@@ -17,6 +17,7 @@ from itertools import product
 
 from demo_configs import DATES_DEFAULT
 import numpy as np
+import pandas as pd
 from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
@@ -122,7 +123,7 @@ class SinglePeriod:
         self.precision = 2
 
     def load_data(self, df=None, num=0):
-        """Load the relevant stock data from file, dataframe, or Yahoo!.
+        """Load the relevant stock data from files or dataframe.
 
         Args:
             df (dataframe): Table of stock prices.
@@ -132,6 +133,9 @@ class SinglePeriod:
             print("\nLoading data from DataFrame...")
             self.df = df
             self.stocks = df.columns.tolist()
+        elif self.file_path:
+            print("\nLoading data from provided CSV file...")
+            self.df = pd.read_csv(self.file_path, index_col=0)
         else:
             if not self.dates: self.dates = DATES_DEFAULT
 

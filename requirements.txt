@@ -4,4 +4,3 @@ dwave-system>=1.10.0
 matplotlib>=3.3.4
 pandas-datareader>=0.10.0
 setuptools>=75.8.1
-yfinance==0.2.54

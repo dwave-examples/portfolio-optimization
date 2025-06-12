@@ -80,7 +80,7 @@ from src.single_period import SinglePeriod
     "--dates",
     nargs=2,
     type=str,
-    help="Start and end date to query stock data from Yahoo Finance",
+    help="Start and end date to query stock data",
 )
 @click.option(
     "-m",

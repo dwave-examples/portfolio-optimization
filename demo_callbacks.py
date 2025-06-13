@@ -103,7 +103,7 @@ def render_initial_state(
     start_date: str,
     end_date: str,
     stocks: list,
-    all_stocks_store: list,
+    all_stocks_store: str,
 ) -> RenderInitialStateReturn:
     """Takes the selected dates and stocks and updates the stocks graph.
 
@@ -111,13 +111,20 @@ def render_initial_state(
         start_date: The selected start date.
         end_date: The selected end date.
         stocks: The selected stocks.
+        all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
     Returns:
-        input-graph: The input stocks graph.
-        stocks-error: The class name for the stock error.
-        run-button: Whether the run button should be disabled.
-        max-iterations: The number of months between start and end date, which is the number of
-            times to run ``update_multi_output`` (minus 3).
+        A NamedTuple ``RenderInitialStateReturn`` that contains the following:
+            input_graph: The input stocks graph.
+            stocks_error: The class name for the stock error.
+            run_button_disabled: Whether the run button should be disabled.
+            max_iter: The number of months between start and end date, which is the number of
+                times to run ``update_multi_output`` (minus 3).
+            stocks_options: The dropdown stocks to choose from.
+            stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
+            all_stocks_store: A dataframe of all the stocks available, stored serialized.
+            date_range_min: Any date older than this will be disabled on the date selector.
+            date_range_max: Any date more recent than this will be disabled on the date selector.
     """
     # First load, initialize stock dropdown
     if not ctx.triggered_id:

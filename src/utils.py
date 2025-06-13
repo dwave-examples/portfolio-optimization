@@ -25,10 +25,19 @@ import plotly.graph_objs as go
 
 from src.demo_enums import SolverType
 
-
 PROJECT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def clean_stock_data(df, col_name):
+
+def clean_stock_data(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
+    """Modifies stock dataframe created from downloaded data.
+
+    Args:
+        df: The dataframe to clean.
+        col_name: The name of the stock column.
+
+    Returns:
+        pd.DataFrame: The cleaned dataframe.
+    """
     # Convert Date column to datetime to get 1 per month
     df['Date'] = pd.to_datetime(df['Date'])
     monthly_stocks = df.groupby(df['Date'].dt.to_period('M'), as_index=False).first()
@@ -89,7 +98,7 @@ def get_baseline_data(dates: list) -> pd.DataFrame:
     """Reads baseline S&P 500 CSV data and returns baseline dataframe.
 
     Args:
-        dates: The dates to get the data for
+        dates: The dates to get the data for.
 
     Returns:
         pd.DataFrame: A dataframe containing the baseline S&P 500 data.

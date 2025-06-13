@@ -19,8 +19,12 @@ import pandas as pd
 from demo_configs import DATES_DEFAULT
 from src.demo_enums import SolverType
 
-matplotlib.use("agg")
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    matplotlib.use("agg")
+    import matplotlib.pyplot as plt
+
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.single_period import SinglePeriod
@@ -293,6 +297,7 @@ class MultiPeriod(SinglePeriod):
 
             plt.savefig("portfolio.png")
             plt.pause(0.05)
+            plt.show(block=False)
 
             print(f"\nMulti-Period {self.model_type.label} Run...")
 

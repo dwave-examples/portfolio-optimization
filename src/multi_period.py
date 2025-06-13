@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import matplotlib
-from demo_configs import DATES_DEFAULT
 import numpy as np
 import pandas as pd
 
+from demo_configs import DATES_DEFAULT
 from src.demo_enums import SolverType
 
 matplotlib.use("agg")

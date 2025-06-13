@@ -27,7 +27,6 @@ from demo_configs import DEFAULT_STOCKS
 from src.single_period import SinglePeriod
 
 
-
 class TestSmoke(unittest.TestCase):
     @unittest.skipIf(os.getenv("SKIP_INT_TESTS"), "Skipping integration test.")
     def test_smoke_single_period(self):
@@ -47,12 +46,7 @@ class TestDemo(unittest.TestCase):
     """Verify models are build correctly."""
 
     def test_build_dqm(self):
-        test_portfolio = SinglePeriod(
-            bin_size=5,
-            model_type="DQM",
-            t_cost=0,
-            stocks=DEFAULT_STOCKS
-        )
+        test_portfolio = SinglePeriod(bin_size=5, model_type="DQM", t_cost=0, stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],

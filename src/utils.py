@@ -18,11 +18,11 @@ import os
 import random
 from typing import Any
 
-from demo_configs import BASELINE
 import dill as pickle
 import pandas as pd
 import plotly.graph_objs as go
 
+from demo_configs import BASELINE
 from src.demo_enums import SolverType
 
 PROJECT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,8 +39,8 @@ def clean_stock_data(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
         pd.DataFrame: The cleaned dataframe.
     """
     # Convert Date column to datetime to get 1 per month
-    df['Date'] = pd.to_datetime(df['Date'])
-    monthly_stocks = df.groupby(df['Date'].dt.to_period('M'), as_index=False).first()
+    df["Date"] = pd.to_datetime(df["Date"])
+    monthly_stocks = df.groupby(df["Date"].dt.to_period("M"), as_index=False).first()
 
     # Rename Close column to stock name and remove unnecessary columns
     monthly_stocks.rename({"Close/Last": col_name}, axis=1, inplace=True)
@@ -48,8 +48,8 @@ def clean_stock_data(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
 
     monthly_stocks = monthly_stocks.set_index("Date")
 
-    if monthly_stocks[col_name].dtype == 'object':
-        monthly_stocks[col_name] = monthly_stocks[col_name].str.replace('$', '').astype('float')
+    if monthly_stocks[col_name].dtype == "object":
+        monthly_stocks[col_name] = monthly_stocks[col_name].str.replace("$", "").astype("float")
 
     return monthly_stocks
 
@@ -86,7 +86,9 @@ def get_stock_data() -> tuple[pd.DataFrame, list[str]]:
             if df_all_stocks.empty:
                 df_all_stocks = monthly_stocks
             else:
-                df_all_stocks = pd.merge(df_all_stocks, monthly_stocks, left_on='Date', right_on='Date', how='left')
+                df_all_stocks = pd.merge(
+                    df_all_stocks, monthly_stocks, left_on="Date", right_on="Date", how="left"
+                )
 
         else:
             raise ValueError("Expected CSV stock data file type.")
@@ -113,12 +115,16 @@ def get_baseline_data(dates: list) -> pd.DataFrame:
     df_baseline = pd.read_csv(baseline_filename)
     df_baseline = clean_stock_data(df_baseline, BASELINE)
 
-    df_baseline = df_baseline[(df_baseline.index >= requested_start) & (df_baseline.index <= requested_end)]
+    df_baseline = df_baseline[
+        (df_baseline.index >= requested_start) & (df_baseline.index <= requested_end)
+    ]
 
     return df_baseline
 
 
-def get_requested_stocks(df: pd.DataFrame, dates: list, stocks: list=[], num_stocks: int=0) -> pd.DataFrame:
+def get_requested_stocks(
+    df: pd.DataFrame, dates: list, stocks: list = [], num_stocks: int = 0
+) -> pd.DataFrame:
     """Given a dataframe of stocks and stocks/dates to get, returns a dataframe containing
     requested stocks stocks as columns and dates as rows.
 
@@ -140,12 +146,13 @@ def get_requested_stocks(df: pd.DataFrame, dates: list, stocks: list=[], num_sto
 
     if requested_start < first_date or requested_end > last_date:
         raise Exception("Data does not exist for requested date.")
-    
+
     df_date_filtered = df[(df.index >= requested_start) & (df.index <= requested_end)]
 
     if not len(stocks):
         # Generating random list of stocks
-        if num_stocks == 0: num_stocks = 3
+        if num_stocks == 0:
+            num_stocks = 3
 
         all_stocks = list(df.columns)
         df_date_filtered = df_date_filtered[random.sample(all_stocks, num_stocks)]

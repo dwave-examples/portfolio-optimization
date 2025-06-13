@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import json
-from itertools import product
 import os
+from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -517,7 +517,9 @@ class SinglePeriod:
 
         print(f"Variance: {solution['risk']}\n")
 
-    def run(self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None):
+    def run(
+        self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None
+    ):
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:

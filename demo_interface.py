@@ -390,7 +390,7 @@ def create_interface() -> html.Div:
                                                     id="output-graph",
                                                     responsive=True,
                                                     config={"displayModeBar": False},
-                                                )
+                                                ),
                                             ],
                                         ),
                                     ),

@@ -82,6 +82,7 @@ class RenderInitialStateReturn(NamedTuple):
     date_range_min: str = dash.no_update
     date_range_max: str = dash.no_update
 
+
 @dash.callback(
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
@@ -552,8 +553,7 @@ def update_multi_output(
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
     dates = [
-        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y")
-        for date in results_date_dict.keys()
+        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in results_date_dict.keys()
     ]
     solutions = list(results_date_dict.values())
 
@@ -654,9 +654,7 @@ def run_optimization(
         "time limit": time_limit,
         "budget": budget,
         "transaction cost": transaction_cost,
-        "dates": (
-            [start_date, end_date] if start_date and end_date else DATES_DEFAULT
-        ),
+        "dates": ([start_date, end_date] if start_date and end_date else DATES_DEFAULT),
         "stocks": stocks,
     }
 

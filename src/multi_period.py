@@ -145,7 +145,6 @@ class MultiPeriod(SinglePeriod):
         print(self.opt_results_df)
 
         plt.savefig("portfolio.png")
-        plt.show(block=False)
 
         return all_solutions
 

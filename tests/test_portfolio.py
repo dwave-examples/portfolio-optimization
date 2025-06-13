@@ -19,10 +19,13 @@ import unittest
 
 import pandas as pd
 
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_dir)
+sys.path.append("../")
+
 from demo_configs import DEFAULT_STOCKS
 from src.single_period import SinglePeriod
 
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class TestSmoke(unittest.TestCase):
@@ -37,7 +40,7 @@ class TestSmoke(unittest.TestCase):
         """Run multi-period portfolio.py and check that nothing crashes"""
 
         demo_file = os.path.join(project_dir, "portfolio.py")
-        subprocess.check_output([sys.executable, demo_file, "-d", "2012-01-01", "2012-12-31", "-r"])
+        subprocess.check_output([sys.executable, demo_file, "-d", "2021-01-01", "2021-12-31", "-r"])
 
 
 class TestDemo(unittest.TestCase):
@@ -86,7 +89,7 @@ class TestDemo(unittest.TestCase):
 
     def test_build_random_cqm_instance(self):
         test_portfolio = SinglePeriod(model_type="CQM", stocks=DEFAULT_STOCKS)
-        test_portfolio.dates = ["2010-01-01", "2010-12-31"]
+        test_portfolio.dates = ["2021-01-01", "2021-12-31"]
 
         test_portfolio.load_data(num=10)
         test_portfolio.build_cqm()

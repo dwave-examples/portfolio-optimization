@@ -26,6 +26,8 @@ import plotly.graph_objs as go
 from src.demo_enums import SolverType
 
 
+PROJECT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def clean_stock_data(df, col_name):
     # Convert Date column to datetime to get 1 per month
     df['Date'] = pd.to_datetime(df['Date'])
@@ -43,21 +45,19 @@ def clean_stock_data(df, col_name):
     return monthly_stocks
 
 
-def get_stock_data() -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
-    """Reads stock CSVs and returns stock dataframe and baseline dataframe.
+def get_stock_data() -> tuple[pd.DataFrame, list[str]]:
+    """Reads stock CSVs and returns stock dataframe.
 
     Returns:
         pd.DataFrame: A dataframe containing all stock data in historical_data directory.
         list[str]: A list of all the stock names in the dataframe.
-        pd.DataFrame: A dataframe containing the baseline S&P 500 data.
     """
     print("\nReading in all stock data.")
 
     stock_names = []
     df_all_stocks = pd.DataFrame()
 
-    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    historical_data = os.path.join(project_dir, "data/historical_data")
+    historical_data = os.path.join(PROJECT_DIRECTORY, "data/historical_data")
     directory = os.fsencode(historical_data)
 
     for file in os.listdir(directory):
@@ -82,15 +82,34 @@ def get_stock_data() -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
         else:
             raise ValueError("Expected CSV stock data file type.")
 
+    return df_all_stocks, stock_names
+
+
+def get_baseline_data(dates: list) -> pd.DataFrame:
+    """Reads baseline S&P 500 CSV data and returns baseline dataframe.
+
+    Args:
+        dates: The dates to get the data for
+
+    Returns:
+        pd.DataFrame: A dataframe containing the baseline S&P 500 data.
+    """
+    print("\nReading in baseline data.")
+
+    requested_start = pd.to_datetime(dates[0])
+    requested_end = pd.to_datetime(dates[1])
+
     # Read baseline data from file
-    baseline_filename = os.path.join(project_dir, "data/baseline.csv")
+    baseline_filename = os.path.join(PROJECT_DIRECTORY, "data/baseline.csv")
     df_baseline = pd.read_csv(baseline_filename)
     df_baseline = clean_stock_data(df_baseline, BASELINE)
 
-    return df_all_stocks, stock_names, df_baseline
+    df_baseline = df_baseline[(df_baseline.index >= requested_start) & (df_baseline.index <= requested_end)]
+
+    return df_baseline
 
 
-def get_requested_stocks(df, dates, stocks=[], num_stocks=0) -> pd.DataFrame:
+def get_requested_stocks(df: pd.DataFrame, dates: list, stocks: list=[], num_stocks: int=0) -> pd.DataFrame:
     """Given a dataframe of stocks and stocks/dates to get, returns a dataframe containing
     requested stocks stocks as columns and dates as rows.
 

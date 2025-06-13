@@ -287,7 +287,6 @@ def create_interface() -> html.Div:
             dcc.Store(id="loop-store"),
             dcc.Store(id="settings-store"),
             dcc.Store(id="all-stocks-store"),
-            dcc.Store(id="stocks-store"),
             dcc.Interval(
                 id="loop-interval",
                 interval=50,  # Interval in milliseconds

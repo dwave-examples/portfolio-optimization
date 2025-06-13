@@ -14,15 +14,15 @@
 
 import json
 from itertools import product
+import os
 
-from demo_configs import DATES_DEFAULT
 import numpy as np
 import pandas as pd
 from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.demo_enums import SolverType
-from src.utils import get_requested_stocks, get_stock_data
+from src.utils import get_baseline_data, get_requested_stocks, get_stock_data
 
 
 class SinglePeriod:
@@ -133,17 +133,20 @@ class SinglePeriod:
             print("\nLoading data from DataFrame...")
             self.df = df
             self.stocks = df.columns.tolist()
-        elif self.file_path:
-            print("\nLoading data from provided CSV file...")
-            self.df = pd.read_csv(self.file_path, index_col=0)
-        else:
-            if not self.dates: self.dates = DATES_DEFAULT
+        elif self.dates:
+            print("\nLoading data from stock files...")
+            all_stocks_df, _ = get_stock_data()
 
-            df, _, self.df_baseline = get_stock_data()
-            self.df = get_requested_stocks(
-                df, self.dates, self.stocks, num
-            )
+            self.df = get_requested_stocks(all_stocks_df, self.dates, self.stocks, num)
+            self.df_baseline = get_baseline_data(self.dates)
             self.df_all = self.df
+
+        else:
+            print("\nLoading data from provided CSV file...")
+            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            data_csv = os.path.join(project_dir, self.file_path)
+            self.df = pd.read_csv(data_csv, index_col=0)
+            self.stocks = self.df.columns.tolist()
 
         self.init_holdings = {s: 0 for s in self.stocks}
 

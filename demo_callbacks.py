@@ -79,7 +79,6 @@ class RenderInitialStateReturn(NamedTuple):
     stocks_options: list = dash.no_update
     stocks_value: list = dash.no_update
     all_stocks_store: str = dash.no_update
-    stocks_store: str = dash.no_update
     date_range_min: str = dash.no_update
     date_range_max: str = dash.no_update
 
@@ -91,7 +90,6 @@ class RenderInitialStateReturn(NamedTuple):
     Output("stocks", "options"),
     Output("stocks", "value"),
     Output("all-stocks-store", "data"),
-    Output("stocks-store", "data"),
     Output("date-range", "min_date_allowed"),
     Output("date-range", "max_date_allowed"),
     inputs=[
@@ -122,8 +120,8 @@ def render_initial_state(
             times to run ``update_multi_output`` (minus 3).
     """
     # First load, initialize stock dropdown
-    if not all_stocks_store:
-        df_all_stocks, stock_names, df_baseline = get_stock_data()
+    if not ctx.triggered_id:
+        df_all_stocks, stock_names = get_stock_data()
 
         if not set(stocks) <= set(stock_names):
             raise ValueError("No historical data files for requested stocks.")
@@ -136,7 +134,6 @@ def render_initial_state(
             stocks_options=stock_names,
             stocks_value=stocks,
             all_stocks_store=serialize(df_all_stocks),
-            stocks_store=serialize(df),
             date_range_min=df_all_stocks.index[0],
             date_range_max=df_all_stocks.index[-1],
         )
@@ -150,7 +147,6 @@ def render_initial_state(
     return RenderInitialStateReturn(
         input_graph=generate_input_graph(df),
         max_iter=len(df) - 1,
-        stocks_store=serialize(df),
     )
 
 

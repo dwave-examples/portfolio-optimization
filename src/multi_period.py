@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 import numpy as np
 import pandas as pd
 
@@ -155,18 +156,18 @@ class MultiPeriod(SinglePeriod):
         all_solutions: dict,
         first_purchase: bool = True,
         initial_budget: float = 0,
-        init_holdings: list = None,
-    ):
+        init_holdings: Optional[list] = None,
+    ) -> tuple[dict, list, dict, list]:
         """Initiate a single run of the rebalancing portfolio optimization problem for runs
         initiated through the Dash user interface.
 
         Args:
             i: Current loop iteration.
-            first_purchase: Whether this is the first loop iteration.
-            initial_budget: The budget going into this iteration.
             baseline_result: The baseline stock for multi-period portfolio optimization run.
             months: A list of the months for solutions already found.
             all_solutions: A dict of month, solution key-value pairs.
+            first_purchase: Whether this is the first loop iteration.
+            initial_budget: The budget going into this iteration.
             init_holdings: The stocks to start the run with.
 
         Returns:
@@ -209,9 +210,9 @@ class MultiPeriod(SinglePeriod):
         initial_budget: float = 0,
         max_risk: float = 0,
         min_return: float = 0,
-        init_holdings: list = None,
+        init_holdings: Optional[list] = None,
         cli_run: bool = False,
-    ):
+    ) -> tuple[dict, list, dict, list, float]:
         """Conduct one iteration of the rebalancing portfolio optimization problem. Optionally plots
         the results in a matplotlib graph.
 

@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib
 import numpy as np
 import pandas as pd
 
 from demo_configs import DATES_DEFAULT
 from src.demo_enums import SolverType
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    matplotlib.use("agg")
-    import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 

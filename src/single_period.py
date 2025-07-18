@@ -143,7 +143,7 @@ class SinglePeriod:
 
         else:
             print("\nLoading data from provided CSV file...")
-            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            project_dir = os.getcwd()
             data_csv = os.path.join(project_dir, self.file_path)
             self.df = pd.read_csv(data_csv, index_col=0)
             self.stocks = self.df.columns.tolist()

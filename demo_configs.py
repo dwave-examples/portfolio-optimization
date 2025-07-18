@@ -41,12 +41,16 @@ TRANSACTION_COST = {
     "value": 0,
 }
 
-# A list of stock symbols/tickers for the options for the stocks dropdown,
-# "value" is the default list.
+# Options:
+# ['Social Media', 'Car Company', 'Animation Company', 'Search Engine', 'Online Marketplace',
+# 'Another Computer Company', 'Large Retailer', 'Streaming Service', 'Coffee Company',
+# 'Computer Company']
 DEFAULT_STOCKS = ["Search Engine", "Large Retailer", "Coffee Company"]
 
 BASELINE = "^GSPC"  # The S&P 500 symbol
 
+# The canned data was downloaded from 2020-05-29 to 2025-05-23.
+# The dates below should fall between the two dates above.
 DATES_DEFAULT = ["2023-01-01", "2024-12-31"]
 
 BUDGET = {

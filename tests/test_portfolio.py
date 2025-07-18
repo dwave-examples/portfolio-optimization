@@ -19,7 +19,7 @@ import unittest
 
 import pandas as pd
 
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_dir = os.getcwd()
 sys.path.append(project_dir)
 sys.path.append("../")
 
@@ -117,7 +117,6 @@ class TestIntegration(unittest.TestCase):
     def test_cqm_integration(self):
         """Test integration of portfolio script default cqm run."""
 
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, "portfolio.py")
 
         output = subprocess.check_output([sys.executable, demo_file])
@@ -135,7 +134,6 @@ class TestIntegration(unittest.TestCase):
     def test_dqm_integration(self):
         """Test integration of portfolio script dqm run."""
 
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, "portfolio.py")
 
         output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM"])

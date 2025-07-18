@@ -25,7 +25,8 @@ import plotly.graph_objs as go
 from demo_configs import BASELINE
 from src.demo_enums import SolverType
 
-PROJECT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# PROJECT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_DIRECTORY = os.getcwd()
 
 
 def clean_stock_data(df: pd.DataFrame, col_name: str) -> pd.DataFrame:

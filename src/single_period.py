@@ -13,17 +13,16 @@
 # limitations under the License.
 
 import json
-import random
+import os
 from itertools import product
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.demo_enums import SolverType
-from src.utils import get_live_data
+from src.utils import get_baseline_data, get_requested_stocks, get_stock_data
 
 
 class SinglePeriod:
@@ -124,7 +123,7 @@ class SinglePeriod:
         self.precision = 2
 
     def load_data(self, df=None, num=0):
-        """Load the relevant stock data from file, dataframe, or Yahoo!.
+        """Load the relevant stock data from files or dataframe.
 
         Args:
             df (dataframe): Table of stock prices.
@@ -135,13 +134,19 @@ class SinglePeriod:
             self.df = df
             self.stocks = df.columns.tolist()
         elif self.dates:
-            self.df, self.stocks, self.df_baseline = get_live_data(
-                self.dates, self.stocks, self.baseline, num
-            )
+            print("\nLoading data from stock files...")
+            all_stocks_df, _ = get_stock_data()
+
+            self.df = get_requested_stocks(all_stocks_df, self.dates, self.stocks, num)
+            self.df_baseline = get_baseline_data(self.dates)
             self.df_all = self.df
+
         else:
             print("\nLoading data from provided CSV file...")
-            self.df = pd.read_csv(self.file_path, index_col=0)
+            project_dir = os.getcwd()
+            data_csv = os.path.join(project_dir, self.file_path)
+            self.df = pd.read_csv(data_csv, index_col=0)
+            self.stocks = self.df.columns.tolist()
 
         self.init_holdings = {s: 0 for s in self.stocks}
 
@@ -512,7 +517,9 @@ class SinglePeriod:
 
         print(f"Variance: {solution['risk']}\n")
 
-    def run(self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None):
+    def run(
+        self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None
+    ):
         """Execute sequence of load_data --> build_model --> solve.
 
         Args:

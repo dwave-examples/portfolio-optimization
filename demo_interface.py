@@ -18,16 +18,15 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Optional
 
-import yfinance as yf
 from dash import dcc, html
 
 from demo_configs import (
     BUDGET,
     DATES_DEFAULT,
+    DEFAULT_STOCKS,
     DESCRIPTION,
     MAIN_HEADER,
     SOLVER_TIME,
-    STOCK_OPTIONS,
     THEME_COLOR_SECONDARY,
     THUMBNAIL,
     TRANSACTION_COST,
@@ -140,8 +139,8 @@ def generate_settings_form() -> html.Div:
             ),
             html.Label("Stocks"),
             dcc.Dropdown(
-                STOCK_OPTIONS["options"],
-                STOCK_OPTIONS["value"],
+                DEFAULT_STOCKS,
+                DEFAULT_STOCKS,
                 id="stocks",
                 multi=True,
             ),
@@ -287,6 +286,7 @@ def create_interface() -> html.Div:
             dcc.Store(id="portfolio"),
             dcc.Store(id="loop-store"),
             dcc.Store(id="settings-store"),
+            dcc.Store(id="all-stocks-store"),
             dcc.Interval(
                 id="loop-interval",
                 interval=50,  # Interval in milliseconds
@@ -390,7 +390,7 @@ def create_interface() -> html.Div:
                                                     id="output-graph",
                                                     responsive=True,
                                                     config={"displayModeBar": False},
-                                                )
+                                                ),
                                             ],
                                         ),
                                     ),

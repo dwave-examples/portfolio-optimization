@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib
-from demo_configs import DATES_DEFAULT
 import numpy as np
 import pandas as pd
 
+from demo_configs import DATES_DEFAULT
 from src.demo_enums import SolverType
 
-matplotlib.use("agg")
 import matplotlib.pyplot as plt
+
 from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
 
 from src.single_period import SinglePeriod
@@ -145,7 +144,6 @@ class MultiPeriod(SinglePeriod):
         print(self.opt_results_df)
 
         plt.savefig("portfolio.png")
-        plt.show(block=False)
 
         return all_solutions
 
@@ -294,6 +292,7 @@ class MultiPeriod(SinglePeriod):
 
             plt.savefig("portfolio.png")
             plt.pause(0.05)
+            plt.show(block=False)
 
             print(f"\nMulti-Period {self.model_type.label} Run...")
 

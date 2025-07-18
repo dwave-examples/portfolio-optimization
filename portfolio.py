@@ -14,7 +14,7 @@
 
 import click
 
-from demo_configs import STOCK_OPTIONS
+from demo_configs import DEFAULT_STOCKS
 from src.demo_enums import SolverType
 from src.multi_period import MultiPeriod
 from src.single_period import SinglePeriod
@@ -26,7 +26,7 @@ from src.single_period import SinglePeriod
     "--stocks",
     multiple=True,
     type=str,
-    default=STOCK_OPTIONS["value"],
+    default=DEFAULT_STOCKS,
     show_default=True,
     help="Stock name to be included."
     "When a file is provided, stock name must be included in the file ",
@@ -80,7 +80,7 @@ from src.single_period import SinglePeriod
     "--dates",
     nargs=2,
     type=str,
-    help="Start and end date to query stock data from Yahoo Finance",
+    help="Start and end date to query stock data",
 )
 @click.option(
     "-m",

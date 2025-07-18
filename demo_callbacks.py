@@ -25,7 +25,7 @@ from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from demo_configs import BASELINE, DATES_DEFAULT, STOCK_OPTIONS
+from demo_configs import BASELINE, DATES_DEFAULT
 from demo_interface import generate_dates_slider, generate_table_group
 from src.demo_enums import PeriodType, SolverType
 from src.multi_period import MultiPeriod
@@ -34,7 +34,8 @@ from src.utils import (
     deserialize,
     format_table_data,
     generate_input_graph,
-    get_live_data,
+    get_requested_stocks,
+    get_stock_data,
     initialize_output_graph,
     serialize,
     update_output_graph,
@@ -68,45 +69,93 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
 
 
+class RenderInitialStateReturn(NamedTuple):
+    """Return type for the ``render_initial_state`` callback function."""
+
+    input_graph: go.Figure = dash.no_update
+    stocks_error: str = "display-none"
+    run_button_disabled: bool = False
+    max_iter: int = dash.no_update
+    stocks_options: list = dash.no_update
+    stocks_value: list = dash.no_update
+    all_stocks_store: str = dash.no_update
+    date_range_min: str = dash.no_update
+    date_range_max: str = dash.no_update
+
+
 @dash.callback(
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
     Output("run-button", "disabled"),
     Output("max-iterations", "data"),
+    Output("stocks", "options"),
+    Output("stocks", "value"),
+    Output("all-stocks-store", "data"),
+    Output("date-range", "min_date_allowed"),
+    Output("date-range", "max_date_allowed"),
     inputs=[
         Input("date-range", "start_date"),
         Input("date-range", "end_date"),
         Input("stocks", "value"),
+        State("all-stocks-store", "data"),
     ],
 )
 def render_initial_state(
     start_date: str,
     end_date: str,
     stocks: list,
-) -> tuple[go.Figure, str, bool, int]:
+    all_stocks_store: str,
+) -> RenderInitialStateReturn:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
         start_date: The selected start date.
         end_date: The selected end date.
         stocks: The selected stocks.
+        all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
     Returns:
-        input-graph: The input stocks graph.
-        stocks-error: The class name for the stock error.
-        run-button: Whether the run button should be disabled.
-        max-iterations: The number of months between start and end date, which is the number of
-            times to run ``update_multi_output`` (minus 3).
+        A NamedTuple ``RenderInitialStateReturn`` that contains the following:
+            input_graph: The input stocks graph.
+            stocks_error: The class name for the stock error.
+            run_button_disabled: Whether the run button should be disabled.
+            max_iter: The number of months between start and end date, which is the number of
+                times to run ``update_multi_output`` (minus 3).
+            stocks_options: The dropdown stocks to choose from.
+            stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
+            all_stocks_store: A dataframe of all the stocks available, stored serialized.
+            date_range_min: Any date older than this will be disabled on the date selector.
+            date_range_max: Any date more recent than this will be disabled on the date selector.
     """
+    # First load, initialize stock dropdown
+    if not ctx.triggered_id:
+        df_all_stocks, stock_names = get_stock_data()
+
+        if not set(stocks) <= set(stock_names):
+            raise ValueError("No historical data files for requested stocks.")
+
+        df = get_requested_stocks(df_all_stocks, DATES_DEFAULT, stocks=stocks[:3])
+
+        return RenderInitialStateReturn(
+            input_graph=generate_input_graph(df),
+            max_iter=len(df) - 1,
+            stocks_options=stock_names,
+            stocks_value=stocks,
+            all_stocks_store=serialize(df_all_stocks),
+            date_range_min=df_all_stocks.index[0],
+            date_range_max=df_all_stocks.index[-1],
+        )
 
     if len(stocks) < 2:
-        return dash.no_update, "", True
+        return RenderInitialStateReturn(stocks_error="", run_button_disabled=True)
 
     dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
-    stocks = stocks if stocks else STOCK_OPTIONS["value"]
-    df, stocks, df_baseline = get_live_data(dates, stocks, [BASELINE])
+    df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
 
-    return generate_input_graph(df), "display-none", False, len(df) - 1
+    return RenderInitialStateReturn(
+        input_graph=generate_input_graph(df),
+        max_iter=len(df) - 1,
+    )
 
 
 @dash.callback(
@@ -504,8 +553,7 @@ def update_multi_output(
     loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
     dates = [
-        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y")
-        for date in results_date_dict.keys()
+        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in results_date_dict.keys()
     ]
     solutions = list(results_date_dict.values())
 
@@ -606,9 +654,7 @@ def run_optimization(
         "time limit": time_limit,
         "budget": budget,
         "transaction cost": transaction_cost,
-        "dates": (
-            [start_date, end_date] if start_date and end_date else DATES_DEFAULT
-        ),
+        "dates": ([start_date, end_date] if start_date and end_date else DATES_DEFAULT),
         "stocks": stocks,
     }
 

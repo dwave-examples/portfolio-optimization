@@ -41,36 +41,23 @@ TRANSACTION_COST = {
     "value": 0,
 }
 
-# A list of stock symbols/tickers for the options for the stocks dropdown,
-# "value" is the default list.
-STOCK_OPTIONS = {
-    "options": [
-        {"label": "Amazon (AMZN)", "value": "AMZN"},
-        {"label": "American Airlines (AAL)", "value": "AAL"},
-        {"label": "Apple (AAPL)", "value": "AAPL"},
-        {"label": "Coca-Cola (KO)", "value": "KO"},
-        {"label": "Disney (DIS)", "value": "DIS"},
-        {"label": "Google (GOOG)", "value": "GOOG"},
-        {"label": "Johnson & Johnson (JNJ)", "value": "JNJ"},
-        {"label": "Mastercard (MA)", "value": "MA"},
-        {"label": "Microsoft (MSFT)", "value": "MSFT"},
-        {"label": "Netflix (NFLX)", "value": "NFLX"},
-        {"label": "Visa (V)", "value": "V"},
-        {"label": "Walmart (WMT)", "value": "WMT"},
-        {"label": "Wells Fargo (WFC)", "value": "WFC"},
-    ],
-    "value": ["AAPL", "MSFT", "WMT"],
-}
+# Options:
+# ['Social Media', 'Car Company', 'Animation Company', 'Search Engine', 'Online Marketplace',
+# 'Another Computer Company', 'Large Retailer', 'Streaming Service', 'Coffee Company',
+# 'Computer Company']
+DEFAULT_STOCKS = ["Search Engine", "Large Retailer", "Coffee Company"]
 
 BASELINE = "^GSPC"  # The S&P 500 symbol
 
-DATES_DEFAULT = ["2010-01-01", "2012-12-31"]
+# The canned data was downloaded from 2020-05-29 to 2025-05-23.
+# The dates below should fall between the two dates above.
+DATES_DEFAULT = ["2023-01-01", "2024-12-31"]
 
 BUDGET = {
-    "min": 1000,
+    "min": 5000,
     "max": 100000,
     "step": 100,
-    "value": 1000,
+    "value": 10000,
 }
 
 # solver time limits in seconds (value means default)

@@ -19,10 +19,12 @@ import unittest
 
 import pandas as pd
 
-from demo_configs import STOCK_OPTIONS
-from src.single_period import SinglePeriod
+project_dir = os.getcwd()
+sys.path.append(project_dir)
+sys.path.append("../")
 
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from demo_configs import DEFAULT_STOCKS
+from src.single_period import SinglePeriod
 
 
 class TestSmoke(unittest.TestCase):
@@ -37,19 +39,14 @@ class TestSmoke(unittest.TestCase):
         """Run multi-period portfolio.py and check that nothing crashes"""
 
         demo_file = os.path.join(project_dir, "portfolio.py")
-        subprocess.check_output([sys.executable, demo_file, "-d", "2012-01-01", "2012-12-31", "-r"])
+        subprocess.check_output([sys.executable, demo_file, "-d", "2021-01-01", "2021-12-31", "-r"])
 
 
 class TestDemo(unittest.TestCase):
     """Verify models are build correctly."""
 
     def test_build_dqm(self):
-        test_portfolio = SinglePeriod(
-            bin_size=5,
-            model_type="DQM",
-            t_cost=0,
-            stocks=STOCK_OPTIONS["value"]
-        )
+        test_portfolio = SinglePeriod(bin_size=5, model_type="DQM", t_cost=0, stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],
@@ -67,7 +64,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(test_portfolio.model["DQM"].num_cases(), 28)
 
     def test_build_cqm(self):
-        test_portfolio = SinglePeriod(model_type="CQM", stocks=STOCK_OPTIONS["value"])
+        test_portfolio = SinglePeriod(model_type="CQM", stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],
@@ -85,8 +82,8 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(test_portfolio.model["CQM"].constraints), 8)
 
     def test_build_random_cqm_instance(self):
-        test_portfolio = SinglePeriod(model_type="CQM", stocks=STOCK_OPTIONS["value"])
-        test_portfolio.dates = ["2010-01-01", "2010-12-31"]
+        test_portfolio = SinglePeriod(model_type="CQM", stocks=DEFAULT_STOCKS)
+        test_portfolio.dates = ["2021-01-01", "2021-12-31"]
 
         test_portfolio.load_data(num=10)
         test_portfolio.build_cqm()
@@ -97,7 +94,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(test_portfolio.model["CQM"].constraints), 3 * k + 2)
 
     def test_build_cqm_no_transaction(self):
-        test_portfolio = SinglePeriod(model_type="CQM", t_cost=0, stocks=STOCK_OPTIONS["value"])
+        test_portfolio = SinglePeriod(model_type="CQM", t_cost=0, stocks=DEFAULT_STOCKS)
 
         data = {
             "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],
@@ -120,7 +117,6 @@ class TestIntegration(unittest.TestCase):
     def test_cqm_integration(self):
         """Test integration of portfolio script default cqm run."""
 
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, "portfolio.py")
 
         output = subprocess.check_output([sys.executable, demo_file])
@@ -138,7 +134,6 @@ class TestIntegration(unittest.TestCase):
     def test_dqm_integration(self):
         """Test integration of portfolio script dqm run."""
 
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         demo_file = os.path.join(project_dir, "portfolio.py")
 
         output = subprocess.check_output([sys.executable, demo_file] + ["-m", "DQM"])

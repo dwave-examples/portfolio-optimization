@@ -177,7 +177,7 @@ settings, type:
 
 `python portfolio.py -r`
 
-The program will pull historical data on stocks over a period of 2
+The program will use historical data on stocks over a period of 2
 years. For each month in the year, the optimal portfolio is computed and the funds are
 reinvested. A plot shows the trend of the portfolio value over time, as compared to a fund
 portfolio (investing all of the budget into a given fund, such as S&P500).

@@ -1,6 +1,6 @@
+dash[diskcache]==2.17.1
 dimod>=0.10.7
 dwave-system>=1.10.0
 matplotlib>=3.3.4
 pandas-datareader>=0.10.0
 setuptools>=75.8.1
-yfinance==0.2.54

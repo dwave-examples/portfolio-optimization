@@ -1,0 +1,166 @@
+/*
+Copyright 2024 D-Wave
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* Style rules for all custom CSS. */
+
+.tab-content-results {
+    padding: 3rem 3rem 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    max-width: 85rem;
+    min-width: 80rem;
+}
+
+.tab-content {
+    padding: 0 3rem 3rem;
+}
+
+.tab-content > div {
+    position: relative;
+}
+
+table td:nth-child(2n) {
+    text-align: right;
+}
+
+table td:nth-child(2n+1) {
+    border-right: none;
+}
+
+.input, .results, .input > div:first-child, #input-graph {
+    height: 100%;
+}
+
+.banner > div {
+    display: flex;
+}
+
+.banner button {
+    opacity: 0.6;
+    font-size: 1.6rem;
+    font-weight: 500;
+    padding: 2rem 4rem;
+    text-underline-offset: 0.5rem;
+    border-radius: 0;
+}
+
+.banner button.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.banner button.active:hover {
+    filter: none;
+    cursor: default;
+}
+
+.results-tables table:not(:last-child),
+.results-comparison:not(:last-child) {
+    margin-right: 3rem;
+}
+
+.results-tables {
+    display: flex;
+    width: 100%;
+}
+
+.results-tables .arrow-False {
+    margin-left: 1rem;
+    color: var(--red-light);
+    -webkit-text-stroke: 4px var(--red-light);
+}
+
+.results-tables .arrow-True {
+    margin-left: 1rem;
+    color: var(--teal-darker);
+    -webkit-text-stroke: 4px var(--teal-darker);
+}
+
+.results-comparison > div:first-child:not(:last-child) {
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--grey-medium);
+    color: var(--grey-medium);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.results-comparison:last-child > div:first-child:not(:last-child) {
+    color: var(--grey-dark);
+    border-color: var(--grey-dark);
+}
+
+.results-comparison:nth-child(1) td {
+    color: var(--grey-medium);
+}
+
+.results-comparison:last-child table,
+.results-comparison:last-child td {
+    color: var(--grey-dark);
+    border-color: var(--grey-dark);
+}
+
+#results-date-selector {
+    margin-bottom: 2rem;
+}
+
+#results-date-selector .Select-control {
+    background-color: rgba(0, 126, 255, .15);
+    font-weight: 500;
+}
+
+#output-graph {
+    height: 100%;
+}
+
+#date-labels span {
+    margin-right: 3rem;
+    text-transform: uppercase;
+}
+
+.rc-slider-mark-text {
+    width: 10rem;
+}
+
+#dynamic-results-table {
+    display: flex;
+    justify-content: space-between;
+}
+
+#graph-update-status {
+    position: absolute;
+    z-index: 10;
+    top: 5rem;
+    right: 19rem;
+    font-style: italic;
+}
+
+#stocks-error {
+    color: var(--red-light);
+    font-weight: 500;
+}
+
+#run-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.date-range-text {
+    font-size: 1.3rem;
+    color: var(--grey-medium);
+}

@@ -1,0 +1,5 @@
+*.DS_Store
+__pycache__
+cache
+assets/__generated_theme.css
+portfolio.png

@@ -1,5 +1,6 @@
 dash[diskcache]~=3.3
 dimod~=0.12
+dwave-cloud-client>=0.14.1
 dwave-system~=1.34
 matplotlib~=3.10
 pandas-datareader~=0.10

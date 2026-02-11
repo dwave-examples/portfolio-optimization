@@ -46,13 +46,14 @@ div.tab.tab--disabled {
     margin-left: 1rem;
 }
 
+.tab-parent {
+    display: flex;
+    flex-direction: column;
+}
+
 .tab-content,
 .tab-parent {
     height: 100%;
-}
-
-.tab-content > div:not(.tab-content-results) {
-    height: inherit;
 }
 
 .tab-content {

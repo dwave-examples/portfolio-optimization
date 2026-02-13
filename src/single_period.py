@@ -150,6 +150,8 @@ class SinglePeriod:
 
         self.init_holdings = {s: 0 for s in self.stocks}
 
+        print(self.df.iloc[-1])
+        print(self.df.iloc[-1].dtype)
         self.max_num_shares = (self.budget / self.df.iloc[-1]).astype(int)
         if self.verbose:
             print("\nMax shares we can afford with a budget of", self.budget)

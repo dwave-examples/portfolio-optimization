@@ -152,6 +152,7 @@ class SinglePeriod:
 
         print(self.df.iloc[-1])
         print(self.df.iloc[-1].dtype)
+        print("Pandas version:", pd.__version__)
         self.max_num_shares = (self.budget / self.df.iloc[-1]).astype(int)
         if self.verbose:
             print("\nMax shares we can afford with a budget of", self.budget)

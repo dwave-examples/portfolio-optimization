@@ -49,7 +49,8 @@ def clean_stock_data(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
 
     monthly_stocks = monthly_stocks.set_index("Date")
 
-    monthly_stocks[col_name] = monthly_stocks[col_name].str.replace("$", "").astype("float")
+    if monthly_stocks[col_name].dtype == "str" or monthly_stocks[col_name].dtype == "object":
+        monthly_stocks[col_name] = monthly_stocks[col_name].str.replace("$", "").astype("float")
 
     return monthly_stocks
 

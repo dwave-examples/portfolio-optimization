@@ -87,9 +87,9 @@ from src.single_period import SinglePeriod
     "--model-type",
     default="CQM",
     multiple=False,
-    type=click.Choice(["CQM", "DQM"], case_sensitive=False),
+    type=click.Choice(["CQM", "DQM", "Stride"], case_sensitive=False),
     show_default=True,
-    help="Model type, CQM or DQM",
+    help="Model type, CQM, Stride or DQM",
 )
 @click.option(
     "-r",
@@ -142,19 +142,25 @@ def main(
     t_cost: float,
 ):
 
-    solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
+    if model_type == "CQM":
+        solver_type = SolverType.CQM
+    elif model_type == "Stride":
+        solver_type = SolverType.Stride
+    else:
+        solver_type = SolverType.DQM
+    #solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
 
     if (max_risk or min_return) and solver_type is SolverType.DQM:
-        raise Exception("The bound options require a CQM.")
+        raise Exception("The bound options require a CQM or Stride.")
 
-    if (gamma or bin_size) and solver_type is SolverType.CQM:
+    if (gamma or bin_size) and solver_type is (SolverType.CQM or SolverType.Stride):
         raise Exception("The option gamma or bin-size requires a DQM.")
 
     if num and not dates:
         raise Exception("User must provide dates with option 'num'.")
 
     if t_cost and solver_type is SolverType.DQM:
-        raise Exception("The transaction cost option requires a CQM. Set t_cost=0 for DQM.")
+        raise Exception("The transaction cost option requires a CQM or Stride. Set t_cost=0 for DQM.")
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")

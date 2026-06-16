@@ -3,3 +3,5 @@ __pycache__
 cache
 assets/__generated_theme.css
 portfolio.png
+local_testing
+.idea/

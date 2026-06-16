@@ -21,7 +21,7 @@ from src.demo_enums import SolverType
 
 import matplotlib.pyplot as plt
 
-from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler
+from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler, LeapHybridNLSampler
 
 from src.single_period import SinglePeriod
 
@@ -180,6 +180,7 @@ class MultiPeriod(SinglePeriod):
         self.sampler = {
             "CQM": LeapHybridCQMSampler(**self.sampler_args),
             "DQM": LeapHybridDQMSampler(**self.sampler_args),
+            "Stride": LeapHybridNLSampler(**self.sampler_args),
         }
 
         baseline_result, months, all_solutions, init_holdings, initial_budget = self.run_update(
@@ -197,6 +198,7 @@ class MultiPeriod(SinglePeriod):
         self.sampler = {}
         self.sample_set["CQM"] = {}
         self.sample_set["DQM"] = {}
+        self.sample_set["Stride"] = {}
 
         return baseline_result, months, all_solutions, init_holdings
 
@@ -301,6 +303,16 @@ class MultiPeriod(SinglePeriod):
         if self.model_type is SolverType.DQM:
             self.build_dqm()
             solution = self.solve_dqm()
+        elif self.model_type is SolverType.Stride:
+            # Set budget to 0 to enforce that portfolio is self-financing
+            if self.t_cost and not first_purchase:
+                self.budget = 0
+
+            solution = self.solve_stride(
+                max_risk=max_risk, min_return=min_return, init_holdings=init_holdings
+            )
+
+            init_holdings = solution["stocks"]
         else:
             # Set budget to 0 to enforce that portfolio is self-financing
             if self.t_cost and not first_purchase:

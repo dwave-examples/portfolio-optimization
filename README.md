@@ -128,6 +128,31 @@ A default CQM run with a transaction cost factor of 1% can be done with the foll
 
 `python portfolio.py -m 'CQM' -t 0.01`
 
+##### Stride Runs
+
+Similar to the CQM runs the user can run the same formulations in using the latest Stride non-linear solver.
+
+```python portfolio.py -m 'Stride'```
+
+Same parameters as the CQM formulation can be used. The output of the default Stride run is printed on the console as follows.
+
+```bash
+Stride run...
+Minimize mean-variance expression
+
+Best feasible solution:
+AAPL	 65
+MSFT	  9
+AAL	  1
+WMT	  1
+
+Estimated Returns: 15.31
+Sales Revenue: 0.00
+Purchase Cost: 999.60
+Transaction Cost: 0.00
+Variance: 2464.38
+```
+ 
 ##### DQM Runs
 
 The user can select to build a disctrete quadratic model (DQM) using the following command:
@@ -272,25 +297,25 @@ expression with an associated penalty coefficient &gamma;. The DQM code contains
 to do a grid search in order to obtain the best values of the penalty coefficients &gamma;
 and the risk-aversion coefficient &alpha; that result in the best objective value.
 
-### CQM
+### CQM and Stride
 
 ### Variables
 Each x<sub>i</sub> denotes the number of shares of stock i to be purchased.
 
 ### Constraints
 
-All CQM formulations include the budget constraint described earlier.
+All CQM and Stride formulations include the budget constraint described earlier.
 
 ##### Risk-Bounding Formulation
 
 This includes an upper bound on the risk as a quadratic constraint.
-Such a constraint is supported natively by CQM.
+Such a constraint is supported natively by CQM and Stride.
 
 ##### Return-Bounding Formulation
 This includes a lower bound on the returns as a linear inequality constraint.
 
 ### Objective
-There are 3 CQM formulations, each with a different objective:
+There are 3 formulations, each with a different objective:
 - The bi-objective formulation corresponds to the original problem formulation where
 a combination of variance and mean is minimized.
 - The risk-bounding formulation where only the returns are maximized.

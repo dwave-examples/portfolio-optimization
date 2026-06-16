@@ -147,3 +147,20 @@ class TestIntegration(unittest.TestCase):
         self.assertIn("purchase cost", output)
         self.assertIn("variance", output)
         self.assertNotIn("traceback", output)
+
+    @unittest.skipIf(os.getenv("SKIP_INT_TESTS"), "Skipping integration test.")
+    def test_stride_integration(self):
+        """Test integration of portfolio script stride run."""
+
+        demo_file = os.path.join(project_dir, "portfolio.py")
+
+        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "Stride"])
+        output = output.decode("utf-8")  # Bytes to str
+        output = output.lower()
+
+        self.assertIn("stride run", output)
+        self.assertIn("best feasible solution", output)
+        self.assertIn("estimated returns", output)
+        self.assertIn("purchase cost", output)
+        self.assertIn("variance", output)
+        self.assertNotIn("traceback", output)

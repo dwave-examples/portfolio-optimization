@@ -548,8 +548,6 @@ class SinglePeriod:
         risk_coeff = cov * np.outer(stock_prices, stock_prices)
         RiskCoeff = stride_nl.constant(risk_coeff)
         AvgReturns = stride_nl.constant(avg_returns*stock_prices)
-        MaxRisk = stride_nl.constant(max_risk)
-        MinReturn = stride_nl.constant(min_return)
         NegOne = stride_nl.constant(-1)
         Alpha = stride_nl.constant(self.alpha)
         Zero = stride_nl.constant(0)
@@ -599,12 +597,14 @@ class SinglePeriod:
         if max_risk:
             print("Maximize returns s.t. an upper bound of risk")
             # Adding maximum risk constraint
+            MaxRisk = stride_nl.constant(max_risk)
             stride_nl.add_constraint(add(*risk) <= MaxRisk)
             # Objective: maximize return
             stride_nl.minimize(NegOne*returns.sum())
         elif min_return:
             print("Minimize risk s.t. a lower bound of return")
             # Adding minimum returns constraint
+            MinReturn = stride_nl.constant(min_return)
             stride_nl.add_constraint(returns.sum() >= MinReturn)
             # Objective: minimize risk
             stride_nl.minimize(add(*risk))
@@ -625,15 +625,11 @@ class SinglePeriod:
         if stride_nl.feasible():
             model_des = list(sym for sym in stride_nl.iter_decisions())
             x_var = None
-            y_var = None
             for i in range(len(model_des)):
                 if type(model_des[i]) == IntegerVariable:
                     x_var = model_des[i]
                 elif type(model_des[i]) == BinaryVariable:
                     y_var = model_des[i]
-            """print(f"x variables: {x_var.state(0)}")
-            if y_var is not None:
-                print(f"y variables: {y_var.state(0)}")"""
             solution["stocks"] = {s: int(x_var.state(0)[i]) for i, s in enumerate(self.stocks)}
             solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
             cost = sum(

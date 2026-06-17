@@ -148,7 +148,7 @@ def main(
         solver_type = SolverType.Stride
     else:
         solver_type = SolverType.DQM
-    #solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
+    # solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
 
     if (max_risk or min_return) and solver_type is SolverType.DQM:
         raise Exception("The bound options require a CQM or Stride.")
@@ -160,7 +160,9 @@ def main(
         raise Exception("User must provide dates with option 'num'.")
 
     if t_cost and solver_type is SolverType.DQM:
-        raise Exception("The transaction cost option requires a CQM or Stride. Set t_cost=0 for DQM.")
+        raise Exception(
+            "The transaction cost option requires a CQM or Stride. Set t_cost=0 for DQM."
+        )
 
     if rebalance:
         print(f"\nRebalancing portfolio optimization run...")

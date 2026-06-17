@@ -18,13 +18,6 @@ import argparse
 
 import dash
 import diskcache
-from dash import DiskcacheManager
-
-from demo_configs import APP_TITLE, THEME_COLOR, THEME_COLOR_SECONDARY
-from demo_interface import create_interface
-
-# Essential for initializing callbacks. Do not remove.
-import demo_callbacks
 
 # Fix Dash long callbacks crashing on macOS 10.13+ (also potentially not working
 # on other POSIX systems), caused by https://bugs.python.org/issue33725
@@ -34,6 +27,12 @@ import demo_callbacks
 # the `multiprocessing` library, but its fork, `multiprocess` still hasn't caught up.
 # (see docs: https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods)
 import multiprocess
+from dash import DiskcacheManager
+
+# Essential for initializing callbacks. Do not remove.
+import demo_callbacks
+from demo_configs import APP_TITLE, THEME_COLOR, THEME_COLOR_SECONDARY
+from demo_interface import create_interface
 
 if multiprocess.get_start_method(allow_none=True) is None:
     multiprocess.set_start_method("spawn")

@@ -134,7 +134,7 @@ Similar to the CQM runs the user can run the same formulations in using the late
 
 ```python portfolio.py -m 'Stride'```
 
-Same parameters as the CQM formulation can be used. The output of the default Stride run is printed on the console as follows.
+The same parameters as the CQM formulation can be used. The output of the default Stride solver run is printed on the console as follows.
 
 ```bash
 Stride run...
@@ -304,12 +304,12 @@ Each x<sub>i</sub> denotes the number of shares of stock i to be purchased.
 
 ### Constraints
 
-All CQM and Stride formulations include the budget constraint described earlier.
+All CQM and Stride solver formulations include the budget constraint described earlier.
 
 ##### Risk-Bounding Formulation
 
 This includes an upper bound on the risk as a quadratic constraint.
-Such a constraint is supported natively by CQM and Stride.
+Such a constraint is supported natively by the CQM and Stride solvers.
 
 ##### Return-Bounding Formulation
 This includes a lower bound on the returns as a linear inequality constraint.

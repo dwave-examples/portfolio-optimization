@@ -23,9 +23,9 @@ class SolverType(Enum):
     @property
     def label(self):
         return {
-            SolverType.CQM: "Quantum Hybrid (CQM)",
-            SolverType.DQM: "Quantum Hybrid (DQM)",
-            SolverType.Stride: "Quantum Hybrid (Stride)",
+            SolverType.CQM: "CQM Hybrid Solver",
+            SolverType.DQM: "DQM Hybrid Solver",
+            SolverType.Stride: "Stride Hybrid Solver",
         }[self]
 
 

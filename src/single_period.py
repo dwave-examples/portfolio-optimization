@@ -19,10 +19,10 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from dimod import Binary, ConstrainedQuadraticModel, DiscreteQuadraticModel, Integer, quicksum
-from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler, LeapHybridNLSampler
 from dwave.optimization import Model
 from dwave.optimization.mathematical import add, safe_divide
-from dwave.optimization.symbols import IntegerVariable, BinaryVariable
+from dwave.optimization.symbols import BinaryVariable, IntegerVariable
+from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler, LeapHybridNLSampler
 
 from src.demo_enums import SolverType
 from src.utils import get_baseline_data, get_requested_stocks, get_stock_data
@@ -471,58 +471,6 @@ class SinglePeriod:
 
         print(f"DQM Grid Search Completed: alpha={self.alpha}, gamma={self.gamma}.-")
 
-    def compute_risk_and_returns(self, solution):
-        """Compute the risk and return values of solution."""
-        variance = 0.0
-        for s1, s2 in product(solution, solution):
-            variance += (
-                solution[s1]
-                * self.price[s1]
-                * solution[s2]
-                * self.price[s2]
-                * self.covariance_matrix[s1][s2]
-            )
-
-        est_return = 0
-        for stock in solution:
-            est_return += solution[stock] * self.price[stock] * self.avg_monthly_returns[stock]
-
-        return round(est_return, 2), round(variance, 2)
-
-    def print_results(self, solution: dict):
-        """Print results to the console given a solution dictionary."""
-        is_cqm_run = self.model_type is SolverType.CQM
-        is_dqm_run = self.model_type is SolverType.DQM
-        is_stride_run = self.model_type is SolverType.Stride
-
-        if self.verbose and is_cqm_run:
-            print(
-                f"Number of feasible solutions: {solution['number feasible']} out of {solution['number sampled']} sampled.",
-                f"\nBest energy: {solution['best energy']:.2f}",
-                f"Best energy (feasible): {solution['energy']:.2f}",
-                sep="\n",
-            )
-
-        if is_dqm_run:
-            print(f"\nSolution for alpha = {solution['alpha']} and gamma = {solution['gamma']}:")
-
-        print(
-            f"\nBest feasible solution:",
-            "\n".join(f"{k}\t{v:>3}" for k, v in solution["stocks"].items()),
-            f"\nEstimated Returns: {solution['return']}",
-            sep="\n",
-        )
-
-        if is_cqm_run or is_stride_run:
-            print(f"Sales Revenue: {solution['sales']:.2f}")
-
-        print(f"Purchase Cost: {solution['cost']:.2f}")
-
-        if is_cqm_run or is_stride_run:
-            print(f"Transaction Cost: {solution['transaction cost']:.2f}")
-
-        print(f"Variance: {solution['risk']}\n")
-
     def solve_stride(self, max_risk=None, min_return=None, init_holdings=None):
         """Build and solve a Stride formulation.
         This method allows the user a choice of 3 problem formulations:
@@ -543,11 +491,11 @@ class SinglePeriod:
         avg_returns = np.array(list(self.avg_monthly_returns))
         StockPrices = stride_nl.constant(stock_prices)
         BudgetUpper = stride_nl.constant(self.budget)
-        BudgetLower = stride_nl.constant(0.997*self.budget)
+        BudgetLower = stride_nl.constant(0.997 * self.budget)
         cov = self.covariance_matrix.loc[self.stocks, self.stocks].to_numpy()
         risk_coeff = cov * np.outer(stock_prices, stock_prices)
         RiskCoeff = stride_nl.constant(risk_coeff)
-        AvgReturns = stride_nl.constant(avg_returns*stock_prices)
+        AvgReturns = stride_nl.constant(avg_returns * stock_prices)
         NegOne = stride_nl.constant(-1)
         Alpha = stride_nl.constant(self.alpha)
         Zero = stride_nl.constant(0)
@@ -557,7 +505,9 @@ class SinglePeriod:
         BudgetLowerWithTrans = stride_nl.constant(self.budget - 0.003 * self.init_budget)
 
         # Defining and adding variables to the Stride model
-        x = stride_nl.integer(len(self.stocks), lower_bound=0, upper_bound=list(self.max_num_shares))
+        x = stride_nl.integer(
+            len(self.stocks), lower_bound=0, upper_bound=list(self.max_num_shares)
+        )
 
         # Defining risk expression
         risk = []
@@ -574,7 +524,7 @@ class SinglePeriod:
             self.init_holdings = init_holdings
 
         if not self.t_cost:
-            stock_purchases = x*StockPrices
+            stock_purchases = x * StockPrices
             stride_nl.add_constraint(stock_purchases.sum() <= BudgetUpper)
             stride_nl.add_constraint(stock_purchases.sum() >= BudgetLower)
         else:
@@ -589,8 +539,8 @@ class SinglePeriod:
                 prev_cost = Two * TransCost * StockPrices[i] * x0[i] * y[i]
                 lhs.append(curr_cost + curr_return - prev_cost - prev_return)
                 # Indicator linking constraints
-                stride_nl.add_constraint(x[i] - x0[i]*y[i] >= Zero)
-                stride_nl.add_constraint(x[i] - x[i]*y[i] <= x0[i])
+                stride_nl.add_constraint(x[i] - x0[i] * y[i] >= Zero)
+                stride_nl.add_constraint(x[i] - x[i] * y[i] <= x0[i])
             stride_nl.add_constraint(add(*lhs) <= BudgetUpper)
             stride_nl.add_constraint(add(*lhs) >= BudgetLowerWithTrans)
 
@@ -600,7 +550,7 @@ class SinglePeriod:
             MaxRisk = stride_nl.constant(max_risk)
             stride_nl.add_constraint(add(*risk) <= MaxRisk)
             # Objective: maximize return
-            stride_nl.minimize(NegOne*returns.sum())
+            stride_nl.minimize(NegOne * returns.sum())
         elif min_return:
             print("Minimize risk s.t. a lower bound of return")
             # Adding minimum returns constraint
@@ -611,7 +561,7 @@ class SinglePeriod:
         else:
             print("Minimize mean-variance expression")
             # Objective: minimize mean-variance expression
-            stride_nl.minimize(Alpha*add(*risk) - returns.sum())
+            stride_nl.minimize(Alpha * add(*risk) - returns.sum())
             """
             Alternative objective function - minimize the ratio of risk per unit return. This can be also done in Stride.
             obj_expr = safe_divide((Alpha * add(*risk)), returns.sum())
@@ -619,7 +569,9 @@ class SinglePeriod:
             """
 
         self.model["Stride"] = stride_nl
-        self.sample_set["Stride"] = self.sampler["Stride"].sample(stride_nl, label="Example - Portfolio Optimization", time_limit=self.time_limit)
+        self.sample_set["Stride"] = self.sampler["Stride"].sample(
+            stride_nl, label="Example - Portfolio Optimization", time_limit=self.time_limit
+        )
         stride_nl.lock()
         solution = {}
         if stride_nl.feasible():
@@ -628,8 +580,6 @@ class SinglePeriod:
             for i in range(len(model_des)):
                 if type(model_des[i]) == IntegerVariable:
                     x_var = model_des[i]
-                elif type(model_des[i]) == BinaryVariable:
-                    y_var = model_des[i]
             solution["stocks"] = {s: int(x_var.state(0)[i]) for i, s in enumerate(self.stocks)}
             solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
             cost = sum(
@@ -657,6 +607,55 @@ class SinglePeriod:
 
         return solution
 
+    def compute_risk_and_returns(self, solution):
+        """Compute the risk and return values of solution."""
+        variance = 0.0
+        for s1, s2 in product(solution, solution):
+            variance += (
+                solution[s1]
+                * self.price[s1]
+                * solution[s2]
+                * self.price[s2]
+                * self.covariance_matrix[s1][s2]
+            )
+
+        est_return = 0
+        for stock in solution:
+            est_return += solution[stock] * self.price[stock] * self.avg_monthly_returns[stock]
+
+        return round(est_return, 2), round(variance, 2)
+
+    def print_results(self, solution: dict):
+        """Print results to the console given a solution dictionary."""
+        is_cqm_run = self.model_type is SolverType.CQM
+        is_dqm_run = self.model_type is SolverType.DQM
+
+        if self.verbose and is_cqm_run:
+            print(
+                f"Number of feasible solutions: {solution['number feasible']} out of {solution['number sampled']} sampled.",
+                f"\nBest energy: {solution['best energy']:.2f}",
+                f"Best energy (feasible): {solution['energy']:.2f}",
+                sep="\n",
+            )
+
+        if is_dqm_run:
+            print(f"\nSolution for alpha = {solution['alpha']} and gamma = {solution['gamma']}:")
+
+        print(
+            f"\nBest feasible solution:",
+            "\n".join(f"{k}\t{v:>3}" for k, v in solution["stocks"].items()),
+            f"\nEstimated Returns: {solution['return']}",
+            sep="\n",
+        )
+
+        print(f"Purchase Cost: {solution['cost']:.2f}")
+
+        if not is_dqm_run:
+            print(f"Sales Revenue: {solution['sales']:.2f}")
+            print(f"Transaction Cost: {solution['transaction cost']:.2f}")
+
+        print(f"Variance: {solution['risk']}\n")
+
     def run(
         self, min_return: float = 0, max_risk: float = 0, num: int = 0, init_holdings: float = None
     ):
@@ -679,7 +678,9 @@ class SinglePeriod:
             )
         elif self.model_type is SolverType.Stride:
             print(f"\nStride run...")
-            solution = self.solve_stride(min_return=min_return, max_risk=max_risk, init_holdings=init_holdings)
+            solution = self.solve_stride(
+                min_return=min_return, max_risk=max_risk, init_holdings=init_holdings
+            )
         else:
             print(f"\nDQM run...")
             if len(self.alpha_list) > 1 or len(self.gamma_list) > 1:

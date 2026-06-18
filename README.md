@@ -130,7 +130,7 @@ A default CQM run with a transaction cost factor of 1% can be done with the foll
 
 ##### Stride Runs
 
-Similar to the CQM runs the user can run the same formulations in using the latest Stride non-linear solver.
+Similar to the CQM runs, the user can run the same formulations in using the Stride&trade; hybrid solver.
 
 ```python portfolio.py -m 'Stride'```
 

@@ -148,7 +148,6 @@ def main(
         solver_type = SolverType.Stride
     else:
         solver_type = SolverType.DQM
-    # solver_type = SolverType.CQM if model_type == "CQM" else SolverType.DQM
 
     if (max_risk or min_return) and solver_type is SolverType.DQM:
         raise Exception("The bound options require a CQM or Stride.")

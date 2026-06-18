@@ -471,8 +471,8 @@ class SinglePeriod:
 
         print(f"DQM Grid Search Completed: alpha={self.alpha}, gamma={self.gamma}.-")
 
-    def solve_stride(self, max_risk=None, min_return=None, init_holdings=None):
-        """Build and solve a Stride formulation.
+    def build_stride(self, max_risk=None, min_return=None, init_holdings=None):
+        """Build a Stride formulation.
         This method allows the user a choice of 3 problem formulations:
             1) max return - alpha*risk (default formulation)
             2) max return s.t. risk <= max_risk
@@ -484,38 +484,40 @@ class SinglePeriod:
             init_holdings (float): Initial holdings, or initial portfolio state.
         """
         # Instantiating the Stride object
-        stride_nl = Model()
+        model = Model()
 
         # Required constants
         stock_prices = np.array(list(self.price))
         avg_returns = np.array(list(self.avg_monthly_returns))
-        StockPrices = stride_nl.constant(stock_prices)
-        BudgetUpper = stride_nl.constant(self.budget)
-        BudgetLower = stride_nl.constant(0.997 * self.budget)
+        const_stock_prices = model.constant(stock_prices)
+        const_budget_upper = model.constant(self.budget)
+        const_budget_lower = model.constant(0.997 * self.budget)
         cov = self.covariance_matrix.loc[self.stocks, self.stocks].to_numpy()
         risk_coeff = cov * np.outer(stock_prices, stock_prices)
-        RiskCoeff = stride_nl.constant(risk_coeff)
-        AvgReturns = stride_nl.constant(avg_returns * stock_prices)
-        NegOne = stride_nl.constant(-1)
-        Alpha = stride_nl.constant(self.alpha)
-        Zero = stride_nl.constant(0)
-        TransCost = stride_nl.constant(self.t_cost)
-        One = stride_nl.constant(1)
-        Two = stride_nl.constant(2)
-        BudgetLowerWithTrans = stride_nl.constant(self.budget - 0.003 * self.init_budget)
+        const_risk_coeff = model.constant(risk_coeff)
+        const_avg_returns = model.constant(avg_returns * stock_prices)
+        const_neg_one = model.constant(-1)
+        const_alpha = model.constant(self.alpha)
+        const_zero = model.constant(0)
+        const_trans_cost = model.constant(self.t_cost)
+        const_one = model.constant(1)
+        const_two = model.constant(2)
+        const_budget_lower_with_trans = model.constant(self.budget - 0.003 * self.init_budget)
+
+        num_stocks = len(self.stocks)
 
         # Defining and adding variables to the Stride model
-        x = stride_nl.integer(
-            len(self.stocks), lower_bound=0, upper_bound=list(self.max_num_shares)
+        x = model.integer(
+            num_stocks, lower_bound=0, upper_bound=list(self.max_num_shares)
         )
 
         # Defining risk expression
         risk = []
-        for (i1, s1), (i2, s2) in product(enumerate(self.stocks), enumerate(self.stocks)):
-            risk.append(RiskCoeff[i1, i2] * x[i1] * x[i2])
+        for i1, i2 in product(range(num_stocks), range(num_stocks)):
+            risk.append(const_risk_coeff[i1, i2] * x[i1] * x[i2])
 
         # Defining the returns expression
-        returns = AvgReturns * x
+        returns = const_avg_returns * x
 
         # Adding budget and related constraints
         if not init_holdings:
@@ -524,86 +526,102 @@ class SinglePeriod:
             self.init_holdings = init_holdings
 
         if not self.t_cost:
-            stock_purchases = x * StockPrices
-            stride_nl.add_constraint(stock_purchases.sum() <= BudgetUpper)
-            stride_nl.add_constraint(stock_purchases.sum() >= BudgetLower)
+            stock_purchases = x * const_stock_prices
+            model.add_constraint(stock_purchases.sum() <= const_budget_upper)
+            model.add_constraint(stock_purchases.sum() >= const_budget_lower)
         else:
             # Modeling transaction cost
-            y = stride_nl.binary(len(self.stocks))  # dummy binary variable
-            x0 = stride_nl.constant(np.array(list(init_holdings.values())))
+            y = model.binary(num_stocks)  # dummy binary variable
+            x0 = model.constant(np.array(list(init_holdings.values())))
             lhs = []
-            for i, s in enumerate(self.stocks):
-                curr_return = StockPrices[i] * (One - TransCost) * x[i]
-                prev_return = StockPrices[i] * (One - TransCost) * x0[i]
-                curr_cost = Two * TransCost * StockPrices[i] * x[i] * y[i]
-                prev_cost = Two * TransCost * StockPrices[i] * x0[i] * y[i]
+            for i in range(num_stocks):
+                curr_return = const_stock_prices[i] * (const_one - const_trans_cost) * x[i]
+                prev_return = const_stock_prices[i] * (const_one - const_trans_cost) * x0[i]
+                curr_cost = const_two * const_trans_cost * const_stock_prices[i] * x[i] * y[i]
+                prev_cost = const_two * const_trans_cost * const_stock_prices[i] * x0[i] * y[i]
                 lhs.append(curr_cost + curr_return - prev_cost - prev_return)
                 # Indicator linking constraints
-                stride_nl.add_constraint(x[i] - x0[i] * y[i] >= Zero)
-                stride_nl.add_constraint(x[i] - x[i] * y[i] <= x0[i])
-            stride_nl.add_constraint(add(*lhs) <= BudgetUpper)
-            stride_nl.add_constraint(add(*lhs) >= BudgetLowerWithTrans)
+                model.add_constraint(x[i] - x0[i] * y[i] >= const_zero)
+                model.add_constraint(x[i] - x[i] * y[i] <= x0[i])
+            model.add_constraint(add(*lhs) <= const_budget_upper)
+            model.add_constraint(add(*lhs) >= const_budget_lower_with_trans)
 
         if max_risk:
             print("Maximize returns s.t. an upper bound of risk")
             # Adding maximum risk constraint
-            MaxRisk = stride_nl.constant(max_risk)
-            stride_nl.add_constraint(add(*risk) <= MaxRisk)
+            const_max_risk = model.constant(max_risk)
+            model.add_constraint(add(*risk) <= const_max_risk)
             # Objective: maximize return
-            stride_nl.minimize(NegOne * returns.sum())
+            model.minimize(const_neg_one * returns.sum())
         elif min_return:
             print("Minimize risk s.t. a lower bound of return")
             # Adding minimum returns constraint
-            MinReturn = stride_nl.constant(min_return)
-            stride_nl.add_constraint(returns.sum() >= MinReturn)
+            const_min_return = model.constant(min_return)
+            model.add_constraint(returns.sum() >= const_min_return)
             # Objective: minimize risk
-            stride_nl.minimize(add(*risk))
+            model.minimize(add(*risk))
         else:
             print("Minimize mean-variance expression")
             # Objective: minimize mean-variance expression
-            stride_nl.minimize(Alpha * add(*risk) - returns.sum())
+            model.minimize(const_alpha * add(*risk) - returns.sum())
             """
             Alternative objective function - minimize the ratio of risk per unit return. This can be also done in Stride.
             obj_expr = safe_divide((Alpha * add(*risk)), returns.sum())
-            stride_nl.minimize(obj_expr)
+            model.minimize(obj_expr)
             """
+        self.model["Stride"] = model
 
-        self.model["Stride"] = stride_nl
+    def solve_stride(self, max_risk=None, min_return=None, init_holdings=None):
+        """Solve the Stride formulation.
+        This method allows the user a choice of 3 problem formulations:
+            1) max return - alpha*risk (default formulation)
+            2) max return s.t. risk <= max_risk
+            3) min risk s.t. return >= min_return
+
+        Args:
+            max_risk (int): Maximum risk for the risk bounding formulation.
+            min_return (int): Minimum return for the return bounding formulation.
+            init_holdings (float): Initial holdings, or initial portfolio state.
+        """
+
+        self.build_stride(max_risk, min_return, init_holdings)
+
         self.sample_set["Stride"] = self.sampler["Stride"].sample(
-            stride_nl, label="Example - Portfolio Optimization", time_limit=self.time_limit
+            self.model["Stride"], label="Example - Portfolio Optimization", time_limit=self.time_limit
         )
-        stride_nl.lock()
+        self.model["Stride"].lock()
         solution = {}
-        if stride_nl.feasible():
-            model_des = list(sym for sym in stride_nl.iter_decisions())
-            x_var = None
-            for i in range(len(model_des)):
-                if type(model_des[i]) == IntegerVariable:
-                    x_var = model_des[i]
-            solution["stocks"] = {s: int(x_var.state(0)[i]) for i, s in enumerate(self.stocks)}
-            solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
-            cost = sum(
-                [
-                    self.price[s] * max(0, solution["stocks"][s] - self.init_holdings[s])
-                    for s in self.stocks
-                ]
-            )
-            sales = sum(
-                [
-                    self.price[s] * max(0, self.init_holdings[s] - solution["stocks"][s])
-                    for s in self.stocks
-                ]
-            )
-            transaction = self.t_cost * (cost + sales)
-            solution.update(
-                {
-                    "sales": sales,
-                    "cost": cost,
-                    "transaction cost": transaction,
-                }
-            )
-        else:
+
+        if not self.model["Stride"].feasible():
             raise Exception("No feasible solution could be found for this problem instance.")
+
+        model_des = list(sym for sym in self.model["Stride"].iter_decisions())
+        x_var = None
+        for i in range(len(model_des)):
+            if type(model_des[i]) == IntegerVariable:
+                x_var = model_des[i]
+        solution["stocks"] = {s: int(x_var.state(0)[i]) for i, s in enumerate(self.stocks)}
+        solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
+        cost = sum(
+            [
+                self.price[s] * max(0, solution["stocks"][s] - self.init_holdings[s])
+                for s in self.stocks
+            ]
+        )
+        sales = sum(
+            [
+                self.price[s] * max(0, self.init_holdings[s] - solution["stocks"][s])
+                for s in self.stocks
+            ]
+        )
+        transaction = self.t_cost * (cost + sales)
+        solution.update(
+            {
+                "sales": sales,
+                "cost": cost,
+                "transaction cost": transaction,
+            }
+        )
 
         return solution
 

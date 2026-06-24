@@ -471,8 +471,9 @@ class SinglePeriod:
 
         print(f"DQM Grid Search Completed: alpha={self.alpha}, gamma={self.gamma}.-")
 
-    def build_stride(self, max_risk=None, min_return=None, init_holdings=None):
+    def build_stride(self, max_risk=None, min_return=None, init_holdings=None) -> None:
         """Build a Stride formulation.
+
         This method allows the user a choice of 3 problem formulations:
             1) max return - alpha*risk (default formulation)
             2) max return s.t. risk <= max_risk
@@ -487,8 +488,8 @@ class SinglePeriod:
         model = Model()
 
         # Required constants
-        stock_prices = np.array(list(self.price))
-        avg_returns = np.array(list(self.avg_monthly_returns))
+        stock_prices = np.asarray(self.price)
+        avg_returns = np.asarray(self.avg_monthly_returns)
         const_stock_prices = model.constant(stock_prices)
         const_budget_upper = model.constant(self.budget)
         const_budget_lower = model.constant(0.997 * self.budget)
@@ -571,8 +572,9 @@ class SinglePeriod:
             """
         self.model["Stride"] = model
 
-    def solve_stride(self, max_risk=None, min_return=None, init_holdings=None):
+    def solve_stride(self, max_risk=None, min_return=None, init_holdings=None) -> dict:
         """Solve the Stride formulation.
+
         This method allows the user a choice of 3 problem formulations:
             1) max return - alpha*risk (default formulation)
             2) max return s.t. risk <= max_risk
@@ -582,6 +584,13 @@ class SinglePeriod:
             max_risk (int): Maximum risk for the risk bounding formulation.
             min_return (int): Minimum return for the return bounding formulation.
             init_holdings (float): Initial holdings, or initial portfolio state.
+
+        Returns:
+            A dictionary containing the portfolio solution metrics:
+
+            - sales: Portfolio sales value.
+            - cost: Portfolio cost value.
+            - transaction cost: Transaction cost incurred.
         """
 
         self.build_stride(max_risk, min_return, init_holdings)
@@ -596,10 +605,12 @@ class SinglePeriod:
             raise Exception("No feasible solution could be found for this problem instance.")
 
         model_des = list(sym for sym in self.model["Stride"].iter_decisions())
-        x_var = None
-        for i in range(len(model_des)):
-            if type(model_des[i]) == IntegerVariable:
-                x_var = model_des[i]
+        for i, var in enumerate(model_des):
+            if isinstance(var, IntegerVariable):
+                x_var = var
+                break
+        else:
+            x_var = None
         solution["stocks"] = {s: int(x_var.state(0)[i]) for i, s in enumerate(self.stocks)}
         solution["return"], solution["risk"] = self.compute_risk_and_returns(solution["stocks"])
         cost = sum(

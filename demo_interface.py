@@ -13,7 +13,6 @@
 # limitations under the License.
 
 """This file stores the HTML layout for the app."""
-
 from __future__ import annotations
 
 from datetime import date, timedelta

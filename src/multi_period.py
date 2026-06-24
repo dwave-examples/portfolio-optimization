@@ -13,14 +13,16 @@
 # limitations under the License.
 
 from typing import Optional
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler, LeapHybridNLSampler
 
 from demo_configs import DATES_DEFAULT
 from src.demo_enums import SolverType
+
+import matplotlib.pyplot as plt
+
+from dwave.system import LeapHybridCQMSampler, LeapHybridDQMSampler, LeapHybridNLSampler
+
 from src.single_period import SinglePeriod
 
 

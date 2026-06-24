@@ -152,7 +152,7 @@ def main(
     if (max_risk or min_return) and solver_type is SolverType.DQM:
         raise Exception("The bound options require a CQM or Stride.")
 
-    if (gamma or bin_size) and solver_type is (SolverType.CQM or SolverType.Stride):
+    if (gamma or bin_size) and solver_type in (SolverType.CQM, SolverType.Stride):
         raise Exception("The option gamma or bin-size requires a DQM.")
 
     if num and not dates:

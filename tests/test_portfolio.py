@@ -111,6 +111,28 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(test_portfolio.model["CQM"].variables), 4)
         self.assertEqual(len(test_portfolio.model["CQM"].constraints), 4)
 
+    def test_build_stride(self):
+        test_portfolio = SinglePeriod(model_type="Stride", stocks=DEFAULT_STOCKS)
+
+        data = {
+            "IBM": [93.043, 84.585, 111.453, 99.525, 95.819],
+            "WMT": [51.826, 52.823, 56.477, 49.805, 50.287],
+        }
+
+        idx = ["Nov-00", "Dec-00", "Jan-01", "Feb-01", "Mar-01"]
+
+        df = pd.DataFrame(data, index=idx)
+
+        test_portfolio.load_data(df=df)
+        test_portfolio.build_stride()
+        test_portfolio.model["Stride"].lock()
+
+        num_variables = test_portfolio.model["Stride"].num_decisions()
+        num_constraints = test_portfolio.model["Stride"].num_constraints()
+
+        self.assertEqual(num_variables, 2)
+        self.assertEqual(num_constraints, 6)
+
 
 class TestIntegration(unittest.TestCase):
     @unittest.skipIf(os.getenv("SKIP_INT_TESTS"), "Skipping integration test.")
@@ -142,6 +164,23 @@ class TestIntegration(unittest.TestCase):
 
         self.assertIn("dqm run", output)
         self.assertIn("solution for alpha", output)
+        self.assertIn("best feasible solution", output)
+        self.assertIn("estimated returns", output)
+        self.assertIn("purchase cost", output)
+        self.assertIn("variance", output)
+        self.assertNotIn("traceback", output)
+
+    @unittest.skipIf(os.getenv("SKIP_INT_TESTS"), "Skipping integration test.")
+    def test_stride_integration(self):
+        """Test integration of portfolio script stride run."""
+
+        demo_file = os.path.join(project_dir, "portfolio.py")
+
+        output = subprocess.check_output([sys.executable, demo_file] + ["-m", "Stride"])
+        output = output.decode("utf-8")  # Bytes to str
+        output = output.lower()
+
+        self.assertIn("stride run", output)
         self.assertIn("best feasible solution", output)
         self.assertIn("estimated returns", output)
         self.assertIn("purchase cost", output)

@@ -18,12 +18,14 @@ from enum import Enum
 class SolverType(Enum):
     CQM = 0
     DQM = 1
+    Stride = 2
 
     @property
     def label(self):
         return {
-            SolverType.CQM: "Quantum Hybrid (CQM)",
-            SolverType.DQM: "Quantum Hybrid (DQM)",
+            SolverType.CQM: "CQM Hybrid Solver",
+            SolverType.DQM: "DQM Hybrid Solver",
+            SolverType.Stride: "Stride Hybrid Solver",
         }[self]
 
 

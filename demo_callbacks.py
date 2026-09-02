@@ -288,7 +288,7 @@ def update_results_date_table(
     Output("cancel-button", "style", allow_duplicate=True),
     Output("run-button", "style", allow_duplicate=True),
     Output("iteration", "data", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Input("cancel-button", "n_clicks"),
     prevent_initial_call=True,
 )
@@ -371,7 +371,7 @@ class UpdateMultiOutputReturn(NamedTuple):
     Output("cancel-button", "style", allow_duplicate=True),
     Output("run-button", "style", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Output("graph-tab", "disabled", allow_duplicate=True),
     Output("graph-update-status", "children", allow_duplicate=True),
     inputs=[
@@ -662,7 +662,7 @@ def run_optimization(
     Output("cancel-button", "style", allow_duplicate=True),
     Output("run-button", "style", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Output("dates-slider", "children", allow_duplicate=True),
     background=True,
     inputs=[

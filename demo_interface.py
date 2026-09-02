@@ -506,7 +506,6 @@ def create_interface() -> html.Div:
                                     dmc.TabsPanel(
                                         value="graph-tab",
                                         tabIndex="13",
-                                        style={"display": "none"},
                                         children=[
                                             html.Div(
                                                 className="tab-content-wrapper",

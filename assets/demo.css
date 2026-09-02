@@ -28,6 +28,11 @@ custom CSS can be added below.
     height: 100%;
 }
 
+.tab-content-wrapper > div {
+    position: relative;
+    height: 100%;
+}
+
 .input, .results {
     display: flex;
     justify-content: center;
@@ -119,8 +124,8 @@ table td:nth-child(2n+1) {
 #graph-update-status {
     position: absolute;
     z-index: 10;
-    top: 5rem;
-    right: 19rem;
+    top: 2rem;
+    right: 13rem;
     font-style: italic;
 }
 

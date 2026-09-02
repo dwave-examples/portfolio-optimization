@@ -42,6 +42,6 @@ Dash reads all css files contained in `/assets/` so no imports are necessary.
     --banner-height: 6.5rem;
     --left-col-width: 26.25rem;
     --problem-details-height: 8rem;
-    --title-section-height: 13.5rem;
+    --title-section-height: 17rem;
     /*** Add new variables here ***/
 }

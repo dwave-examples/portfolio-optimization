@@ -190,7 +190,6 @@ def generate_input_graph(df: pd.DataFrame = None) -> go.Figure:
         )
 
     fig.update_layout(
-        title="Historical Stock Data",
         xaxis_title="Month",
         yaxis_title="Price",
         hovermode="x",

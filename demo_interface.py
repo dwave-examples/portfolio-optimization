@@ -37,7 +37,7 @@ from src.demo_enums import PeriodType, SolverType
 THEME_COLOR = "#2d4376"
 
 
-def slider(label: str, id: str, config: dict) -> html.Div:
+def slider(label: str, id: str, config: dict, marks: list | None = None, labelAlwaysOn: bool = True) -> html.Div:
     """Slider element for value selection.
 
     Args:
@@ -53,11 +53,15 @@ def slider(label: str, id: str, config: dict) -> html.Div:
                 id=id,
                 className="slider",
                 **config,
-                marks=[
-                    {"value": config["min"], "label": f'{config["min"]}'},
-                    {"value": config["max"], "label": f'{config["max"]}'},
-                ],
-                labelAlwaysOn=True,
+                marks=(
+                    marks
+                    if marks
+                    else [
+                        {"value": config["min"], "label": f'{config["min"]}'},
+                        {"value": config["max"], "label": f'{config["max"]}'},
+                    ]
+                ),
+                labelAlwaysOn=labelAlwaysOn,
                 thumbLabel=f"{label} slider",
                 color=THEME_COLOR,
             ),
@@ -104,6 +108,35 @@ def multiselect(label: str, id: str, options: list, values: list) -> html.Div:
                 id=id,
                 data=options,
                 value=values,
+            ),
+        ],
+    )
+
+
+def radio(label: str, id: str, options: list, value: str, inline: bool = True) -> html.Div:
+    """Radio element for option selection.
+
+    Args:
+        label: The title that goes above the radio.
+        id: A unique selector for this element.
+        options: A list of dictionaries of labels and values.
+        value: The value of the radio that should be preselected.
+        inline: Whether the options are displayed beside or below each other.
+    """
+    return html.Div(
+        className="radio-wrapper",
+        children=[
+            dmc.RadioGroup(
+                id=id,
+                className=f"radio{' radio--inline' if inline else ''}",
+                label=label,
+                value=value,
+                children=dmc.Group(
+                    [
+                        dmc.Radio(option["label"], value=option["value"], color=THEME_COLOR)
+                        for option in options
+                    ]
+                ),
             ),
         ],
     )
@@ -165,7 +198,7 @@ def generate_settings_form() -> html.Div:
         children=[
             dropdown(
                 "Solver",
-                "sampler-type-select",
+                "solver-type-select",
                 sorted(solver_options, key=lambda op: op["value"]),
             ),
             input(
@@ -180,21 +213,15 @@ def generate_settings_form() -> html.Div:
                 DEFAULT_STOCKS,
             ),
             html.P("Please select at least 2 stocks", id="stocks-error", className="display-none"),
-            html.Div(
-                className="input-wrapper",
-                children=[
-                    html.Label("Date Range", htmlFor="date-range"),
-                    dmc.DatePickerInput(
-                        id="date-range",
-                        label="Date Range",
-                        description="Date range must be at least four months.",
-                        minDate=date(2020, 8, 5),
-                        maxDate=date.today().replace(day=1) - timedelta(days=1),  # prev month end
-                        type="range",
-                        value=[DATES_DEFAULT[0], DATES_DEFAULT[1]],
-                        maw=125,
-                    ),
-                ]
+            dmc.DatePickerInput(
+                id="date-range",
+                label="Date Range",
+                description="Date range must be at least four months.",
+                minDate=date(2020, 8, 5),
+                maxDate=date.today().replace(day=1) - timedelta(days=1),  # prev month end
+                type="range",
+                value=[DATES_DEFAULT[0], DATES_DEFAULT[1]],
+                # maw=125,
             ),
             html.P("Date range must be at least four months.", className="date-range-text"),
             input(
@@ -211,6 +238,13 @@ def generate_settings_form() -> html.Div:
                     ),
                 ],
                 id="transaction-cost-wrapper",
+            ),
+            radio(
+                "Period",
+                "period-options",
+                generate_options(PeriodType),
+                value=f"{PeriodType.MULTI.value}",
+                inline=False,
             ),
         ],
     )
@@ -313,9 +347,8 @@ def generate_dates_slider(dates: list) -> html.Div:
         "",
         "results-date-selector",
         {"min": 0, "max": last_date, "value": last_date, "step": 1},
-        marks={0: dates[0], last_date: dates[-1]},
-        dots=True,
-        show_tooltip=False,
+        marks=[{"value": 0, "label": dates[0]}, {"value": f"{last_date}", "label": f"{dates[-1]}"}],
+        labelAlwaysOn=False, 
     )
 
 
@@ -334,7 +367,6 @@ def create_interface() -> html.Div:
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
             dcc.Store(id="max-iterations", data=0),  # Max iterations of result loop
-            dcc.Store(id="selected-period", data=0),  # The currently selected period option
             dcc.Store(id="results-date-dict"),  # Dictionary of date periods and their solutions
             dcc.Store(id="portfolio"),
             dcc.Store(id="loop-store"),
@@ -348,24 +380,6 @@ def create_interface() -> html.Div:
             ),
             dcc.Store(id="loop-running", data=False),
             dcc.Store(id="iteration", data=3),
-            # Header brand banner
-            html.Div(
-                className="banner",
-                children=[
-                    html.Img(src=THUMBNAIL),
-                    html.Div(
-                        [
-                            html.Div(
-                                html.Button(
-                                    period.label,
-                                    id={"type": "period-option", "index": index},
-                                )
-                            )
-                            for index, period in enumerate(PeriodType)
-                        ]
-                    ),
-                ],
-            ),
             # Settings and results columns
             html.Main(
                 className="columns-main",
@@ -469,6 +483,7 @@ def create_interface() -> html.Div:
                                             html.Div(
                                                 className="tab-content-wrapper",
                                                 children=[
+                                                    html.H3("Historical Stock Data"),
                                                     dcc.Loading(
                                                         parent_className="input",
                                                         className="input-loading",

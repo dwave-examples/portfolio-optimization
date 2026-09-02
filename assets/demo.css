@@ -35,14 +35,6 @@ custom CSS can be added below.
     height: 100%;
 }
 
-.tab-content {
-    padding: 0 3rem 3rem;
-}
-
-.tab-content > div {
-    position: relative;
-}
-
 table td:nth-child(2n) {
     text-align: right;
 }
@@ -53,29 +45,7 @@ table td:nth-child(2n+1) {
 
 .input, .results, .input > div:first-child, #input-graph {
     height: 100%;
-}
-
-.banner > div {
-    display: flex;
-}
-
-.banner button {
-    opacity: 0.6;
-    font-size: 1.6rem;
-    font-weight: 500;
-    padding: 2rem 4rem;
-    text-underline-offset: 0.5rem;
-    border-radius: 0;
-}
-
-.banner button.active {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.banner button.active:hover {
-    filter: none;
-    cursor: default;
+    width: 100%;
 }
 
 .results-tables table:not(:last-child),
@@ -96,8 +66,8 @@ table td:nth-child(2n+1) {
 
 .results-tables .arrow-True {
     margin-left: 1rem;
-    color: var(--teal-darker);
-    -webkit-text-stroke: 4px var(--teal-darker);
+    color: var(--teal-dark);
+    -webkit-text-stroke: 4px var(--teal-dark);
 }
 
 .results-comparison > div:first-child:not(:last-child) {
@@ -141,10 +111,6 @@ table td:nth-child(2n+1) {
     text-transform: uppercase;
 }
 
-.rc-slider-mark-text {
-    width: 10rem;
-}
-
 #dynamic-results-table {
     display: flex;
     justify-content: space-between;
@@ -163,13 +129,18 @@ table td:nth-child(2n+1) {
     font-weight: 500;
 }
 
-#run-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    filter: none;
+.date-range-text {
+    font-size: 0.875rem;
+    color: var(--grey-medium);
+    margin-top: 0.25rem;
 }
 
-.date-range-text {
-    font-size: 1.3rem;
-    color: var(--grey-medium);
+.mantine-InputWrapper-label.mantine-DatePickerInput-label {
+    font-family: var(--font);
+    color: var(--blue-darkest);
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    margin: 1rem 0 0.5rem;
+    font-weight: 600;
+    display: block;
 }

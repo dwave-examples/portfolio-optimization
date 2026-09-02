@@ -15,7 +15,7 @@ while staying under some specified spending budget.
 
 ## Installation
 You can run this example without installation in cloud-based IDEs that support the
-[Development Containers specification](https://containers.dev/supporting) (aka "devcontainers")
+[Development Containers Specification](https://containers.dev/supporting) (aka "devcontainers")
 such as GitHub Codespaces.
 
 For development environments that do not support `devcontainers`, install requirements:
@@ -28,16 +28,12 @@ If you are cloning the repo to your local system, working in a
 [virtual environment](https://docs.python.org/3/library/venv.html) is recommended.
 
 ## Usage
-This demo can be run with a browser interface, as seen in the screenshot above, or entirely through
-the command line.
-
-### Run with Interface
 Your development environment should be configured to access the
-[Leap&trade; Quantum Cloud Service](https://docs.ocean.dwavesys.com/en/stable/overview/sapi.html).
+[Leap&trade; quantum cloud service](https://docs.dwavequantum.com/en/latest/ocean/sapi_access_basic.html).
 You can see information about supported IDEs and authorizing access to your Leap account
-[here](https://docs.dwavesys.com/docs/latest/doc_leap_dev_env.html).
+[here](https://docs.dwavequantum.com/en/latest/ocean/leap_authorization.html).
 
-Run the following terminal command to start the Dash app:
+Run the following terminal command to start the Dash application:
 
 ```bash
 python app.py
@@ -51,8 +47,8 @@ a solver.
 Configuration options can be found in the [demo_configs.py](demo_configs.py) file.
 
 > [!NOTE]\
-> If you plan on editing any files while the app is running,
-please run the app with the `--debug` command-line argument for live reloads and easier debugging:
+> If you plan on editing any files while the application is running, please run the application
+with the `--debug` command-line argument for live reloads and easier debugging:
 `python app.py --debug`
 
 
@@ -305,3 +301,7 @@ Georgia Tech University (2002). https://www2.isye.gatech.edu/~sahmed/isye6669/no
 
 Mansini, R., Ogryczak, W., &amp; Speranza, M. G. (2015). Linear and mixed integer programming for
 portfolio optimization. Springer International Publishing.
+
+## License
+
+Released under the Apache License 2.0. See [LICENSE](LICENSE) file.

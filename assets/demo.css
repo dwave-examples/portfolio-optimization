@@ -14,16 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* Style rules for all custom CSS. */
+/*******************************************************************
+This file contains all custom CSS for this demo.
+The following style rules can be altered or removed and any additional
+custom CSS can be added below.
+*******************************************************************/
 
-.tab-content-results {
-    padding: 3rem 3rem 0;
+.tab-content-wrapper {
+    padding: 2rem 2rem 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    max-width: 85rem;
-    min-width: 80rem;
+}
+
+.input, .results {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 .tab-content {

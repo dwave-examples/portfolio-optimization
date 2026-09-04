@@ -15,13 +15,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
 import dash
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-from dash import ALL, MATCH, ctx
+from dash import MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
@@ -34,6 +34,7 @@ from src.utils import (
     deserialize,
     format_table_data,
     generate_input_graph,
+    get_month_range,
     get_requested_stocks,
     get_stock_data,
     initialize_output_graph,
@@ -78,6 +79,7 @@ class RenderInitialStateReturn(NamedTuple):
 
     input_graph: go.Figure = dash.no_update
     stocks_error: str = "display-none"
+    dates_error: str = "display-none"
     run_button_disabled: bool = False
     max_iter: int = dash.no_update
     stocks_options: list = dash.no_update
@@ -90,31 +92,30 @@ class RenderInitialStateReturn(NamedTuple):
 @dash.callback(
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
+    Output("dates-error", "className"),
     Output("run-button", "disabled"),
     Output("max-iterations", "data"),
-    Output("stocks", "options"),
+    Output("stocks", "data"),
     Output("stocks", "value"),
     Output("all-stocks-store", "data"),
-    Output("date-range", "min_date_allowed"),
-    Output("date-range", "max_date_allowed"),
+    Output("date-range", "minDate"),
+    Output("date-range", "maxDate"),
     inputs=[
-        Input("date-range", "start_date"),
-        Input("date-range", "end_date"),
+        Input("date-range", "value"),
         Input("stocks", "value"),
         State("all-stocks-store", "data"),
     ],
 )
 def render_initial_state(
-    start_date: str,
-    end_date: str,
+    date_range: list,
     stocks: list,
     all_stocks_store: str,
 ) -> RenderInitialStateReturn:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
-        start_date: The selected start date.
-        end_date: The selected end date.
+        date_range: The selected start and end months as a pair of ``YYYY-MM-DD`` strings.
+            Either entry is ``None`` while the user is mid-selection.
         stocks: The selected stocks.
         all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
@@ -122,14 +123,15 @@ def render_initial_state(
         A NamedTuple ``RenderInitialStateReturn`` that contains the following:
             input_graph: The input stocks graph.
             stocks_error: The class name for the stock error.
+            dates_error: The class name for the date range error.
             run_button_disabled: Whether the run button should be disabled.
             max_iter: The number of months between start and end date, which is the number of
                 times to run ``update_multi_output`` (minus 3).
             stocks_options: The dropdown stocks to choose from.
             stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
             all_stocks_store: A dataframe of all the stocks available, stored serialized.
-            date_range_min: Any date older than this will be disabled on the date selector.
-            date_range_max: Any date more recent than this will be disabled on the date selector.
+            date_range_min: Any month older than this will be disabled on the date selector.
+            date_range_max: Any month more recent than this will be disabled on the date selector.
     """
     # First load, initialize stock dropdown
     if not ctx.triggered_id:
@@ -146,15 +148,24 @@ def render_initial_state(
             stocks_options=stock_names,
             stocks_value=stocks,
             all_stocks_store=serialize(df_all_stocks),
-            date_range_min=df_all_stocks.index[0],
-            date_range_max=df_all_stocks.index[-1],
+            date_range_min=df_all_stocks.index[0].to_period("M").start_time.strftime("%Y-%m-%d"),
+            date_range_max=df_all_stocks.index[-1].to_period("M").start_time.strftime("%Y-%m-%d"),
         )
 
     if len(stocks) < 2:
         return RenderInitialStateReturn(stocks_error="", run_button_disabled=True)
 
-    dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
-    df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
+    if not date_range or not all(date_range):
+        raise PreventUpdate  # Only one end of the range has been picked so far
+
+    df_all_stocks = deserialize(all_stocks_store)
+    dates = get_month_range(date_range, last_date=df_all_stocks.index[-1])
+    df = get_requested_stocks(df_all_stocks, dates, stocks)
+
+    if len(df) < 4:
+        return RenderInitialStateReturn(
+            input_graph=generate_input_graph(df), dates_error="", run_button_disabled=True
+        )
 
     return RenderInitialStateReturn(
         input_graph=generate_input_graph(df),
@@ -595,9 +606,9 @@ class RunOptimizationReturn(NamedTuple):
         State("solver-time-limit", "value"),
         State("budget", "value"),
         State("transaction-cost", "value"),
-        State("date-range", "start_date"),
-        State("date-range", "end_date"),
+        State("date-range", "value"),
         State("stocks", "value"),
+        State("all-stocks-store", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -608,9 +619,9 @@ def run_optimization(
     time_limit: int,
     budget: int,
     transaction_cost: float,
-    start_date: str,
-    end_date: str,
+    date_range: list,
     stocks: list,
+    all_stocks_store: str,
 ) -> RunOptimizationReturn:
     """Updates UI and triggers optimization run.
 
@@ -621,9 +632,9 @@ def run_optimization(
         time_limit: The time limit for all runs.
         budget: The budget for the run.
         transaction_cost: The selected transaction cost.
-        start_date: The selected start date.
-        end_date: The selected end date.
+        date_range: The selected start and end months as a pair of ``YYYY-MM-DD`` strings.
         stocks: The list of selected stocks.
+        all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
     Returns:
         A NamedTuple ``RunOptimizationReturn`` containing:
@@ -637,12 +648,17 @@ def run_optimization(
             graph-tab-disabled: Whether to disable the graph tab.
 
     """
+    if date_range and all(date_range):
+        dates = get_month_range(date_range, last_date=deserialize(all_stocks_store).index[-1])
+    else:
+        dates = DATES_DEFAULT
+
     settings_store = {
         "solver type": int(solver_type),
         "time limit": time_limit,
         "budget": budget,
         "transaction cost": transaction_cost,
-        "dates": ([start_date, end_date] if start_date and end_date else DATES_DEFAULT),
+        "dates": dates,
         "stocks": stocks,
         "selected-period": int(period),
     }

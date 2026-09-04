@@ -129,18 +129,18 @@ table td:nth-child(2n+1) {
     font-style: italic;
 }
 
-#stocks-error {
-    color: var(--red-light);
-    font-weight: 500;
+#stocks-error, #dates-error {
+    color: var(--red-dark);
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0;
 }
 
-.date-range-text {
+#date-range-description {
     font-size: 0.875rem;
     color: var(--grey-medium);
-    margin-top: 0.25rem;
 }
 
-.mantine-InputWrapper-label.mantine-DatePickerInput-label {
+.mantine-InputWrapper-label.mantine-MonthPickerInput-label {
     font-family: var(--font);
     color: var(--blue-darkest);
     font-size: 1.125rem;

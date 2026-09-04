@@ -213,17 +213,21 @@ def generate_settings_form() -> html.Div:
                 DEFAULT_STOCKS,
             ),
             html.P("Please select at least 2 stocks", id="stocks-error", className="display-none"),
-            dmc.DatePickerInput(
+            dmc.MonthPickerInput(
                 id="date-range",
                 label="Date Range",
                 description="Date range must be at least four months.",
-                minDate=date(2020, 8, 5),
+                minDate=date(2020, 8, 1),
                 maxDate=date.today().replace(day=1) - timedelta(days=1),  # prev month end
                 type="range",
+                valueFormat="MMM YYYY",
                 value=[DATES_DEFAULT[0], DATES_DEFAULT[1]],
-                # maw=125,
             ),
-            html.P("Date range must be at least four months.", className="date-range-text"),
+            html.P(
+                "Please select a date range of at least four months",
+                id="dates-error",
+                className="display-none",
+            ),
             input(
                 "Budget (USD)",
                 "budget",
@@ -483,7 +487,6 @@ def create_interface() -> html.Div:
                                             html.Div(
                                                 className="tab-content-wrapper",
                                                 children=[
-                                                    html.H3("Historical Stock Data"),
                                                     dcc.Loading(
                                                         parent_className="input",
                                                         className="input-loading",

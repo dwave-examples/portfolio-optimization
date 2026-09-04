@@ -123,6 +123,31 @@ def get_baseline_data(dates: list) -> pd.DataFrame:
     return df_baseline
 
 
+def get_month_range(dates: list, last_date: pd.Timestamp = None) -> list[str]:
+    """Expands a pair of dates to cover the full calendar months they fall in.
+
+    Stock data is stored as one row per month, keyed by the last trading day of that month,
+    so a requested range must start on the first day of the start month and end on the last
+    day of the end month to include both months.
+
+    Args:
+        dates: Pair of date strings for the start and end of the range.
+        last_date: The most recent date with data. If provided, the end of the range is
+            clamped to it so a partial final month can still be requested.
+
+    Returns:
+        A pair of ``YYYY-MM-DD`` strings for the first day of the start month and the last day
+        of the end month.
+    """
+    start = pd.to_datetime(dates[0]).to_period("M").start_time
+    end = pd.to_datetime(dates[1]).to_period("M").end_time.normalize()
+
+    if last_date is not None:
+        end = min(end, pd.to_datetime(last_date))
+
+    return [start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")]
+
+
 def get_requested_stocks(
     df: pd.DataFrame, dates: list, stocks: list = [], num_stocks: int = 0
 ) -> pd.DataFrame:
@@ -190,6 +215,7 @@ def generate_input_graph(df: pd.DataFrame = None) -> go.Figure:
         )
 
     fig.update_layout(
+        title="Historical Stock Data",
         xaxis_title="Month",
         yaxis_title="Price",
         hovermode="x",

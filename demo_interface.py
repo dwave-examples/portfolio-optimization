@@ -37,22 +37,31 @@ from src.demo_enums import PeriodType, SolverType
 THEME_COLOR = "#2d4376"
 
 
-def slider(label: str, id: str, config: dict, marks: list | None = None, labelAlwaysOn: bool = True) -> html.Div:
+def slider(
+    label: str, id: str, config: dict, marks: list | None = None, show_label: bool = True
+) -> html.Div:
     """Slider element for value selection.
 
     Args:
-        label: The title that goes above the slider.
+        label: The title that goes above the slider. Also used as the thumb's accessible name.
         id: A unique selector for this element.
         config: A dictionary of slider configurations, see dmc.Slider Dash Mantine docs.
+        marks: Marks to show on the slider track. Defaults to the min and max values.
+        show_label: Whether to show the title above the slider and the value label on the
+            thumb. When ``False`` only the track and its marks are shown.
     """
+    # Setting ``label`` to None removes the thumb's value label entirely.
+    thumb_label_config = {"labelAlwaysOn": True} if show_label else {"label": None}
+
     return html.Div(
         className="slider-wrapper",
         children=[
-            html.Label(label, htmlFor=id),
+            html.Label(label, htmlFor=id) if show_label else (),
             dmc.Slider(
                 id=id,
                 className="slider",
                 **config,
+                **thumb_label_config,
                 marks=(
                     marks
                     if marks
@@ -61,7 +70,6 @@ def slider(label: str, id: str, config: dict, marks: list | None = None, labelAl
                         {"value": config["max"], "label": f'{config["max"]}'},
                     ]
                 ),
-                labelAlwaysOn=labelAlwaysOn,
                 thumbLabel=f"{label} slider",
                 color=THEME_COLOR,
             ),
@@ -347,12 +355,18 @@ def generate_dates_slider(dates: list) -> html.Div:
     """
     last_date = len(dates) - 1
 
+    # A mark per date gives the track a dot at every position; only the ends are labelled.
+    marks = [
+        {"value": i, "label": dates[i]} if i in (0, last_date) else {"value": i}
+        for i in range(len(dates))
+    ]
+
     return slider(
-        "",
+        "Results date",
         "results-date-selector",
         {"min": 0, "max": last_date, "value": last_date, "step": 1},
-        marks=[{"value": 0, "label": dates[0]}, {"value": f"{last_date}", "label": f"{dates[-1]}"}],
-        labelAlwaysOn=False, 
+        marks=marks,
+        show_label=False,
     )
 
 

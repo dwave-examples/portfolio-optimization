@@ -123,7 +123,7 @@ def get_baseline_data(dates: list) -> pd.DataFrame:
     return df_baseline
 
 
-def get_month_range(dates: list, last_date: pd.Timestamp = None) -> list[str]:
+def get_month_range(dates: list) -> list[str]:
     """Expands a pair of dates to cover the full calendar months they fall in.
 
     Stock data is stored as one row per month, keyed by the last trading day of that month,
@@ -132,8 +132,6 @@ def get_month_range(dates: list, last_date: pd.Timestamp = None) -> list[str]:
 
     Args:
         dates: Pair of date strings for the start and end of the range.
-        last_date: The most recent date with data. If provided, the end of the range is
-            clamped to it so a partial final month can still be requested.
 
     Returns:
         A pair of ``YYYY-MM-DD`` strings for the first day of the start month and the last day
@@ -141,9 +139,6 @@ def get_month_range(dates: list, last_date: pd.Timestamp = None) -> list[str]:
     """
     start = pd.to_datetime(dates[0]).to_period("M").start_time
     end = pd.to_datetime(dates[1]).to_period("M").end_time.normalize()
-
-    if last_date is not None:
-        end = min(end, pd.to_datetime(last_date))
 
     return [start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")]
 
@@ -165,12 +160,17 @@ def get_requested_stocks(
     """
     print(f"\nGetting stock data for {dates[0]} to {dates[1]}...")
 
-    first_date = df.index[0]
-    last_date = df.index[-1]
     requested_start = pd.to_datetime(dates[0])
     requested_end = pd.to_datetime(dates[1])
 
-    if requested_start < first_date or requested_end > last_date:
+    # Data is monthly (one row per month, dated by its last trading day), so a request is
+    # only out of range if it asks for a month the data doesn't cover. Comparing by month
+    # lets a request span the first and last months even when the data for those months
+    # doesn't start on the 1st or run to the end of the month.
+    first_month = df.index[0].to_period("M")
+    last_month = df.index[-1].to_period("M")
+
+    if requested_start.to_period("M") < first_month or requested_end.to_period("M") > last_month:
         raise Exception("Data does not exist for requested date.")
 
     df_date_filtered = df[(df.index >= requested_start) & (df.index <= requested_end)]

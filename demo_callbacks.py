@@ -158,9 +158,8 @@ def render_initial_state(
     if not date_range or not all(date_range):
         raise PreventUpdate  # Only one end of the range has been picked so far
 
-    df_all_stocks = deserialize(all_stocks_store)
-    dates = get_month_range(date_range, last_date=df_all_stocks.index[-1])
-    df = get_requested_stocks(df_all_stocks, dates, stocks)
+    dates = get_month_range(date_range)
+    df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
 
     if len(df) < 4:
         return RenderInitialStateReturn(
@@ -346,7 +345,8 @@ def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> b
     if is_loop_running:
         raise PreventUpdate
 
-    return True, f"Submitting problem {iter-3} of {max_iter-3}..."
+    # Iterations run from 3 through max_iter inclusive, so this is problem iter-2 of max_iter-2.
+    return True, f"Submitting problem {iter-2} of {max_iter-2}..."
 
 
 class UpdateMultiOutputReturn(NamedTuple):
@@ -445,8 +445,10 @@ def update_multi_output(
     if not is_loop_running or iteration > max_iterations:
         raise PreventUpdate
 
-    if iteration == 3:  # First iteration
-        my_portfolio = MultiPeriod(
+    is_first_iteration = iteration == 3
+
+    if is_first_iteration:
+        portfolio = MultiPeriod(
             budget=budget,
             sampler_args="{}",
             gamma=100,
@@ -460,80 +462,64 @@ def update_multi_output(
             verbose=False,
         )
 
-        my_portfolio.load_data()
+        portfolio.load_data()
 
-        my_portfolio.baseline_values = [0]
-        my_portfolio.update_values = [0]
-        my_portfolio.opt_results_df = pd.DataFrame(
+        portfolio.baseline_values = [0]
+        portfolio.update_values = [0]
+        portfolio.opt_results_df = pd.DataFrame(
             columns=["Date", "Value"] + stocks + ["Variance", "Returns"]
         )
-        my_portfolio.price_df = pd.DataFrame(columns=stocks)
+        portfolio.price_df = pd.DataFrame(columns=stocks)
 
-        fig = initialize_output_graph(my_portfolio.df_baseline, budget)
+        fig = initialize_output_graph(portfolio.df_baseline, budget)
 
-        baseline_result, months, all_solutions, init_holdings = my_portfolio.initiate_run_update(
+        baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
             i=iteration,
             baseline_result={},
             months=[],
             all_solutions={},
         )
 
-        fig = update_output_graph(
-            fig,
-            iteration,
-            my_portfolio.update_values,
-            my_portfolio.baseline_values,
-            my_portfolio.df_all,
-        )
+        loop_store = {"budget": budget}
+    else:
+        portfolio = deserialize(portfolio)
+        fig = go.Figure(fig)
 
-        return UpdateMultiOutputReturn(
-            output_graph=fig,
-            iteration=iteration + 1,
-            results_date_dict=all_solutions,
-            portfolio=serialize(my_portfolio),
-            loop_store={
-                "baseline": baseline_result,
-                "months": months,
-                "budget": budget,
-                "holdings": init_holdings,
+        baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
+            i=iteration,
+            first_purchase=False,
+            baseline_result={
+                key: np.array(value) for key, value in loop_store["baseline"].items()
             },
-            is_loop_running=False,
-            graph_tab_disabled=False,
+            months=loop_store["months"],
+            initial_budget=loop_store["budget"],
+            all_solutions=results_date_dict,
+            init_holdings=loop_store["holdings"],
         )
 
-    portfolio = deserialize(portfolio)
-    baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
-        i=iteration,
-        first_purchase=False,
-        baseline_result={key: np.array(value) for key, value in loop_store["baseline"].items()},
-        months=loop_store["months"],
-        initial_budget=loop_store["budget"],
-        all_solutions=results_date_dict,
-        init_holdings=loop_store["holdings"],
-    )
+    loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
     fig = update_output_graph(
-        go.Figure(fig),
+        fig,
         iteration,
         portfolio.update_values,
         portfolio.baseline_values,
         portfolio.df_all,
     )
 
-    if iteration == max_iterations:  # Last iteration
-        dates = [
-            datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y")
-            for date in results_date_dict.keys()
-        ]
-        solutions = list(results_date_dict.values())
+    dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in all_solutions]
+    solutions = list(all_solutions.values())
 
-        output_tables = generate_table_group(
-            tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
-            title=dates[-1],
-        )
+    output_tables = generate_table_group(
+        tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
+        title=dates[-1],
+    )
 
-        dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
+    dates_slider = generate_dates_slider(dates) if len(dates) > 1 else []
 
+    # The first iteration can also be the last when the range is only four months long, so
+    # every iteration (including the first) has to check whether the run is finished.
+    if iteration == max_iterations:
         return UpdateMultiOutputReturn(
             output_graph=fig,
             iteration=3,
@@ -546,24 +532,10 @@ def update_multi_output(
             run_button_style={},
             results_tab_disabled=False,
             results_tab_label="Results",
+            graph_tab_disabled=False if is_first_iteration else dash.no_update,
             graph_update_status="",
         )
 
-    loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
-
-    dates = [
-        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in results_date_dict.keys()
-    ]
-    solutions = list(results_date_dict.values())
-
-    output_tables = generate_table_group(
-        tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
-        title=dates[-1],
-    )
-
-    dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
-
-    # Regular iteration
     return UpdateMultiOutputReturn(
         output_graph=fig,
         iteration=iteration + 1,
@@ -574,6 +546,7 @@ def update_multi_output(
         loop_store=loop_store,
         is_loop_running=False,
         results_tab_disabled=False,
+        graph_tab_disabled=False if is_first_iteration else dash.no_update,
     )
 
 
@@ -608,7 +581,6 @@ class RunOptimizationReturn(NamedTuple):
         State("transaction-cost", "value"),
         State("date-range", "value"),
         State("stocks", "value"),
-        State("all-stocks-store", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -621,7 +593,6 @@ def run_optimization(
     transaction_cost: float,
     date_range: list,
     stocks: list,
-    all_stocks_store: str,
 ) -> RunOptimizationReturn:
     """Updates UI and triggers optimization run.
 
@@ -634,7 +605,6 @@ def run_optimization(
         transaction_cost: The selected transaction cost.
         date_range: The selected start and end months as a pair of ``YYYY-MM-DD`` strings.
         stocks: The list of selected stocks.
-        all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
     Returns:
         A NamedTuple ``RunOptimizationReturn`` containing:
@@ -648,10 +618,7 @@ def run_optimization(
             graph-tab-disabled: Whether to disable the graph tab.
 
     """
-    if date_range and all(date_range):
-        dates = get_month_range(date_range, last_date=deserialize(all_stocks_store).index[-1])
-    else:
-        dates = DATES_DEFAULT
+    dates = get_month_range(date_range) if date_range and all(date_range) else DATES_DEFAULT
 
     settings_store = {
         "solver type": int(solver_type),

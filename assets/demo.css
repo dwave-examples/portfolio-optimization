@@ -137,7 +137,7 @@ table td:nth-child(2n+1) {
 
 #date-range-description {
     font-size: 0.875rem;
-    color: var(--grey-medium);
+    color: #545454;
 }
 
 .mantine-InputWrapper-label.mantine-MonthPickerInput-label {
@@ -148,4 +148,16 @@ table td:nth-child(2n+1) {
     margin: 1rem 0 0.5rem;
     font-weight: 600;
     display: block;
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-in-range]) {
+    background-color: rgb(181, 195, 227);
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-selected]) {
+    background-color: var(--blue-darker);
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-selected]):hover {
+    background-color: var(--blue-darkest);
 }

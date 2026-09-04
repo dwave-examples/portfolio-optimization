@@ -65,8 +65,8 @@ table td:nth-child(2n+1) {
 
 .results-tables .arrow-False {
     margin-left: 1rem;
-    color: var(--red-light);
-    -webkit-text-stroke: 4px var(--red-light);
+    color: var(--red-dark);
+    -webkit-text-stroke: 4px var(--red-dark);
 }
 
 .results-tables .arrow-True {
@@ -137,7 +137,7 @@ table td:nth-child(2n+1) {
 
 #date-range-description {
     font-size: 0.875rem;
-    color: #545454;
+    color: #4f4e4e;
 }
 
 .mantine-InputWrapper-label.mantine-MonthPickerInput-label {
@@ -151,7 +151,7 @@ table td:nth-child(2n+1) {
 }
 
 .mantine-MonthPickerInput-pickerControl:where([data-in-range]) {
-    background-color: rgb(181, 195, 227);
+    background-color: #b5c3e3;
 }
 
 .mantine-MonthPickerInput-pickerControl:where([data-selected]) {
@@ -160,4 +160,23 @@ table td:nth-child(2n+1) {
 
 .mantine-MonthPickerInput-pickerControl:where([data-selected]):hover {
     background-color: var(--blue-darkest);
+}
+
+/* Style rules shared by all dmc inputs (NumberInput, TextInput, Select, MultiSelect,
+MonthPickerInput, etc.). Mantine's default border is too light against the left column to
+meet the 3:1 non-text contrast minimum, so darken it. */
+.mantine-Input-input {
+    border-color: var(--grey-medium);
+}
+
+.mantine-Input-input:focus-visible,
+.mantine-Input-input:focus-within {
+    box-shadow: 0 0 0 2px var(--teal);
+}
+
+/* The scrollable list inside dmc dropdowns (e.g. the stocks MultiSelect) can receive keyboard
+focus but has no default indicator. */
+.mantine-ScrollArea-viewport:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--teal);
 }

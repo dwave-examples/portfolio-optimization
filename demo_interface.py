@@ -229,6 +229,17 @@ def generate_settings_form() -> html.Div:
                 maxDate=date.today().replace(day=1) - timedelta(days=1),  # prev month end
                 type="range",
                 valueFormat="MMM YYYY",
+                # prev/next controls are icon-only buttons, but need names for accessibility.
+                ariaLabels={
+                    "previousYear": "Previous year",
+                    "nextYear": "Next year",
+                    "previousDecade": "Previous decade",
+                    "nextDecade": "Next decade",
+                },
+                # Our ``id`` replaces the popover target id that the dropdown's aria-labelledby
+                # would reference, so turn off the popover's dialog roles to avoid a dangling
+                # reference. The input button itself still carries aria-haspopup/aria-expanded.
+                popoverProps={"withRoles": False},
                 value=[DATES_DEFAULT[0], DATES_DEFAULT[1]],
             ),
             html.P(
@@ -298,10 +309,20 @@ def generate_table(table_dict: dict, comparison: list = []) -> html.Table:
                         html.Td(
                             [
                                 table_dict[key],
+                                # The arrow is a graphic conveying direction, so give it an
+                                # image role and a text alternative for screen readers.
                                 html.Span(
                                     "↑" if comparison[i] else "↓",
                                     className=f"arrow-{comparison[i]}",
                                     style={"visibility": "hidden"} if comparison[i] is None else {},
+                                    role="img",
+                                    **{
+                                        "aria-label": (
+                                            "increased from previous period"
+                                            if comparison[i]
+                                            else "decreased from previous period"
+                                        )
+                                    },
                                 ),
                             ]
                             if i < len(comparison)
@@ -380,7 +401,6 @@ def create_interface() -> html.Div:
                 href="#main-content",
                 id="skip-to-main",
                 className="skip-link",
-                tabIndex=1,
             ),
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
@@ -473,7 +493,11 @@ def create_interface() -> html.Div:
                                                 [
                                                     dmc.TabsList(
                                                         [
-                                                            dmc.TabsTab("Input", value="input-tab"),
+                                                            dmc.TabsTab(
+                                                                "Input",
+                                                                value="input-tab",
+                                                                id="input-tab",
+                                                            ),
                                                             dmc.TabsTab(
                                                                 "Graph",
                                                                 value="graph-tab",
@@ -496,7 +520,8 @@ def create_interface() -> html.Div:
                                     ),
                                     dmc.TabsPanel(
                                         value="input-tab",
-                                        tabIndex="12",
+                                        **{"aria-labelledby": "input-tab"},
+                                        tabIndex=0,
                                         children=[
                                             html.Div(
                                                 className="tab-content-wrapper",
@@ -522,7 +547,8 @@ def create_interface() -> html.Div:
                                     ),
                                     dmc.TabsPanel(
                                         value="graph-tab",
-                                        tabIndex="13",
+                                        **{"aria-labelledby": "graph-tab"},
+                                        tabIndex=0,
                                         children=[
                                             html.Div(
                                                 className="tab-content-wrapper",
@@ -543,7 +569,8 @@ def create_interface() -> html.Div:
                                     ),
                                     dmc.TabsPanel(
                                         value="results-tab",
-                                        tabIndex="14",
+                                        **{"aria-labelledby": "results-tab"},
+                                        tabIndex=0,
                                         children=[
                                             html.Div(
                                                 className="tab-content-wrapper",

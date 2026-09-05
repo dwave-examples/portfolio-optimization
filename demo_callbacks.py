@@ -121,17 +121,18 @@ def render_initial_state(
 
     Returns:
         A NamedTuple ``RenderInitialStateReturn`` that contains the following:
-            input_graph: The input stocks graph.
-            stocks_error: The class name for the stock error.
-            dates_error: The class name for the date range error.
-            run_button_disabled: Whether the run button should be disabled.
-            max_iter: The number of months between start and end date, which is the number of
-                times to run ``update_multi_output`` (minus 3).
-            stocks_options: The dropdown stocks to choose from.
-            stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
-            all_stocks_store: A dataframe of all the stocks available, stored serialized.
-            date_range_min: Any month older than this will be disabled on the date selector.
-            date_range_max: Any month more recent than this will be disabled on the date selector.
+
+        - input_graph: The input stocks graph.
+        - stocks_error: The class name for the stock error.
+        - dates_error: The class name for the date range error.
+        - run_button_disabled: Whether the run button should be disabled.
+        - max_iter: The number of months between start and end date, which is the number of
+        times to run ``update_multi_output`` (minus 3).
+        - stocks_options: The dropdown stocks to choose from.
+        - stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
+        - all_stocks_store: A dataframe of all the stocks available, stored serialized.
+        - date_range_min: Any month older than this will be disabled on the date selector.
+        - date_range_max: Any month more recent than this will be disabled on the date selector.
     """
     # First load, initialize stock dropdown
     if not ctx.triggered_id:
@@ -184,7 +185,7 @@ def render_initial_state(
 )
 def update_selected_period(
     period_option: str,
-) -> tuple[str, int, str, bool, bool, dict]:
+) -> tuple[str, bool, bool, dict]:
     """Updates the period that is selected (SINGLE or MULTI), hides/shows settings accordingly,
         and updates the navigation options to indicate the currently active period option.
 
@@ -192,10 +193,12 @@ def update_selected_period(
         period_option: The currently selected period option as a string.
 
     Returns:
-        selected-tab (str): The tab to select.
-        results-tab-disabled (bool): Whether the results tab should be disabled.
-        graph-tab-disabled (bool): Whether the graph tab should be disabled.
-        graph-tab-style (dict): The style settings for the graph tab.
+        A tuple containing:
+
+        - str: The tab to select.
+        - bool: Whether the results tab should be disabled.
+        - bool: Whether the graph tab should be disabled.
+        - dict: The style settings for the graph tab.
     """
     period = int(period_option)
 
@@ -223,8 +226,7 @@ def update_settings(
             or Classical (``1`` or ``SolverType.CLASSICAL``).
 
     Returns:
-        transaction-cost-wrapper-classname: The class name to hide or show the
-            transaction cost selector.
+        The class name to hide or show the transaction cost selector.
     """
     return "display-none" if int(solver_type) == SolverType.DQM.value else ""
 
@@ -251,7 +253,7 @@ def update_results_date_table(
         settings_store: The settings that have been selected for this run.
 
     Returns:
-        dynamic-results-table: The new table based on the data from the date that was selected.
+        The new table based on the data from the date that was selected.
     """
     solver_type = SolverType(settings_store["solver type"])
 
@@ -309,11 +311,13 @@ def cancel(cancel_button_click: int) -> tuple[bool, dict, dict, int, str]:
         cancel_button_click: The number of times the cancel button has been clicked.
 
     Returns:
-        loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
-        cancel-button-style: The style for the cancel button.
-        run-button-style: The style for the run button.
-        iteration: The number to reset the iteration store to.
-        results-tab-label: The label of the results tab.
+        A tuple containing:
+
+        - bool: Whether to disable the trigger that starts ``update_multi_output``.
+        - dict: The style for the cancel button.
+        - dict: The style for the run button.
+        - int: The number to reset the iteration store to.
+        - str: The label of the results tab.
     """
     return True, {"display": "none"}, {}, 3, "Results"
 
@@ -329,7 +333,12 @@ def cancel(cancel_button_click: int) -> tuple[bool, dict, dict, int, str]:
     ],
     prevent_initial_call=True,
 )
-def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> bool:
+def start_loop_iteration(
+    interval_trigger: int,
+    is_loop_running: bool,
+    iter: int,
+    max_iter: int,
+) -> tuple[bool, str]:
     """Triggers ``update_multi_output`` when Interval is triggered.
 
     Args:
@@ -339,8 +348,10 @@ def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> b
         max_iter: The maximum times to call run_update().
 
     Returns:
-        loop-running: Whether the loop is running.
-        graph-update-status: The text to indicate the iteration progress.
+        A tuple containing:
+
+        - bool: Whether the loop is running.
+        - str: The text to indicate the iteration progress.
     """
     if is_loop_running:
         raise PreventUpdate
@@ -422,21 +433,22 @@ def update_multi_output(
 
     Returns:
         A NamedTuple ``UpdateMultiOutputReturn`` that contains the following:
-            output_graph: The updated output graph.
-            iteration: The next iteration count of the function.
-            dates_slider: A slider of dates that updates the visible solution_table.
-            solution_tables: The solution tables generated by generate_table_group.
-            results_date_dict: A dictionary of date keys and solution values.
-            portfolio: The MultiPeriod portfolio object.
-            loop_store: A dictionary of variables to pass between iterations.
-            is_loop_running: True if the loop is executing, False otherwise.
-            interval_disabled: False if interval is running, True otherwise.
-            cancel_button_style: The style for the cancel button.
-            run_button_style: The style for the run button.
-            results_tab_disabled: Whether the results tab should be disabled.
-            results_tab_label: The label of the results tab.
-            graph_tab_disabled: Whether the graph tab should be disabled.
-            graph_update_status: The text to indicate the iteration progress.
+
+        - output_graph: The updated output graph.
+        - iteration: The next iteration count of the function.
+        - dates_slider: A slider of dates that updates the visible solution_table.
+        - solution_tables: The solution tables generated by generate_table_group.
+        - results_date_dict: A dictionary of date keys and solution values.
+        - portfolio: The MultiPeriod portfolio object.
+        - loop_store: A dictionary of variables to pass between iterations.
+        - is_loop_running: True if the loop is executing, False otherwise.
+        - interval_disabled: False if interval is running, True otherwise.
+        - cancel_button_style: The style for the cancel button.
+        - run_button_style: The style for the run button.
+        - results_tab_disabled: Whether the results tab should be disabled.
+        - results_tab_label: The label of the results tab.
+        - graph_tab_disabled: Whether the graph tab should be disabled.
+        - graph_update_status: The text to indicate the iteration progress.
     """
     solver_type = SolverType(settings_store["solver type"])
     stocks = settings_store["stocks"]
@@ -608,14 +620,15 @@ def run_optimization(
 
     Returns:
         A NamedTuple ``RunOptimizationReturn`` containing:
-            cancel-button-style: The style for the cancel button.
-            run-button-style: The style for the run button.
-            results-tab-disabled: Whether the results tab should be disabled.
-            results-tab-label: The label of the results tab.
-            tabs-value: Which tab should be selected.
-            settings-store: Storing all the settings for the run.
-            loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
-            graph-tab-disabled: Whether to disable the graph tab.
+
+        - cancel_button_style: The style for the cancel button.
+        - run_button_style: The style for the run button.
+        - results_tab_disabled: Whether the results tab should be disabled.
+        - results_tab_label: The label of the results tab.
+        - tabs_value: Which tab should be selected.
+        - settings_store: Storing all the settings for the run.
+        - loop_interval_disabled: Whether to disable the trigger that starts ``update_multi_output``.
+        - graph_tab_disabled: Whether to disable the graph tab.
 
     """
     dates = get_month_range(date_range) if date_range and all(date_range) else DATES_DEFAULT
@@ -663,12 +676,14 @@ def run_optimization_single(
         settings_store: The settings that have been selected for this run.
 
     Returns:
-        solution-table: The tables to display the solution.
-        cancel-button-style: The style for the cancel button.
-        run-button-style: The style for the run button.
-        results-tab-disabled: Whether the results tab should be disabled.
-        results-tab-label: The label of the results tab.
-        dates_slider: A slider of dates that updates the visible solution_table.
+        A tuple containing:
+
+        - list: The tables to display the solution.
+        - dict: The style for the cancel button.
+        - dict: The style for the run button.
+        - bool: Whether the results tab should be disabled.
+        - str: The label of the results tab.
+        - str: A slider of dates that updates the visible solution_table.
     """
     if int(settings_store["selected-period"]) == PeriodType.MULTI.value:
         raise PreventUpdate

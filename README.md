@@ -11,7 +11,7 @@ Optimizing a portfolio of stocks is a challenging problem that looks to identify
 of shares of each stock to purchase in order to minimize risk (variance) and maximize returns,
 while staying under some specified spending budget.
 
-![Demo Example](static/demo.png)
+![Demo Example](static/demo.png "Image of demo interface")
 
 ## Installation
 You can run this example without installation in cloud-based IDEs that support the
@@ -184,7 +184,7 @@ over 30 different portfolios.
 
 At the end of the analysis, the plot is saved as a .png file, as shown below.
 
-![Example Plot](static/portfolio.png)
+![Multi-period portfolio value plot](static/portfolio.png "Line chart of portfolio value over time: the optimized portfolio in blue outperforms the fund portfolio in grey")
 
 ## Problem Set Up
 
@@ -195,7 +195,7 @@ returns of stocks i and j. For a spending budget of B dollars, let x<sub>i</sub>
 of shares of stock i purchased at price p<sub>i</sub> per share. Then, this portfolio optimization
 problem can be represented as
 
-![Model Formulation](static/equation.png)
+![Portfolio optimization model formulation](static/equation.png "Equation: minimize alpha times the double sum over i and j of sigma_ij p_i x_i p_j x_j, minus the sum over i of r_bar_i p_i x_i, subject to the sum over i of p_i x_i being at most B, with each x_i a non-negative integer")
 
 Here, &alpha; &gt; 0 is the trade-off coefficient between the risk (variance) and the returns, also
 known as the risk aversion coefficient. Notice that while we are minimizing the variance, we are

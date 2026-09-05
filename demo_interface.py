@@ -16,9 +16,10 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
+from enum import EnumMeta
 
 from dash import dcc, html
+import dash_mantine_components as dmc
 
 from demo_configs import (
     BUDGET,
@@ -27,59 +28,50 @@ from demo_configs import (
     DESCRIPTION,
     MAIN_HEADER,
     SOLVER_TIME,
-    THEME_COLOR_SECONDARY,
     THUMBNAIL,
     TRANSACTION_COST,
 )
 from src.demo_enums import PeriodType, SolverType
 
 
+THEME_COLOR = "#2d4376"
+
+
 def slider(
-    label: str,
-    id: str,
-    config: dict,
-    wrapper_id: str = "",
-    marks: Optional[dict] = None,
-    show_tooltip: bool = True,
-    dots: bool = False,
+    label: str, id: str, config: dict, marks: list | None = None, show_label: bool = True
 ) -> html.Div:
     """Slider element for value selection.
 
     Args:
-        label: The title that goes above the slider.
+        label: The title that goes above the slider. Also used as the thumb's accessible name.
         id: A unique selector for this element.
-        config: A dictionary of slider configerations, see dcc.Slider Dash docs.
-        wrapper_id: A unique selector for the wrapper element.
-        marks: Optional marks to show instead of max and min.
-        show_tooltip: Whether the tooltip should be visible.
-        dots: Whether dots should be shown where the important data points are.
+        config: A dictionary of slider configurations, see dmc.Slider Dash Mantine docs.
+        marks: Marks to show on the slider track. Defaults to the min and max values.
+        show_label: Whether to show the title above the slider and the value label on the
+            thumb. When ``False`` only the track and its marks are shown.
     """
+    # Setting ``label`` to None removes the thumb's value label entirely.
+    thumb_label_config = {"labelAlwaysOn": True} if show_label else {"label": None}
+
     return html.Div(
         className="slider-wrapper",
-        id=wrapper_id,
         children=[
-            html.Label(label) if label else (),
-            dcc.Slider(
+            html.Label(label, htmlFor=id) if show_label else (),
+            dmc.Slider(
                 id=id,
                 className="slider",
                 **config,
+                **thumb_label_config,
                 marks=(
                     marks
                     if marks
-                    else {
-                        config["min"]: str(config["min"]),
-                        config["max"]: str(config["max"]),
-                    }
+                    else [
+                        {"value": config["min"], "label": f'{config["min"]}'},
+                        {"value": config["max"], "label": f'{config["max"]}'},
+                    ]
                 ),
-                dots=dots,
-                tooltip=(
-                    {
-                        "placement": "bottom",
-                        "always_visible": True,
-                    }
-                    if show_tooltip
-                    else None
-                ),
+                thumbLabel=f"{label} slider",
+                color=THEME_COLOR,
             ),
         ],
     )
@@ -96,91 +88,202 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
     return html.Div(
         className="dropdown-wrapper",
         children=[
-            html.Label(label) if label else (),
-            dcc.Dropdown(
+            html.Label(label, htmlFor=id),
+            dmc.Select(
                 id=id,
-                options=options,
+                data=options,
                 value=options[0]["value"],
-                clearable=False,
-                searchable=False,
+                allowDeselect=False,
             ),
         ],
     )
 
 
-def generate_options(options_list: list) -> list[dict]:
-    """Generates options for dropdowns, checklists, radios, etc."""
-    return [{"label": label, "value": i} for i, label in enumerate(options_list)]
+def multiselect(label: str, id: str, options: list, values: list) -> html.Div:
+    """Multiselect element for option selection.
+
+    Args:
+        label: The title that goes above the multiselect.
+        id: A unique selector for this element.
+        options: A list of dictionaries of labels and values.
+        values: A list of values that should be preselected in the multiselect.
+    """
+    return html.Div(
+        className="dropdown-wrapper",
+        children=[
+            html.Label(label, htmlFor=id),
+            dmc.MultiSelect(
+                id=id,
+                data=options,
+                value=values,
+            ),
+        ],
+    )
+
+
+def radio(label: str, id: str, options: list, value: str, inline: bool = True) -> html.Div:
+    """Radio element for option selection.
+
+    Args:
+        label: The title that goes above the radio.
+        id: A unique selector for this element.
+        options: A list of dictionaries of labels and values.
+        value: The value of the radio that should be preselected.
+        inline: Whether the options are displayed beside or below each other.
+    """
+    return html.Div(
+        className="radio-wrapper",
+        children=[
+            dmc.RadioGroup(
+                id=id,
+                className=f"radio{' radio--inline' if inline else ''}",
+                label=label,
+                value=value,
+                children=dmc.Group(
+                    [
+                        dmc.Radio(option["label"], value=option["value"], color=THEME_COLOR)
+                        for option in options
+                    ]
+                ),
+            ),
+        ],
+    )
+
+
+def input(label: str, id: str, configs: dict, type: str="number") -> html.Div:
+    """Input element for either text or number input.
+
+    Args:
+        label: The title that goes above the input.
+        id: A unique selector for this element.
+        configs: A dictionary of configurations for the input element.
+        type: The type of input, either "number" or "text".
+    """
+    return html.Div(
+        className="input-wrapper",
+        children=[
+            html.Label(label, htmlFor=id),
+            dmc.TextInput(
+                id=id,
+                **configs,
+            ) if type == "text" else dmc.NumberInput(
+                id=id,
+                **configs,
+            ),
+        ],
+    )
+
+
+def generate_options(options: list | EnumMeta | dict) -> list[dict]:
+    """Format options for dropdowns, checklists, radios, etc.
+
+    Args:
+        options: A list, EnumMeta, or dictionary of options to format.
+
+    Returns:
+        A list of dictionaries with "label" and "value" keys for each option.
+    """
+    if isinstance(options, EnumMeta):
+        return [{"label": option.label, "value": f"{option.value}"} for option in options]
+
+    if isinstance(options, dict):
+        return [{"label": f"{key}", "value": f"{value}"} for key, value in options.items()]
+
+    return [{"label": f"{option}", "value": f"{option}"} for option in options]
 
 
 def generate_settings_form() -> html.Div:
-    """This function generates settings for selecting the scenario, model, and solver.
+    """Generate settings for selecting the scenario, model, and solver.
 
     Returns:
-        html.Div: A Div containing the settings for selecting the scenario, model, and solver.
+        A Div containing the settings for selecting the scenario, model, and solver.
     """
-    solver_options = [
-        {"label": solver_type.label, "value": solver_type.value} for solver_type in SolverType
-    ]
+    solver_options = generate_options(SolverType)
+    stock_options = generate_options(DEFAULT_STOCKS)
 
     return html.Div(
         className="settings",
         children=[
             dropdown(
                 "Solver",
-                "sampler-type-select",
+                "solver-type-select",
                 sorted(solver_options, key=lambda op: op["value"]),
             ),
-            html.Label("Solver Time Limit (seconds)"),
-            dcc.Input(
-                id="solver-time-limit",
-                type="number",
-                **SOLVER_TIME,
+            input(
+                "Solver Time Limit (seconds)",
+                "solver-time-limit",
+                SOLVER_TIME,
             ),
-            html.Label("Stocks"),
-            dcc.Dropdown(
+            multiselect(
+                "Stocks",
+                "stocks",
+                sorted(stock_options, key=lambda op: op["value"]),
                 DEFAULT_STOCKS,
-                DEFAULT_STOCKS,
-                id="stocks",
-                multi=True,
             ),
             html.P("Please select at least 2 stocks", id="stocks-error", className="display-none"),
-            html.Label("Date Range"),
-            dcc.DatePickerRange(
+            dmc.MonthPickerInput(
                 id="date-range",
-                max_date_allowed=date.today().replace(day=1) - timedelta(days=1),  # prev month end
-                start_date=DATES_DEFAULT[0],
-                end_date=DATES_DEFAULT[1],
-                minimum_nights=125,
+                label="Date Range",
+                description="Date range must be at least four months.",
+                minDate=date(2020, 8, 1),
+                maxDate=date.today().replace(day=1) - timedelta(days=1),  # prev month end
+                type="range",
+                valueFormat="MMM YYYY",
+                # prev/next controls are icon-only buttons, but need names for accessibility.
+                ariaLabels={
+                    "previousYear": "Previous year",
+                    "nextYear": "Next year",
+                    "previousDecade": "Previous decade",
+                    "nextDecade": "Next decade",
+                },
+                # Our ``id`` replaces the popover target id that the dropdown's aria-labelledby
+                # would reference, so turn off the popover's dialog roles to avoid a dangling
+                # reference. The input button itself still carries aria-haspopup/aria-expanded.
+                popoverProps={"withRoles": False},
+                value=[DATES_DEFAULT[0], DATES_DEFAULT[1]],
             ),
-            html.P("Date range must be at least four months.", className="date-range-text"),
-            html.Label("Budget (USD)"),
-            dcc.Input(
-                id="budget",
-                type="number",
-                **BUDGET,
+            html.P(
+                "Please select a date range of at least four months",
+                id="dates-error",
+                className="display-none",
             ),
-            slider(
-                "Transaction Cost (%)",
-                "transaction-cost",
-                TRANSACTION_COST,
-                "transaction-cost-wrapper",
+            input(
+                "Budget (USD)",
+                "budget",
+                BUDGET,
+            ),
+            html.Div(
+                [
+                    slider(
+                        "Transaction Cost (%)",
+                        "transaction-cost",
+                        TRANSACTION_COST,
+                    ),
+                ],
+                id="transaction-cost-wrapper",
+            ),
+            radio(
+                "Period",
+                "period-options",
+                generate_options(PeriodType),
+                value=f"{PeriodType.MULTI.value}",
+                inline=False,
             ),
         ],
     )
 
 
 def generate_run_buttons() -> html.Div:
-    """Run and cancel buttons to run the optimization."""
+    """Generate run and cancel buttons to run the optimization."""
     return html.Div(
         id="button-group",
         children=[
-            html.Button(id="run-button", children="Run Optimization", n_clicks=0, disabled=False),
+            html.Button("Run Optimization", id="run-button", className="button"),
             html.Button(
+                "Cancel Optimization",
                 id="cancel-button",
-                children="Cancel Optimization",
-                n_clicks=0,
-                className="display-none",
+                className="button",
+                style={"display": "none"},
             ),
         ],
     )
@@ -194,7 +297,7 @@ def generate_table(table_dict: dict, comparison: list = []) -> html.Table:
         comparison: A list of comparisons between tables.
 
     Returns:
-        html.Table: A table containing results.
+        A table containing results.
     """
 
     return html.Table(
@@ -206,10 +309,20 @@ def generate_table(table_dict: dict, comparison: list = []) -> html.Table:
                         html.Td(
                             [
                                 table_dict[key],
+                                # The arrow is a graphic conveying direction, so give it an
+                                # image role and a text alternative for screen readers.
                                 html.Span(
                                     "↑" if comparison[i] else "↓",
                                     className=f"arrow-{comparison[i]}",
                                     style={"visibility": "hidden"} if comparison[i] is None else {},
+                                    role="img",
+                                    **{
+                                        "aria-label": (
+                                            "increased from previous period"
+                                            if comparison[i]
+                                            else "decreased from previous period"
+                                        )
+                                    },
                                 ),
                             ]
                             if i < len(comparison)
@@ -236,7 +349,7 @@ def generate_table_group(
         title: The title to display above the tables.
 
     Returns:
-        html.Div: A div containing a title and grouped tables.
+        A div containing a title and grouped tables.
     """
     if comparisons_data:
         tables = [
@@ -259,29 +372,39 @@ def generate_dates_slider(dates: list) -> html.Div:
         dates: A list of the dates in the slider.
 
     Returns:
-        html.Div: A div containing a dates slider.
+        A div containing a dates slider.
     """
     last_date = len(dates) - 1
 
+    # A mark per date gives the track a dot at every position; only the ends are labelled.
+    marks = [
+        {"value": i, "label": dates[i]} if i in (0, last_date) else {"value": i}
+        for i in range(len(dates))
+    ]
+
     return slider(
-        "",
+        "Results date",
         "results-date-selector",
         {"min": 0, "max": last_date, "value": last_date, "step": 1},
-        marks={0: dates[0], last_date: dates[-1]},
-        dots=True,
-        show_tooltip=False,
+        marks=marks,
+        show_label=False,
     )
 
 
 def create_interface() -> html.Div:
-    """Set the application HTML."""
+    """Create the main application interface."""
     return html.Div(
         id="app-container",
         children=[
+            html.A(  # Skip link for accessibility
+                "Skip to main content",
+                href="#main-content",
+                id="skip-to-main",
+                className="skip-link",
+            ),
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="run-in-progress", data=False),  # Indicates whether run is in progress
             dcc.Store(id="max-iterations", data=0),  # Max iterations of result loop
-            dcc.Store(id="selected-period", data=0),  # The currently selected period option
             dcc.Store(id="results-date-dict"),  # Dictionary of date periods and their solutions
             dcc.Store(id="portfolio"),
             dcc.Store(id="loop-store"),
@@ -295,27 +418,10 @@ def create_interface() -> html.Div:
             ),
             dcc.Store(id="loop-running", data=False),
             dcc.Store(id="iteration", data=3),
-            # Header brand banner
-            html.Div(
-                className="banner",
-                children=[
-                    html.Img(src=THUMBNAIL),
-                    html.Div(
-                        [
-                            html.Div(
-                                html.Button(
-                                    period.label,
-                                    id={"type": "period-option", "index": index},
-                                )
-                            )
-                            for index, period in enumerate(PeriodType)
-                        ]
-                    ),
-                ],
-            ),
             # Settings and results columns
-            html.Div(
+            html.Main(
                 className="columns-main",
+                id="main-content",
                 children=[
                     # Left column
                     html.Div(
@@ -328,21 +434,46 @@ def create_interface() -> html.Div:
                                     html.Div(
                                         className="left-column-layer-2",  # Padding and content wrapper
                                         children=[
-                                            html.H1(MAIN_HEADER),
-                                            html.P(DESCRIPTION),
-                                            generate_settings_form(),
-                                            generate_run_buttons(),
+                                            html.Div(
+                                                [
+                                                    html.H1(MAIN_HEADER),
+                                                    html.P(DESCRIPTION),
+                                                ],
+                                                className="title-section",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Div(
+                                                        html.Div(
+                                                            [
+                                                                generate_settings_form(),
+                                                                generate_run_buttons(),
+                                                            ],
+                                                            className="settings-and-buttons",
+                                                        ),
+                                                        className="settings-and-buttons-wrapper",
+                                                    ),
+                                                    # Left column collapse button
+                                                    html.Div(
+                                                        html.Button(
+                                                            id={
+                                                                "type": "collapse-trigger",
+                                                                "index": 0,
+                                                            },
+                                                            className="left-column-collapse",
+                                                            title="Collapse sidebar",
+                                                            children=[
+                                                                html.Div(className="collapse-arrow")
+                                                            ],
+                                                            **{"aria-expanded": "true"},
+                                                        ),
+                                                    ),
+                                                ],
+                                                className="form-section",
+                                            ),
                                         ],
                                     )
                                 ],
-                            ),
-                            # Left column collapse button
-                            html.Div(
-                                html.Button(
-                                    id={"type": "collapse-trigger", "index": 0},
-                                    className="left-column-collapse",
-                                    children=[html.Div(className="collapse-arrow")],
-                                ),
                             ),
                         ],
                     ),
@@ -350,66 +481,112 @@ def create_interface() -> html.Div:
                     html.Div(
                         className="right-column",
                         children=[
-                            dcc.Tabs(
+                            dmc.Tabs(
                                 id="tabs",
                                 value="input-tab",
-                                mobile_breakpoint=0,
+                                color="white",
                                 children=[
-                                    dcc.Tab(
-                                        label="Input",
-                                        id="input-tab",
-                                        value="input-tab",  # used for switching tabs programatically
-                                        className="tab",
+                                    html.Header(
+                                        className="banner",
                                         children=[
-                                            dcc.Loading(
-                                                parent_className="input",
-                                                className="input-loading",
-                                                type="circle",
-                                                color=THEME_COLOR_SECONDARY,
-                                                children=html.Div(
-                                                    [
-                                                        dcc.Graph(
-                                                            id="input-graph",
-                                                            responsive=True,
-                                                            config={"displayModeBar": False},
-                                                        )
-                                                    ],
-                                                ),
+                                            html.Nav(
+                                                [
+                                                    dmc.TabsList(
+                                                        [
+                                                            dmc.TabsTab(
+                                                                "Input",
+                                                                value="input-tab",
+                                                                id="input-tab",
+                                                            ),
+                                                            dmc.TabsTab(
+                                                                "Graph",
+                                                                value="graph-tab",
+                                                                id="graph-tab",
+                                                                disabled=True,
+                                                                style={"display": "none"},
+                                                            ),
+                                                            dmc.TabsTab(
+                                                                "Results",
+                                                                value="results-tab",
+                                                                id="results-tab",
+                                                                disabled=True,
+                                                            ),
+                                                        ]
+                                                    ),
+                                                ]
                                             ),
+                                            html.Img(src=THUMBNAIL, alt="D-Wave logo"),
                                         ],
                                     ),
-                                    dcc.Tab(
-                                        label="Graph",
-                                        id="graph-tab",
-                                        className="tab",
-                                        style={"display": "none"},
-                                        children=html.Div(
-                                            [
-                                                html.P(id="graph-update-status"),
-                                                dcc.Graph(
-                                                    id="output-graph",
-                                                    responsive=True,
-                                                    config={"displayModeBar": False},
-                                                ),
-                                            ],
-                                        ),
-                                    ),
-                                    dcc.Tab(
-                                        label="Results",
-                                        id="results-tab",
-                                        className="tab",
-                                        disabled=True,
+                                    dmc.TabsPanel(
+                                        value="input-tab",
+                                        **{"aria-labelledby": "input-tab"},
+                                        tabIndex=0,
                                         children=[
                                             html.Div(
-                                                className="tab-content-results",
+                                                className="tab-content-wrapper",
+                                                children=[
+                                                    dcc.Loading(
+                                                        parent_className="input",
+                                                        className="input-loading",
+                                                        type="circle",
+                                                        color=THEME_COLOR,
+                                                        children=html.Div(
+                                                            [
+                                                                dcc.Graph(
+                                                                    id="input-graph",
+                                                                    responsive=True,
+                                                                    config={"displayModeBar": False},
+                                                                )
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ]
+                                            )
+                                        ],
+                                    ),
+                                    dmc.TabsPanel(
+                                        value="graph-tab",
+                                        **{"aria-labelledby": "graph-tab"},
+                                        tabIndex=0,
+                                        children=[
+                                            html.Div(
+                                                className="tab-content-wrapper",
                                                 children=[
                                                     html.Div(
                                                         [
-                                                            html.Div(id="dates-slider"),
-                                                            html.Div(id="dynamic-results-table"),
-                                                        ]
+                                                            html.P(id="graph-update-status"),
+                                                            dcc.Graph(
+                                                                id="output-graph",
+                                                                responsive=True,
+                                                                config={"displayModeBar": False},
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ]
+                                            )
+                                        ],
+                                    ),
+                                    dmc.TabsPanel(
+                                        value="results-tab",
+                                        **{"aria-labelledby": "results-tab"},
+                                        tabIndex=0,
+                                        children=[
+                                            html.Div(
+                                                className="tab-content-wrapper",
+                                                children=[
+                                                    html.Div(
+                                                        className="tab-content-results",
+                                                        children=[
+                                                            html.Div(
+                                                                [
+                                                                    html.Div(id="dates-slider"),
+                                                                    html.Div(id="dynamic-results-table"),
+                                                                ]
+                                                            )
+                                                        ],
                                                     )
-                                                ],
+                                                ]
                                             )
                                         ],
                                     ),

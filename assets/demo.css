@@ -14,24 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* Style rules for all custom CSS. */
+/*******************************************************************
+This file contains all custom CSS for this demo.
+The following style rules can be altered or removed and any additional
+custom CSS can be added below.
+*******************************************************************/
 
-.tab-content-results {
-    padding: 3rem 3rem 0;
+.tab-content-wrapper {
+    padding: 2rem 2rem 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    max-width: 85rem;
-    min-width: 80rem;
 }
 
-.tab-content {
-    padding: 0 3rem 3rem;
-}
-
-.tab-content > div {
+.tab-content-wrapper > div {
     position: relative;
+    height: 100%;
+}
+
+.input, .results {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 table td:nth-child(2n) {
@@ -44,29 +50,7 @@ table td:nth-child(2n+1) {
 
 .input, .results, .input > div:first-child, #input-graph {
     height: 100%;
-}
-
-.banner > div {
-    display: flex;
-}
-
-.banner button {
-    opacity: 0.6;
-    font-size: 1.6rem;
-    font-weight: 500;
-    padding: 2rem 4rem;
-    text-underline-offset: 0.5rem;
-    border-radius: 0;
-}
-
-.banner button.active {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.banner button.active:hover {
-    filter: none;
-    cursor: default;
+    width: 100%;
 }
 
 .results-tables table:not(:last-child),
@@ -81,14 +65,14 @@ table td:nth-child(2n+1) {
 
 .results-tables .arrow-False {
     margin-left: 1rem;
-    color: var(--red-light);
-    -webkit-text-stroke: 4px var(--red-light);
+    color: var(--red-dark);
+    -webkit-text-stroke: 4px var(--red-dark);
 }
 
 .results-tables .arrow-True {
     margin-left: 1rem;
-    color: var(--teal-darker);
-    -webkit-text-stroke: 4px var(--teal-darker);
+    color: var(--teal-dark);
+    -webkit-text-stroke: 4px var(--teal-dark);
 }
 
 .results-comparison > div:first-child:not(:last-child) {
@@ -132,10 +116,6 @@ table td:nth-child(2n+1) {
     text-transform: uppercase;
 }
 
-.rc-slider-mark-text {
-    width: 10rem;
-}
-
 #dynamic-results-table {
     display: flex;
     justify-content: space-between;
@@ -144,23 +124,59 @@ table td:nth-child(2n+1) {
 #graph-update-status {
     position: absolute;
     z-index: 10;
-    top: 5rem;
-    right: 19rem;
+    top: 2rem;
+    right: 13rem;
     font-style: italic;
 }
 
-#stocks-error {
-    color: var(--red-light);
-    font-weight: 500;
+#stocks-error, #dates-error {
+    color: var(--red-dark);
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0;
 }
 
-#run-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    filter: none;
+#date-range-description {
+    font-size: 0.875rem;
+    color: #4f4e4e;
 }
 
-.date-range-text {
-    font-size: 1.3rem;
-    color: var(--grey-medium);
+.mantine-InputWrapper-label.mantine-MonthPickerInput-label {
+    font-family: var(--font);
+    color: var(--blue-darkest);
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    margin: 1rem 0 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-in-range]) {
+    background-color: #b5c3e3;
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-selected]) {
+    background-color: var(--blue-darker);
+}
+
+.mantine-MonthPickerInput-pickerControl:where([data-selected]):hover {
+    background-color: var(--blue-darkest);
+}
+
+/* Style rules shared by all dmc inputs (NumberInput, TextInput, Select, MultiSelect,
+MonthPickerInput, etc.). Mantine's default border is too light against the left column to
+meet the 3:1 non-text contrast minimum, so darken it. */
+.mantine-Input-input {
+    border-color: var(--grey-medium);
+}
+
+.mantine-Input-input:focus-visible,
+.mantine-Input-input:focus-within {
+    box-shadow: 0 0 0 2px var(--teal);
+}
+
+/* The scrollable list inside dmc dropdowns (e.g. the stocks MultiSelect) can receive keyboard
+focus but has no default indicator. */
+.mantine-ScrollArea-viewport:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--teal);
 }

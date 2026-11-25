@@ -15,13 +15,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
 import dash
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-from dash import ALL, MATCH, ctx
+from dash import MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
@@ -34,6 +34,7 @@ from src.utils import (
     deserialize,
     format_table_data,
     generate_input_graph,
+    get_month_range,
     get_requested_stocks,
     get_stock_data,
     initialize_output_graph,
@@ -44,29 +45,33 @@ from src.utils import (
 
 @dash.callback(
     Output({"type": "to-collapse-class", "index": MATCH}, "className"),
+    Output({"type": "collapse-trigger", "index": MATCH}, "aria-expanded"),
     inputs=[
         Input({"type": "collapse-trigger", "index": MATCH}, "n_clicks"),
         State({"type": "to-collapse-class", "index": MATCH}, "className"),
     ],
     prevent_initial_call=True,
 )
-def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
+def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[str, str]:
     """Toggles a 'collapsed' class that hides and shows some aspect of the UI.
 
     Args:
-        collapse_trigger (int): The (total) number of times a collapse button has been clicked.
-        to_collapse_class (str): Current class name of the thing to collapse, 'collapsed' if not
+        collapse_trigger: The (total) number of times a collapse button has been clicked.
+        to_collapse_class: Current class name of the thing to collapse, 'collapsed' if not
             visible, empty string if visible.
 
     Returns:
-        str: The new class name of the thing to collapse.
+        A tuple containing:
+
+        - str: The new class name of the thing to collapse.
+        - str: The aria-expanded value.
     """
 
     classes = to_collapse_class.split(" ") if to_collapse_class else []
     if "collapsed" in classes:
         classes.remove("collapsed")
-        return " ".join(classes)
-    return to_collapse_class + " collapsed" if to_collapse_class else "collapsed"
+        return " ".join(classes), "true"
+    return to_collapse_class + " collapsed" if to_collapse_class else "collapsed", "false"
 
 
 class RenderInitialStateReturn(NamedTuple):
@@ -74,6 +79,7 @@ class RenderInitialStateReturn(NamedTuple):
 
     input_graph: go.Figure = dash.no_update
     stocks_error: str = "display-none"
+    dates_error: str = "display-none"
     run_button_disabled: bool = False
     max_iter: int = dash.no_update
     stocks_options: list = dash.no_update
@@ -86,46 +92,47 @@ class RenderInitialStateReturn(NamedTuple):
 @dash.callback(
     Output("input-graph", "figure"),
     Output("stocks-error", "className"),
+    Output("dates-error", "className"),
     Output("run-button", "disabled"),
     Output("max-iterations", "data"),
-    Output("stocks", "options"),
+    Output("stocks", "data"),
     Output("stocks", "value"),
     Output("all-stocks-store", "data"),
-    Output("date-range", "min_date_allowed"),
-    Output("date-range", "max_date_allowed"),
+    Output("date-range", "minDate"),
+    Output("date-range", "maxDate"),
     inputs=[
-        Input("date-range", "start_date"),
-        Input("date-range", "end_date"),
+        Input("date-range", "value"),
         Input("stocks", "value"),
         State("all-stocks-store", "data"),
     ],
 )
 def render_initial_state(
-    start_date: str,
-    end_date: str,
+    date_range: list,
     stocks: list,
     all_stocks_store: str,
 ) -> RenderInitialStateReturn:
     """Takes the selected dates and stocks and updates the stocks graph.
 
     Args:
-        start_date: The selected start date.
-        end_date: The selected end date.
+        date_range: The selected start and end months as a pair of ``YYYY-MM-DD`` strings.
+            Either entry is ``None`` while the user is mid-selection.
         stocks: The selected stocks.
         all_stocks_store: A dataframe of all the stocks available, stored serialized.
 
     Returns:
         A NamedTuple ``RenderInitialStateReturn`` that contains the following:
-            input_graph: The input stocks graph.
-            stocks_error: The class name for the stock error.
-            run_button_disabled: Whether the run button should be disabled.
-            max_iter: The number of months between start and end date, which is the number of
-                times to run ``update_multi_output`` (minus 3).
-            stocks_options: The dropdown stocks to choose from.
-            stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
-            all_stocks_store: A dataframe of all the stocks available, stored serialized.
-            date_range_min: Any date older than this will be disabled on the date selector.
-            date_range_max: Any date more recent than this will be disabled on the date selector.
+
+        - input_graph: The input stocks graph.
+        - stocks_error: The class name for the stock error.
+        - dates_error: The class name for the date range error.
+        - run_button_disabled: Whether the run button should be disabled.
+        - max_iter: The number of months between start and end date, which is the number of
+        times to run ``update_multi_output`` (minus 3).
+        - stocks_options: The dropdown stocks to choose from.
+        - stocks_value: The value of the stocks dropdown. A sublist of stocks_options.
+        - all_stocks_store: A dataframe of all the stocks available, stored serialized.
+        - date_range_min: Any month older than this will be disabled on the date selector.
+        - date_range_max: Any month more recent than this will be disabled on the date selector.
     """
     # First load, initialize stock dropdown
     if not ctx.triggered_id:
@@ -142,15 +149,23 @@ def render_initial_state(
             stocks_options=stock_names,
             stocks_value=stocks,
             all_stocks_store=serialize(df_all_stocks),
-            date_range_min=df_all_stocks.index[0],
-            date_range_max=df_all_stocks.index[-1],
+            date_range_min=df_all_stocks.index[0].to_period("M").start_time.strftime("%Y-%m-%d"),
+            date_range_max=df_all_stocks.index[-1].to_period("M").start_time.strftime("%Y-%m-%d"),
         )
 
     if len(stocks) < 2:
         return RenderInitialStateReturn(stocks_error="", run_button_disabled=True)
 
-    dates = [start_date, end_date] if start_date and end_date else DATES_DEFAULT
+    if not date_range or not all(date_range):
+        raise PreventUpdate  # Only one end of the range has been picked so far
+
+    dates = get_month_range(date_range)
     df = get_requested_stocks(deserialize(all_stocks_store), dates, stocks)
+
+    if len(df) < 4:
+        return RenderInitialStateReturn(
+            input_graph=generate_input_graph(df), dates_error="", run_button_disabled=True
+        )
 
     return RenderInitialStateReturn(
         input_graph=generate_input_graph(df),
@@ -159,64 +174,50 @@ def render_initial_state(
 
 
 @dash.callback(
-    Output({"type": "period-option", "index": ALL}, "className"),
-    Output("selected-period", "data"),
     Output("tabs", "value"),
     Output("results-tab", "disabled", allow_duplicate=True),
     Output("graph-tab", "disabled"),
     Output("graph-tab", "style"),
     inputs=[
-        Input({"type": "period-option", "index": ALL}, "n_clicks"),
-        State("selected-period", "data"),
+        Input("period-options", "value"),
     ],
     prevent_initial_call="initial_duplicate",
 )
 def update_selected_period(
-    period_options: list[int],
-    selected_period: Union[PeriodType, int],
-) -> tuple[str, int, str, bool, bool, dict]:
+    period_option: str,
+) -> tuple[str, bool, bool, dict]:
     """Updates the period that is selected (SINGLE or MULTI), hides/shows settings accordingly,
         and updates the navigation options to indicate the currently active period option.
 
     Args:
-        period_options: A list containing the number of times each period option has been clicked.
-        selected_period: The currently selected period.
+        period_option: The currently selected period option as a string.
 
     Returns:
-        period-options-class (list): A list of classes for the header period navigation options.
-        selected-period (int): Either SINGLE (``0`` or ``PeriodType.SINGLE``) or
-            MULTI (``1`` or ``PeriodType.MULTI``).
-        selected-tab (str): The tab to select.
-        results-tab-disabled (bool): Whether the results tab should be disabled.
-        graph-tab-disabled (bool): Whether the graph tab should be disabled.
-        graph-tab-style (dict): The style settings for the graph tab.
+        A tuple containing:
+
+        - str: The tab to select.
+        - bool: Whether the results tab should be disabled.
+        - bool: Whether the graph tab should be disabled.
+        - dict: The style settings for the graph tab.
     """
-    if ctx.triggered_id and selected_period == ctx.triggered_id["index"]:
-        raise PreventUpdate
-
-    nav_class_names = [""] * len(period_options)
-    new_period = ctx.triggered_id["index"] if ctx.triggered_id else PeriodType.SINGLE.value
-
-    nav_class_names[new_period] = "active"
+    period = int(period_option)
 
     return (
-        nav_class_names,
-        new_period,
         "input-tab",
         True,
-        new_period is PeriodType.MULTI.value,
-        {"display": "none" if new_period is PeriodType.SINGLE.value else "block"},
+        period == PeriodType.MULTI.value,
+        {"display": "none" if period == PeriodType.SINGLE.value else "block"},
     )
 
 
 @dash.callback(
     Output("transaction-cost-wrapper", "className"),
     inputs=[
-        Input("sampler-type-select", "value"),
+        Input("solver-type-select", "value"),
     ],
 )
 def update_settings(
-    solver_type: Union[SolverType, int],
+    solver_type: str,
 ) -> str:
     """Hides the transaction cost when the DQM is selected and shows otherwise.
 
@@ -225,10 +226,9 @@ def update_settings(
             or Classical (``1`` or ``SolverType.CLASSICAL``).
 
     Returns:
-        transaction-cost-wrapper-classname: The class name to hide or show the
-            transaction cost selector.
+        The class name to hide or show the transaction cost selector.
     """
-    return "display-none" if solver_type is SolverType.DQM.value else ""
+    return "display-none" if int(solver_type) == SolverType.DQM.value else ""
 
 
 @dash.callback(
@@ -253,7 +253,7 @@ def update_results_date_table(
         settings_store: The settings that have been selected for this run.
 
     Returns:
-        dynamic-results-table: The new table based on the data from the date that was selected.
+        The new table based on the data from the date that was selected.
     """
     solver_type = SolverType(settings_store["solver type"])
 
@@ -297,27 +297,29 @@ def update_results_date_table(
 
 @dash.callback(
     Output("loop-interval", "disabled", allow_duplicate=True),
-    Output("cancel-button", "className", allow_duplicate=True),
-    Output("run-button", "className", allow_duplicate=True),
+    Output("cancel-button", "style", allow_duplicate=True),
+    Output("run-button", "style", allow_duplicate=True),
     Output("iteration", "data", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Input("cancel-button", "n_clicks"),
     prevent_initial_call=True,
 )
-def cancel(cancel_button_click: int) -> tuple[bool, str, str, int, str]:
+def cancel(cancel_button_click: int) -> tuple[bool, dict, dict, int, str]:
     """Resets the UI when the cancel button is clicked.
 
     Args:
         cancel_button_click: The number of times the cancel button has been clicked.
 
     Returns:
-        loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
-        cancel-button-class: The class for the cancel button.
-        run-button-class: The class for the run button.
-        iteration: The number to reset the iteration store to.
-        results-tab-label: The label of the results tab.
+        A tuple containing:
+
+        - bool: Whether to disable the trigger that starts ``update_multi_output``.
+        - dict: The style for the cancel button.
+        - dict: The style for the run button.
+        - int: The number to reset the iteration store to.
+        - str: The label of the results tab.
     """
-    return True, "display-none", "", 3, "Results"
+    return True, {"display": "none"}, {}, 3, "Results"
 
 
 @dash.callback(
@@ -331,7 +333,12 @@ def cancel(cancel_button_click: int) -> tuple[bool, str, str, int, str]:
     ],
     prevent_initial_call=True,
 )
-def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> bool:
+def start_loop_iteration(
+    interval_trigger: int,
+    is_loop_running: bool,
+    iter: int,
+    max_iter: int,
+) -> tuple[bool, str]:
     """Triggers ``update_multi_output`` when Interval is triggered.
 
     Args:
@@ -341,13 +348,16 @@ def start_loop_iteration(interval_trigger, is_loop_running, iter, max_iter) -> b
         max_iter: The maximum times to call run_update().
 
     Returns:
-        loop-running: Whether the loop is running.
-        graph-update-status: The text to indicate the iteration progress.
+        A tuple containing:
+
+        - bool: Whether the loop is running.
+        - str: The text to indicate the iteration progress.
     """
     if is_loop_running:
         raise PreventUpdate
 
-    return True, f"Submitting problem {iter-3} of {max_iter-3}..."
+    # Iterations run from 3 through max_iter inclusive, so this is problem iter-2 of max_iter-2.
+    return True, f"Submitting problem {iter-2} of {max_iter-2}..."
 
 
 class UpdateMultiOutputReturn(NamedTuple):
@@ -362,8 +372,8 @@ class UpdateMultiOutputReturn(NamedTuple):
     loop_store: dict = dash.no_update
     is_loop_running: bool = dash.no_update
     interval_disabled: bool = dash.no_update
-    cancel_button_class: str = dash.no_update
-    run_button_class: str = dash.no_update
+    cancel_button_style: dict = dash.no_update
+    run_button_style: dict = dash.no_update
     results_tab_disabled: bool = dash.no_update
     results_tab_label: str = dash.no_update
     graph_tab_disabled: bool = dash.no_update
@@ -380,10 +390,10 @@ class UpdateMultiOutputReturn(NamedTuple):
     Output("loop-store", "data"),
     Output("loop-running", "data", allow_duplicate=True),
     Output("loop-interval", "disabled"),
-    Output("cancel-button", "className", allow_duplicate=True),
-    Output("run-button", "className", allow_duplicate=True),
+    Output("cancel-button", "style", allow_duplicate=True),
+    Output("run-button", "style", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Output("graph-tab", "disabled", allow_duplicate=True),
     Output("graph-update-status", "children", allow_duplicate=True),
     inputs=[
@@ -423,21 +433,22 @@ def update_multi_output(
 
     Returns:
         A NamedTuple ``UpdateMultiOutputReturn`` that contains the following:
-            output_graph: The updated output graph.
-            iteration: The next iteration count of the function.
-            dates_slider: A slider of dates that updates the visible solution_table.
-            solution_tables: The solution tables generated by generate_table_group.
-            results_date_dict: A dictionary of date keys and solution values.
-            portfolio: The MultiPeriod portfolio object.
-            loop_store: A dictionary of variables to pass between iterations.
-            is_loop_running: True if the loop is executing, False otherwise.
-            interval_disabled: False if interval is running, True otherwise.
-            cancel_button_class: The class for the cancel button.
-            run_button_class: The class for the run button.
-            results_tab_disabled: Whether the results tab should be disabled.
-            results_tab_label: The label of the results tab.
-            graph_tab_disabled: Whether the graph tab should be disabled.
-            graph_update_status: The text to indicate the iteration progress.
+
+        - output_graph: The updated output graph.
+        - iteration: The next iteration count of the function.
+        - dates_slider: A slider of dates that updates the visible solution_table.
+        - solution_tables: The solution tables generated by generate_table_group.
+        - results_date_dict: A dictionary of date keys and solution values.
+        - portfolio: The MultiPeriod portfolio object.
+        - loop_store: A dictionary of variables to pass between iterations.
+        - is_loop_running: True if the loop is executing, False otherwise.
+        - interval_disabled: False if interval is running, True otherwise.
+        - cancel_button_style: The style for the cancel button.
+        - run_button_style: The style for the run button.
+        - results_tab_disabled: Whether the results tab should be disabled.
+        - results_tab_label: The label of the results tab.
+        - graph_tab_disabled: Whether the graph tab should be disabled.
+        - graph_update_status: The text to indicate the iteration progress.
     """
     solver_type = SolverType(settings_store["solver type"])
     stocks = settings_store["stocks"]
@@ -446,8 +457,10 @@ def update_multi_output(
     if not is_loop_running or iteration > max_iterations:
         raise PreventUpdate
 
-    if iteration == 3:  # First iteration
-        my_portfolio = MultiPeriod(
+    is_first_iteration = iteration == 3
+
+    if is_first_iteration:
+        portfolio = MultiPeriod(
             budget=budget,
             sampler_args="{}",
             gamma=100,
@@ -461,80 +474,64 @@ def update_multi_output(
             verbose=False,
         )
 
-        my_portfolio.load_data()
+        portfolio.load_data()
 
-        my_portfolio.baseline_values = [0]
-        my_portfolio.update_values = [0]
-        my_portfolio.opt_results_df = pd.DataFrame(
+        portfolio.baseline_values = [0]
+        portfolio.update_values = [0]
+        portfolio.opt_results_df = pd.DataFrame(
             columns=["Date", "Value"] + stocks + ["Variance", "Returns"]
         )
-        my_portfolio.price_df = pd.DataFrame(columns=stocks)
+        portfolio.price_df = pd.DataFrame(columns=stocks)
 
-        fig = initialize_output_graph(my_portfolio.df_baseline, budget)
+        fig = initialize_output_graph(portfolio.df_baseline, budget)
 
-        baseline_result, months, all_solutions, init_holdings = my_portfolio.initiate_run_update(
+        baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
             i=iteration,
             baseline_result={},
             months=[],
             all_solutions={},
         )
 
-        fig = update_output_graph(
-            fig,
-            iteration,
-            my_portfolio.update_values,
-            my_portfolio.baseline_values,
-            my_portfolio.df_all,
-        )
+        loop_store = {"budget": budget}
+    else:
+        portfolio = deserialize(portfolio)
+        fig = go.Figure(fig)
 
-        return UpdateMultiOutputReturn(
-            output_graph=fig,
-            iteration=iteration + 1,
-            results_date_dict=all_solutions,
-            portfolio=serialize(my_portfolio),
-            loop_store={
-                "baseline": baseline_result,
-                "months": months,
-                "budget": budget,
-                "holdings": init_holdings,
+        baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
+            i=iteration,
+            first_purchase=False,
+            baseline_result={
+                key: np.array(value) for key, value in loop_store["baseline"].items()
             },
-            is_loop_running=False,
-            graph_tab_disabled=False,
+            months=loop_store["months"],
+            initial_budget=loop_store["budget"],
+            all_solutions=results_date_dict,
+            init_holdings=loop_store["holdings"],
         )
 
-    portfolio = deserialize(portfolio)
-    baseline_result, months, all_solutions, init_holdings = portfolio.initiate_run_update(
-        i=iteration,
-        first_purchase=False,
-        baseline_result={key: np.array(value) for key, value in loop_store["baseline"].items()},
-        months=loop_store["months"],
-        initial_budget=loop_store["budget"],
-        all_solutions=results_date_dict,
-        init_holdings=loop_store["holdings"],
-    )
+    loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
 
     fig = update_output_graph(
-        go.Figure(fig),
+        fig,
         iteration,
         portfolio.update_values,
         portfolio.baseline_values,
         portfolio.df_all,
     )
 
-    if iteration == max_iterations:  # Last iteration
-        dates = [
-            datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y")
-            for date in results_date_dict.keys()
-        ]
-        solutions = list(results_date_dict.values())
+    dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in all_solutions]
+    solutions = list(all_solutions.values())
 
-        output_tables = generate_table_group(
-            tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
-            title=dates[-1],
-        )
+    output_tables = generate_table_group(
+        tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
+        title=dates[-1],
+    )
 
-        dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
+    dates_slider = generate_dates_slider(dates) if len(dates) > 1 else []
 
+    # The first iteration can also be the last when the range is only four months long, so
+    # every iteration (including the first) has to check whether the run is finished.
+    if iteration == max_iterations:
         return UpdateMultiOutputReturn(
             output_graph=fig,
             iteration=3,
@@ -543,28 +540,14 @@ def update_multi_output(
             results_date_dict=all_solutions,
             is_loop_running=False,
             interval_disabled=True,
-            cancel_button_class="display-none",
-            run_button_class="",
+            cancel_button_style={"display": "none"},
+            run_button_style={},
             results_tab_disabled=False,
             results_tab_label="Results",
+            graph_tab_disabled=False if is_first_iteration else dash.no_update,
             graph_update_status="",
         )
 
-    loop_store.update({"baseline": baseline_result, "months": months, "holdings": init_holdings})
-
-    dates = [
-        datetime.strptime(date, "%Y-%m-%d").strftime("%b %Y") for date in results_date_dict.keys()
-    ]
-    solutions = list(results_date_dict.values())
-
-    output_tables = generate_table_group(
-        tables_data=[solutions[-1]["stocks"], format_table_data(solver_type, solutions[-1])],
-        title=dates[-1],
-    )
-
-    dates_slider = generate_dates_slider(dates) if dates and len(dates) > 1 else []
-
-    # Regular iteration
     return UpdateMultiOutputReturn(
         output_graph=fig,
         iteration=iteration + 1,
@@ -575,14 +558,15 @@ def update_multi_output(
         loop_store=loop_store,
         is_loop_running=False,
         results_tab_disabled=False,
+        graph_tab_disabled=False if is_first_iteration else dash.no_update,
     )
 
 
 class RunOptimizationReturn(NamedTuple):
     """Return type for the ``run_optimization`` callback function."""
 
-    cancel_button_class: str = ""
-    run_button_class: str = "display-none"
+    cancel_button_style: dict = {}
+    run_button_style: dict = {"display": "none"}
     results_tab_disabled: bool = True
     results_tab_label: str = "Loading..."
     tabs_value: str = "input-tab"
@@ -592,73 +576,74 @@ class RunOptimizationReturn(NamedTuple):
 
 
 @dash.callback(
-    Output("cancel-button", "className"),
-    Output("run-button", "className"),
+    Output("cancel-button", "style"),
+    Output("run-button", "style"),
     Output("results-tab", "disabled"),
-    Output("results-tab", "label"),
+    Output("results-tab", "children"),
     Output("tabs", "value", allow_duplicate=True),
     Output("settings-store", "data"),
     Output("loop-interval", "disabled", allow_duplicate=True),
     Output("graph-tab", "disabled", allow_duplicate=True),
     inputs=[
         Input("run-button", "n_clicks"),
-        State("selected-period", "data"),
-        State("sampler-type-select", "value"),
+        State("period-options", "value"),
+        State("solver-type-select", "value"),
         State("solver-time-limit", "value"),
         State("budget", "value"),
         State("transaction-cost", "value"),
-        State("date-range", "start_date"),
-        State("date-range", "end_date"),
+        State("date-range", "value"),
         State("stocks", "value"),
     ],
     prevent_initial_call=True,
 )
 def run_optimization(
     run_click: int,
-    period: Union[PeriodType, int],
-    solver_type: Union[SolverType, int],
+    period: str,
+    solver_type: str,
     time_limit: int,
     budget: int,
     transaction_cost: float,
-    start_date: str,
-    end_date: str,
+    date_range: list,
     stocks: list,
 ) -> RunOptimizationReturn:
     """Updates UI and triggers optimization run.
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
-        period: The currently selected PeriodType either single-period or multi-period.
+        period: The currently selected PeriodType either single-period (0) or multi-period (1).
         solver_type: Which solver was selected.
         time_limit: The time limit for all runs.
         budget: The budget for the run.
         transaction_cost: The selected transaction cost.
-        start_date: The selected start date.
-        end_date: The selected end date.
+        date_range: The selected start and end months as a pair of ``YYYY-MM-DD`` strings.
         stocks: The list of selected stocks.
 
     Returns:
         A NamedTuple ``RunOptimizationReturn`` containing:
-            cancel-button-class: The class for the cancel button.
-            run-button-class: The class for the run button.
-            results-tab-disabled: Whether the results tab should be disabled.
-            results-tab-label: The label of the results tab.
-            tabs-value: Which tab should be selected.
-            settings-store: Storing all the settings for the run.
-            loop-interval-disabled: Whether to disable the trigger that starts ``update_multi_output``.
-            graph-tab-disabled: Whether to disable the graph tab.
+
+        - cancel_button_style: The style for the cancel button.
+        - run_button_style: The style for the run button.
+        - results_tab_disabled: Whether the results tab should be disabled.
+        - results_tab_label: The label of the results tab.
+        - tabs_value: Which tab should be selected.
+        - settings_store: Storing all the settings for the run.
+        - loop_interval_disabled: Whether to disable the trigger that starts ``update_multi_output``.
+        - graph_tab_disabled: Whether to disable the graph tab.
 
     """
+    dates = get_month_range(date_range) if date_range and all(date_range) else DATES_DEFAULT
+
     settings_store = {
-        "solver type": solver_type,
+        "solver type": int(solver_type),
         "time limit": time_limit,
         "budget": budget,
         "transaction cost": transaction_cost,
-        "dates": ([start_date, end_date] if start_date and end_date else DATES_DEFAULT),
+        "dates": dates,
         "stocks": stocks,
+        "selected-period": int(period),
     }
 
-    if period is PeriodType.SINGLE.value:
+    if int(period) == PeriodType.SINGLE.value:
         return RunOptimizationReturn(settings_store=settings_store)
 
     return RunOptimizationReturn(
@@ -670,38 +655,37 @@ def run_optimization(
 
 @dash.callback(
     Output("dynamic-results-table", "children", allow_duplicate=True),
-    Output("cancel-button", "className", allow_duplicate=True),
-    Output("run-button", "className", allow_duplicate=True),
+    Output("cancel-button", "style", allow_duplicate=True),
+    Output("run-button", "style", allow_duplicate=True),
     Output("results-tab", "disabled", allow_duplicate=True),
-    Output("results-tab", "label", allow_duplicate=True),
+    Output("results-tab", "children", allow_duplicate=True),
     Output("dates-slider", "children", allow_duplicate=True),
     background=True,
     inputs=[
         Input("settings-store", "data"),
-        State("selected-period", "data"),
     ],
     cancel=[Input("cancel-button", "n_clicks")],
     prevent_initial_call=True,
 )
 def run_optimization_single(
     settings_store: dict,
-    period: Union[PeriodType, int],
-) -> tuple[list, str, str, bool, str, str]:
+) -> tuple[list, dict, dict, bool, str, str]:
     """Runs the single period optimization and updates UI accordingly.
 
     Args:
         settings_store: The settings that have been selected for this run.
-        period: The currently selected PeriodType either single-period or multi-period.
 
     Returns:
-        solution-table: The tables to display the solution.
-        cancel-button-class: The class for the cancel button.
-        run-button-class: The class for the run button.
-        results-tab-disabled: Whether the results tab should be disabled.
-        results-tab-label: The label of the results tab.
-        dates_slider: A slider of dates that updates the visible solution_table.
+        A tuple containing:
+
+        - list: The tables to display the solution.
+        - dict: The style for the cancel button.
+        - dict: The style for the run button.
+        - bool: Whether the results tab should be disabled.
+        - str: The label of the results tab.
+        - str: A slider of dates that updates the visible solution_table.
     """
-    if period is PeriodType.MULTI.value:
+    if int(settings_store["selected-period"]) == PeriodType.MULTI.value:
         raise PreventUpdate
 
     solver_type = SolverType(settings_store["solver type"])
@@ -722,4 +706,4 @@ def run_optimization_single(
 
     output_tables = generate_table_group(tables_data=[solution["stocks"], table])
 
-    return output_tables, "display-none", "", False, "Results", ""
+    return output_tables, {"display": "none"}, {}, False, "Results", ""
